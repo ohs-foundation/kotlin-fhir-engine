@@ -65,11 +65,8 @@ internal data class LocalChangeEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,
   val resourceType: String,
   val resourceId: String,
-  /** Stored as String (KMP replacement for java.util.UUID). */
   val resourceUuid: String,
-  /** Stored as epoch milliseconds (KMP replacement for java.time.Instant). */
   val timestamp: Long,
-  /** Stored as Int value from [Type] enum (KMP replacement for Room enum TypeConverter). */
   val type: Int,
   val payload: String,
   val versionId: String? = null,
