@@ -1,0 +1,65 @@
+site_name: Kotlin FHIR Engine
+site_description: Developer documentation for the Kotlin FHIR Engine
+site_url: https://engine.ohsplayer.dev/
+repo_url: https://github.com/ohs-foundation/kotlin-fhir-engine
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.code.copy
+    - navigation.expand
+    - navigation.footer
+    - navigation.instant
+    - navigation.tracking
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.share
+
+nav:
+  - Home: index.md
+  - About: about.md
+  - Getting Started:
+    - getting-started/overview.md
+    - getting-started/installation.md
+    - getting-started/quick-start.md
+  - User Guide:
+    - user-guide/configuration.md
+    - user-guide/authentication.md
+    - user-guide/data-management.md
+  - Developer Guide:
+    - developer-guide/contributing.md
+    - developer-guide/api-reference.md
+  - Deployment:
+    - deployment/overview.md
+  - FAQ: faq.md
+  - Changelog: changelog.md
+
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.magiclink
+
+plugins:
+  - search
+  - git-revision-date-localized
+  - minify:
+      minify_html: true
+
+# https://www.mkdocs.org/user-guide/configuration/#validation
+# Nota Bene: There is no "error" level in MkDocs, but the build-docs.bash script
+# uses "mkdocs build --strict", which cause MkDocs to abort the build on any warnings.
+validation:
+  nav:
+    not_found: warn
+    absolute_links: warn
+    omitted_files: warn
+  links:
+    anchors: warn
+    not_found: warn
+    absolute_links: warn
+    unrecognized_links: warn
