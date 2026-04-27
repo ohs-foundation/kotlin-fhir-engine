@@ -1,8 +1,9 @@
 plugins {
-  id("org.jetbrains.kotlin.multiplatform")
-  id("com.android.kotlin.multiplatform.library")
-  alias(libs.plugins.ksp)
+  alias(libs.plugins.android.kotlin.multiplatform.library)
+  alias(libs.plugins.cashapp.licensee)
+  alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -51,12 +52,14 @@ kotlin {
         implementation(libs.ktor.client.encoding)
         implementation(libs.ktor.client.auth)
         implementation(libs.ktor.serialization.kotlinx.json)
+        implementation(libs.meeseeks.runtime)
       }
     }
     commonTest {
       dependencies {
         implementation(libs.kotlin.test)
         implementation(libs.kotlinx.coroutines.test)
+        implementation(libs.kotest.assertions.core)
       }
     }
     val androidMain by getting {
@@ -99,4 +102,7 @@ dependencies {
   ).forEach {
     add(it, libs.androidx.room.compiler)
   }
+}
+
+licensee {
 }
