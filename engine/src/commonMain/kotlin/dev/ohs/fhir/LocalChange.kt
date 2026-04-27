@@ -57,8 +57,8 @@ internal fun LocalChangeEntity.toLocalChange(): LocalChange =
     resourceType = resourceType,
     resourceId = resourceId,
     versionId = versionId,
-    timestamp = Instant.fromEpochMilliseconds(timestamp),
-    type = LocalChange.Type.from(type),
+    timestamp = timestamp,
+    type = LocalChange.Type.from(type.value),
     payload = payload,
     token = LocalChangeToken(listOf(id)),
   )
