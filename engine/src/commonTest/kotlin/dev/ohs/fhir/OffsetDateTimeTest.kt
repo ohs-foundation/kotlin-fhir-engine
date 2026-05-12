@@ -22,7 +22,8 @@ import kotlin.test.assertFails
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.time.Instant
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.offsetAt
@@ -57,7 +58,7 @@ class OffsetDateTimeTest {
   @Test
   fun parse_isoWithFractionalSeconds_preservesNanos() {
     val parsed = OffsetDateTime.parse("2026-01-15T10:30:00.123456789+00:00")
-    assertEquals(Instant.parse("2026-01-15T10:30:00.123456789Z"), parsed.instant)
+    assertEquals(LocalDateTime.parse("2026-01-15T10:30:00.123456789"), parsed.dateTime)
   }
 
   @Test
@@ -68,24 +69,24 @@ class OffsetDateTimeTest {
   @Test
   fun now_offsetMatchesSystemTimeZone() {
     val now = OffsetDateTime.now()
-    val expectedOffset = TimeZone.currentSystemDefault().offsetAt(now.instant)
+    val expectedOffset = TimeZone.currentSystemDefault().offsetAt(Clock.System.now())
     assertEquals(expectedOffset, now.offset)
   }
 
   @Test
-  fun equals_sameInstantAndOffset_true() {
-    val instant = Instant.parse("2026-01-15T10:00:00Z")
+  fun equals_sameDateTimeAndOffset_true() {
+    val dateTime = LocalDateTime.parse("2026-01-15T10:00:00")
     val offset = UtcOffset(hours = 5, minutes = 30)
-    val a = OffsetDateTime(instant, offset)
-    val b = OffsetDateTime(instant, offset)
+    val a = OffsetDateTime(dateTime, offset)
+    val b = OffsetDateTime(dateTime, offset)
     assertEquals(a, b)
   }
 
   @Test
-  fun equals_sameInstantDifferentOffset_false() {
-    val instant = Instant.parse("2026-01-15T10:00:00Z")
-    val a = OffsetDateTime(instant, UtcOffset(hours = 5))
-    val b = OffsetDateTime(instant, UtcOffset(hours = -8))
+  fun equals_sameDateTimeDifferentOffset_false() {
+    val dateTime = LocalDateTime.parse("2026-01-15T10:00:00")
+    val a = OffsetDateTime(dateTime, UtcOffset(hours = 5))
+    val b = OffsetDateTime(dateTime, UtcOffset(hours = -8))
     assertNotEquals(a, b)
   }
 
