@@ -21,6 +21,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.google.fhir.model.r4.terminologies.ResourceType
+import kotlin.uuid.Uuid
 import dev.ohs.fhir.index.entities.UriIndex
 
 @Entity(
@@ -44,7 +46,7 @@ import dev.ohs.fhir.index.entities.UriIndex
 )
 internal data class UriIndexEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,
-  val resourceUuid: String,
-  val resourceType: String,
+  val resourceUuid: Uuid,
+  val resourceType: ResourceType,
   @Embedded(prefix = "index_") val index: UriIndex,
 )

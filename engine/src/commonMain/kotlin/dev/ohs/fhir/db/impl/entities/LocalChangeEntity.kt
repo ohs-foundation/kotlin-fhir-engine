@@ -19,6 +19,8 @@ package dev.ohs.fhir.db.impl.entities
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * When a local change to a resource happens, the lastUpdated timestamp in [ResourceEntity] is
@@ -65,8 +67,8 @@ internal data class LocalChangeEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,
   val resourceType: String,
   val resourceId: String,
-  val resourceUuid: String,
-  val timestamp: Long,
+  val resourceUuid: Uuid,
+  val timestamp: Instant,
   val type: Int,
   val payload: String,
   val versionId: String? = null,
