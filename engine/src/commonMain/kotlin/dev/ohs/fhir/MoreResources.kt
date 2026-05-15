@@ -74,3 +74,15 @@ internal fun Resource.updateMeta(versionId: String?, lastUpdated: Instant?): Res
   obj["meta"] = JsonObject(meta)
   return parser.decodeFromString(JsonObject(obj).toString())
 }
+
+/**
+ * Returns a copy of this [Resource] with `id` overridden. Round-trips through FHIR JSON because
+ * kotlin-fhir's [Resource] is immutable and its abstract `Resource.Builder` doesn't expose `id`
+ * polymorphically.
+ */
+internal fun Resource.withId(newId: String): Resource {
+  val parser = FhirR4Json()
+  val obj = Json.parseToJsonElement(parser.encodeToString(this)).jsonObject.toMutableMap()
+  obj["id"] = JsonPrimitive(newId)
+  return parser.decodeFromString(JsonObject(obj).toString())
+}
