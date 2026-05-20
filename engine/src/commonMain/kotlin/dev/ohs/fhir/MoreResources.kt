@@ -48,10 +48,21 @@ fun <R : Resource> getResourceClass(resourceType: ResourceType): KClass<R> =
   getResourceClass(resourceType.name)
 
 /**
- * Returns the [KClass] object for the resource type. JVM targets use reflection. iOS is not
- * supported.
+ * Returns the [KClass] object for the resource type.
+ *
+ * Uses the codegen-produced `getResourceClassByName` lookup table — works uniformly across all
+ * targets (no JVM reflection involved).
+ *
+ * @throws IllegalArgumentException if the name does not match any FHIR R4 resource type.
  */
-expect fun <R : Resource> getResourceClass(resourceTypeName: String): KClass<R>
+@Suppress("UNCHECKED_CAST")
+fun <R : Resource> getResourceClass(resourceTypeName: String): KClass<R> {
+  // Strip any curly-brace namespace prefix (e.g. "{http://hl7.org/fhir}Patient" -> "Patient")
+  // mirroring the engine's CQL-engine workaround.
+  val className = resourceTypeName.replace(Regex("\\{[^}]*\\}"), "")
+  return (dev.ohs.fhir.index.getResourceClassByName(className) as? KClass<R>)
+    ?: throw IllegalArgumentException("Unknown FHIR R4 resource type: $resourceTypeName")
+}
 
 internal val Resource.resourceType: String
   get() = this::class.simpleName ?: error("Cannot determine resource type for $this")

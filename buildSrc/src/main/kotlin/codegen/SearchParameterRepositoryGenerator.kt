@@ -24,6 +24,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.WildcardTypeName
 import java.io.File
 import java.util.Locale
 import kotlin.collections.HashMap
@@ -143,7 +144,35 @@ internal object SearchParameterRepositoryGenerator {
     getSearchParamListFunction.addStatement(
       "return resourceSearchParams + getBaseResourceSearchParamsList(resource.resourceType)",
     )
-    fileSpec.addFunction(getSearchParamListFunction.build()).build().writeTo(outputPath)
+    fileSpec.addFunction(getSearchParamListFunction.build())
+
+    // Resource-name → KClass lookup. Lets `getResourceClass` work uniformly across JVM and iOS
+    // without `Class.forName` (which has no Kotlin/Native equivalent).
+    val kClassOutResource =
+      ClassName("kotlin.reflect", "KClass")
+        .parameterizedBy(WildcardTypeName.producerOf(resourceClass))
+        .copy(nullable = true)
+    val getResourceClassByNameFunction =
+      FunSpec.builder("getResourceClassByName")
+        .addParameter("name", String::class)
+        .returns(kClassOutResource)
+        .addModifiers(KModifier.INTERNAL)
+        .addKdoc(generatedComment)
+        .apply {
+          beginControlFlow("return when (name)")
+          searchParamMap.keys
+            .filter { it != "Resource" }
+            .sorted()
+            .forEach { name ->
+              addStatement("%S -> %T::class", name, ClassName(resourcePackage, name))
+            }
+          addStatement("else -> null")
+          endControlFlow()
+        }
+        .build()
+    fileSpec.addFunction(getResourceClassByNameFunction)
+
+    fileSpec.build().writeTo(outputPath)
   }
 
   /**
