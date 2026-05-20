@@ -84,6 +84,11 @@ kotlin {
         implementation(libs.ktor.client.darwin)
       }
     }
+    val desktopTest by getting {
+      dependencies {
+        implementation(libs.hapi.fhir.structures.r4)
+      }
+    }
     getByName("androidHostTest") {
       dependencies {
         implementation(libs.junit)

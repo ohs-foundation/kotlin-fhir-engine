@@ -22,6 +22,7 @@ import com.google.fhir.model.r4.Resource
 import com.google.fhir.model.r4.terminologies.ResourceType
 import kotlin.reflect.KClass
 import kotlin.time.Instant
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -42,6 +43,16 @@ fun <R : Resource> getResourceType(kClass: KClass<R>): ResourceType {
   }
 }
 
+/** Returns the [KClass] object for the resource type. */
+fun <R : Resource> getResourceClass(resourceType: ResourceType): KClass<R> =
+  getResourceClass(resourceType.name)
+
+/**
+ * Returns the [KClass] object for the resource type. JVM targets use reflection. iOS is not
+ * supported.
+ */
+expect fun <R : Resource> getResourceClass(resourceTypeName: String): KClass<R>
+
 internal val Resource.resourceType: String
   get() = this::class.simpleName ?: error("Cannot determine resource type for $this")
 
@@ -54,7 +65,7 @@ internal val Resource.versionId: String?
 internal val Resource.lastUpdated: Instant?
   get() {
     val dt = (meta?.lastUpdated?.value as? FhirDateTime.DateTime) ?: return null
-    return Instant.parse("${dt.dateTime}${dt.utcOffset}")
+    return dt.dateTime.toInstant(dt.utcOffset)
   }
 
 /**
