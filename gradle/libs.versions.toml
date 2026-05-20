@@ -7,6 +7,7 @@ androidx-sqlite = "2.5.0"
 androidx-test-core = "1.6.1"
 androidx-work = "2.8.1"
 fhir-path = "1.0.0-beta01"
+fhir-ucum = "1.0.3"
 junit = "4.13.2"
 kermit = "2.0.8"
 kotlin = "2.2.20"
@@ -27,6 +28,7 @@ androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-te
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
 fhir-path = { module = "com.google.fhir:fhir-path", version.ref = "fhir-path" }
+fhir-ucum = { module = "org.fhir:ucum", version.ref = "fhir-ucum" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kotlin-fhir = { module = "com.google.fhir:fhir-model", version.ref = "kotlin-fhir" }
