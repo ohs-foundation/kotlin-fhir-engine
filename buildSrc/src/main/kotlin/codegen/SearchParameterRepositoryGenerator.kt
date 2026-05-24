@@ -18,6 +18,7 @@ package codegen
 
 import com.google.fhir.model.r4.Bundle
 import com.google.fhir.model.r4.SearchParameter
+import com.google.fhir.model.r4.terminologies.ResourceType as FhirResourceType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -160,8 +161,9 @@ internal object SearchParameterRepositoryGenerator {
         .addKdoc(generatedComment)
         .apply {
           beginControlFlow("return when (name)")
-          searchParamMap.keys
-            .filter { it != "Resource" }
+          FhirResourceType.values()
+            .map { it.name }
+            .filter { name -> runCatching { Class.forName("$resourcePackage.$name") }.isSuccess }
             .sorted()
             .forEach { name ->
               addStatement("%S -> %T::class", name, ClassName(resourcePackage, name))
