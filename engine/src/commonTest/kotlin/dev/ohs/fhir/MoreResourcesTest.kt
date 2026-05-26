@@ -33,12 +33,12 @@ class MoreResourcesTest {
   }
 
   @Test
-  fun `getResourceClass() by name should return resource class`() {
+  fun `getResourceClass by name should return resource class`() {
     assertEquals(Patient::class, getResourceClass<Patient>("Patient"))
   }
 
   @Test
-  fun `getResourceClass() by resource type should return resource class`() {
+  fun `getResourceClass by resource type should return resource class`() {
     assertEquals(Patient::class, getResourceClass<Patient>(ResourceType.Patient))
   }
 
