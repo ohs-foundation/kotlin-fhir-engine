@@ -28,22 +28,22 @@ import kotlin.time.Clock
 
 class MoreResourcesTest {
   @Test
-  fun getResourceType() {
+  fun getResourceType_withResourceKClass_returnsResourceType() {
     assertEquals(ResourceType.Patient, getResourceType(Patient::class))
   }
 
   @Test
-  fun `getResourceClass by name should return resource class`() {
+  fun getResourceClass_byName_returnsResourceClass() {
     assertEquals(Patient::class, getResourceClass<Patient>("Patient"))
   }
 
   @Test
-  fun `getResourceClass by resource type should return resource class`() {
+  fun getResourceClass_byResourceType_returnsResourceClass() {
     assertEquals(Patient::class, getResourceClass<Patient>(ResourceType.Patient))
   }
 
   @Test
-  fun `updateMeta should update resource meta with given versionId and lastUpdated`() {
+  fun updateMeta_withVersionIdAndLastUpdated_updatesResourceMeta() {
     val versionId = "1"
     val instantValue = Clock.System.now()
     val resource = Patient(id = "patient")
@@ -55,7 +55,7 @@ class MoreResourcesTest {
   }
 
   @Test
-  fun `updateMeta should not change existing meta if new values are null`() {
+  fun updateMeta_withNullValues_preservesExistingMeta() {
     val versionId = "1"
     val instantValue = Clock.System.now()
     val resource =
