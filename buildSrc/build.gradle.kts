@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins { `kotlin-dsl` }
 
 repositories {
@@ -14,6 +16,6 @@ dependencies {
 
 // fhir-model is built with Kotlin 2.2; the kotlin-dsl plugin in Gradle 8.13 still uses 2.0.
 // Allow reading the newer metadata.
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+tasks.withType<KotlinCompile>().configureEach {
   compilerOptions { freeCompilerArgs.add("-Xskip-metadata-version-check") }
 }
