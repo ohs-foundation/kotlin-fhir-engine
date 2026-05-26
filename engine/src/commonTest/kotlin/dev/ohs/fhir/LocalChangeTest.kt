@@ -26,12 +26,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 
 class LocalChangeTest {
 
   @Test
-  fun `should convert the database entity class to a local change`() = runBlocking {
+  fun toLocalChange_withInsertEntity_returnsMatchingLocalChange() = runTest {
     val localChangeEntity =
       LocalChangeEntity(
         id = 1,
