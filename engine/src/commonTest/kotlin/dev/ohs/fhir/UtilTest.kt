@@ -16,22 +16,13 @@
 
 package dev.ohs.fhir
 
+import com.google.fhir.model.r4.Patient
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * Adapted from engine/src/test/java/com/google/android/fhir/UtilTest.kt
- *
- * Only includes tests for functions that exist in engine-kmp's Util.kt:
- * - isValidDateOnly()
- * - percentOf()
- *
- * Skipped (functions not in engine-kmp):
- * - logicalId tests (6 tests) — logicalId extension not in engine-kmp Util.kt
- * - operationOutcomeIsSuccess tests (4 tests) — isUploadSuccess() not in engine-kmp
- */
+/** `operationOutcomeIsSuccess_*` tests skipped pending sync implementation. */
 class UtilTest {
 
   @Test
@@ -57,5 +48,33 @@ class UtilTest {
   @Test
   fun percentOf_shouldReturnPercentage() {
     assertEquals(0.5, percentOf(25, 50))
+  }
+
+  @Test
+  fun logicalId_patient_missing_id_shouldReturnEmptyString() {
+    assertEquals("", Patient().logicalId)
+  }
+
+  @Test
+  fun logicalId_patient_null_id_shouldReturnEmptyString() {
+    assertEquals("", Patient(id = null).logicalId)
+  }
+
+  @Test
+  fun logicalId_patient_blank_id_shouldReturnEmptyString() {
+    assertEquals("", Patient(id = "").logicalId)
+  }
+
+  @Test
+  fun logicalId_patient_stringId_shouldReturnId() {
+    assertEquals("test_patient", Patient(id = "test_patient").logicalId)
+  }
+
+  @Test
+  fun logicalId_patient_fullyQualifiedId_shouldReturnUnqualifiedId() {
+    assertEquals(
+      "Nemo",
+      Patient(id = "http://hapi.fhir.org/baseR4/Patient/Nemo").logicalId,
+    )
   }
 }
