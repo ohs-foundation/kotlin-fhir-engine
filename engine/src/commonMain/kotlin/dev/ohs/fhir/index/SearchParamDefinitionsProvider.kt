@@ -34,8 +34,14 @@ internal class SearchParamDefinitionsProviderImpl(
   private val customParams: Map<String, List<SearchParamDefinition>> = emptyMap(),
 ) : SearchParamDefinitionsProvider {
 
-  override fun get(resource: Resource): List<SearchParamDefinition> {
-    return getSearchParamList(resource) +
-      customParams.getOrElse(resource.resourceType) { emptyList() }
-  }
+  override fun get(resource: Resource): List<SearchParamDefinition> =
+    getByResourceType(resource.resourceType)
+
+  /**
+   * Returns the search parameters for the given resource type name without needing a [Resource]
+   * instance. Used by `XFhirQueryTranslator`, which only has a resource type to work from.
+   */
+  fun getByResourceType(resourceTypeName: String): List<SearchParamDefinition> =
+    getSearchParamList(resourceTypeName) +
+      customParams.getOrElse(resourceTypeName) { emptyList() }
 }
