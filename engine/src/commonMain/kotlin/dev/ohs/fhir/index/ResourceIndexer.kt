@@ -29,7 +29,6 @@ import dev.ohs.fhir.index.entities.ReferenceIndex
 import dev.ohs.fhir.index.entities.StringIndex
 import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.index.entities.UriIndex
-import dev.ohs.fhir.logicalId
 import dev.ohs.fhir.search.LAST_UPDATED
 import dev.ohs.fhir.search.LOCAL_LAST_UPDATED
 import dev.ohs.fhir.ucumUrl
@@ -81,7 +80,7 @@ internal class ResourceIndexer(
 
   private fun <R : Resource> extractIndexValues(resource: R): ResourceIndices {
     val resourceType = getResourceType(resource::class)
-    val indexBuilder = ResourceIndices.Builder(resourceType, resource.logicalId)
+    val indexBuilder = ResourceIndices.Builder(resourceType, resource.id.orEmpty())
     searchParamDefinitionsProvider
       .get(resource)
       .flatMap { searchParam ->
