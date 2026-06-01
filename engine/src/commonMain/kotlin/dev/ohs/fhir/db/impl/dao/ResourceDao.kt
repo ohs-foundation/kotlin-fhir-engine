@@ -38,7 +38,6 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndexer.Companion.createLocalLastUpdatedIndex
 import dev.ohs.fhir.index.ResourceIndices
 import dev.ohs.fhir.lastUpdated
-import dev.ohs.fhir.logicalId
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.versionId
@@ -65,7 +64,7 @@ internal abstract class ResourceDao {
    * @param [timeOfLocalChange] time when the local change was made
    */
   suspend fun applyLocalUpdate(resource: Resource, timeOfLocalChange: Instant?) {
-    getResourceEntity(resource.logicalId, resource.resourceTypeEnum)?.let {
+    getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
           serializedResource = FhirR4Json().encodeToString(resource),
@@ -84,7 +83,7 @@ internal abstract class ResourceDao {
     getResourceEntity(resourceUuid)?.let {
       val entity =
         it.copy(
-          resourceId = updatedResource.logicalId,
+          resourceId = updatedResource.id.orEmpty(),
           serializedResource = FhirR4Json().encodeToString(updatedResource),
           lastUpdatedRemote = updatedResource.lastUpdated ?: it.lastUpdatedRemote,
           versionId = updatedResource.versionId ?: it.versionId,
@@ -101,7 +100,7 @@ internal abstract class ResourceDao {
    * @param [resource] the resource with the remote(server) updates
    */
   private suspend fun applyRemoteUpdate(resource: Resource) {
-    getResourceEntity(resource.logicalId, resource.resourceTypeEnum)?.let {
+    getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
           serializedResource = FhirR4Json().encodeToString(resource),
@@ -245,7 +244,7 @@ internal abstract class ResourceDao {
   // existing [ResourceEntity]
   // Else, we insert with a new [ResourceEntity]
   private suspend fun insertRemoteResource(resource: Resource): Uuid {
-    val existingResourceEntity = getResourceEntity(resource.logicalId, resource.resourceTypeEnum)
+    val existingResourceEntity = getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)
     if (existingResourceEntity != null) {
       applyRemoteUpdate(resource)
       return existingResourceEntity.resourceUuid
@@ -265,7 +264,7 @@ internal abstract class ResourceDao {
         id = 0,
         resourceType = resourceWithId.resourceTypeEnum,
         resourceUuid = resourceUuid,
-        resourceId = resourceWithId.logicalId,
+        resourceId = resourceWithId.id.orEmpty(),
         serializedResource = FhirR4Json().encodeToString(resourceWithId),
         versionId = resourceWithId.versionId,
         lastUpdatedRemote = resourceWithId.lastUpdated,
