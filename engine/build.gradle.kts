@@ -1,9 +1,16 @@
+import codegen.GenerateSearchParamsTask
+
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("com.android.kotlin.multiplatform.library")
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.serialization)
 }
+
+val generateSearchParamsTask =
+  tasks.register("generateSearchParamsTask", GenerateSearchParamsTask::class) {
+    srcOutputDir.set(layout.buildDirectory.dir("generated/sources/searchparams/commonMain/kotlin"))
+  }
 
 kotlin {
   jvmToolchain(21)
@@ -35,6 +42,7 @@ kotlin {
 
   sourceSets {
     commonMain {
+      kotlin.srcDir(generateSearchParamsTask.map { it.srcOutputDir })
       dependencies {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
@@ -74,6 +82,11 @@ kotlin {
     iosMain {
       dependencies {
         implementation(libs.ktor.client.darwin)
+      }
+    }
+    val desktopTest by getting {
+      dependencies {
+        implementation(libs.hapi.fhir.structures.r4)
       }
     }
     getByName("androidHostTest") {
