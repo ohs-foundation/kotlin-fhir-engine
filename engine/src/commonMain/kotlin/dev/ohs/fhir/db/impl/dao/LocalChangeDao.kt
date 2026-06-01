@@ -30,7 +30,6 @@ import dev.ohs.fhir.db.impl.entities.LocalChangeEntity.Type
 import dev.ohs.fhir.db.impl.entities.LocalChangeResourceReferenceEntity
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.db.impl.replaceJsonValue
-import dev.ohs.fhir.logicalId
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.versionId
 import com.google.fhir.model.r4.FhirR4Json
@@ -67,7 +66,7 @@ internal abstract class LocalChangeDao {
 
   @Transaction
   open suspend fun addInsert(resource: Resource, resourceUuid: Uuid, timeOfLocalChange: Instant) {
-    val resourceId = resource.logicalId
+    val resourceId = resource.id.orEmpty()
     val resourceType = resource.resourceTypeEnum
     val resourceString = FhirR4Json().encodeToString(resource)
 
@@ -112,7 +111,7 @@ internal abstract class LocalChangeDao {
     updatedResource: Resource,
     timeOfLocalChange: Instant,
   ) {
-    val resourceId = updatedResource.logicalId
+    val resourceId = updatedResource.id.orEmpty()
     val resourceType = updatedResource.resourceTypeEnum
 
     if (
@@ -321,7 +320,7 @@ internal abstract class LocalChangeDao {
   abstract suspend fun discardLocalChanges(resourceId: String, resourceType: ResourceType)
 
   suspend fun discardLocalChanges(resources: List<Resource>) {
-    resources.forEach { discardLocalChanges(it.logicalId, it.resourceTypeEnum) }
+    resources.forEach { discardLocalChanges(it.id.orEmpty(), it.resourceTypeEnum) }
   }
 
   @Query(
@@ -448,7 +447,7 @@ internal abstract class LocalChangeDao {
     oldResource: Resource,
     updatedResourceId: String,
   ): List<Uuid> {
-    val oldReferenceValue = "${oldResource.resourceTypeEnum.name}/${oldResource.logicalId}"
+    val oldReferenceValue = "${oldResource.resourceTypeEnum.name}/${oldResource.id.orEmpty()}"
     val updatedReferenceValue = "${oldResource.resourceTypeEnum.name}/$updatedResourceId"
 
     /**
