@@ -85,9 +85,9 @@ kotlin {
       }
     }
     val desktopTest by getting {
-      dependencies {
-        implementation(libs.hapi.fhir.structures.r4)
-      }
+      // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
+      // the codegen consumes at build time, so the test classpath needs access to it.
+      resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
     }
     getByName("androidHostTest") {
       dependencies {

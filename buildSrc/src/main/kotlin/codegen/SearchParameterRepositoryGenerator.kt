@@ -78,17 +78,16 @@ internal object SearchParameterRepositoryGenerator {
     }
 
     val fileSpec = FileSpec.builder(indexPackage, generatedClassName)
-    fileSpec.addImport("dev.ohs.fhir", "resourceType")
 
     val getSearchParamListFunction =
       FunSpec.builder("getSearchParamList")
-        .addParameter("resource", resourceClass)
+        .addParameter("resourceType", String::class)
         .returns(
           ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
         )
         .addModifiers(KModifier.INTERNAL)
         .addKdoc(generatedComment)
-        .beginControlFlow("val resourceSearchParams = when (resource.resourceType)")
+        .beginControlFlow("val resourceSearchParams = when (resourceType)")
 
     val baseParamResourceSpec = ParameterSpec.builder("resourceName", String::class).build()
     val getBaseResourceSearchParamListFunction =
@@ -143,7 +142,7 @@ internal object SearchParameterRepositoryGenerator {
 
     getSearchParamListFunction.addStatement("else -> emptyList()").endControlFlow()
     getSearchParamListFunction.addStatement(
-      "return resourceSearchParams + getBaseResourceSearchParamsList(resource.resourceType)",
+      "return resourceSearchParams + getBaseResourceSearchParamsList(resourceType)",
     )
     fileSpec.addFunction(getSearchParamListFunction.build())
 
