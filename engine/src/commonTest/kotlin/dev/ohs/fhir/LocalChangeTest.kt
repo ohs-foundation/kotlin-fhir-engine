@@ -16,11 +16,11 @@
 
 package dev.ohs.fhir
 
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.HumanName
-import com.google.fhir.model.r4.Patient
-import com.google.fhir.model.r4.String as FhirString
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.String as FhirString
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import kotlin.test.Test
 import kotlin.test.assertEquals
