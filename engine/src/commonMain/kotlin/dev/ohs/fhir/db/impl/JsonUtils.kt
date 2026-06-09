@@ -16,8 +16,8 @@
 
 package dev.ohs.fhir.db.impl
 
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement

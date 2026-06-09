@@ -16,8 +16,8 @@
 
 package dev.ohs.fhir.db.impl
 
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
 
 /**
  * Singleton FHIR JSON parser for serializing/deserializing resources. Replaces HAPI's
