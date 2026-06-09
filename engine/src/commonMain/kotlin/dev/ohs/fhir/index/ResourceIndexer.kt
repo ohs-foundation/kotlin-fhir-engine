@@ -32,31 +32,31 @@ import dev.ohs.fhir.index.entities.UriIndex
 import dev.ohs.fhir.search.LAST_UPDATED
 import dev.ohs.fhir.search.LOCAL_LAST_UPDATED
 import dev.ohs.fhir.ucumUrl
-import com.google.fhir.fhirpath.FhirPathEngine
-import com.google.fhir.model.r4.Address
-import com.google.fhir.model.r4.Canonical
-import com.google.fhir.model.r4.Code
-import com.google.fhir.model.r4.CodeableConcept
-import com.google.fhir.model.r4.Coding
-import com.google.fhir.model.r4.Date
-import com.google.fhir.model.r4.DateTime
-import com.google.fhir.model.r4.Decimal
-import com.google.fhir.model.r4.FhirDate
-import com.google.fhir.model.r4.FhirDateTime
-import com.google.fhir.model.r4.HumanName
-import com.google.fhir.model.r4.Id
-import com.google.fhir.model.r4.Identifier
-import com.google.fhir.model.r4.Instant
-import com.google.fhir.model.r4.Integer
-import com.google.fhir.model.r4.Location
-import com.google.fhir.model.r4.Money
-import com.google.fhir.model.r4.Period
-import com.google.fhir.model.r4.Quantity
-import com.google.fhir.model.r4.Reference
-import com.google.fhir.model.r4.Resource
-import com.google.fhir.model.r4.Timing
-import com.google.fhir.model.r4.Uri
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.fhirpath.FhirPathEngine
+import dev.ohs.fhir.model.r4.Address
+import dev.ohs.fhir.model.r4.Canonical
+import dev.ohs.fhir.model.r4.Code
+import dev.ohs.fhir.model.r4.CodeableConcept
+import dev.ohs.fhir.model.r4.Coding
+import dev.ohs.fhir.model.r4.Date
+import dev.ohs.fhir.model.r4.DateTime
+import dev.ohs.fhir.model.r4.Decimal
+import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.Id
+import dev.ohs.fhir.model.r4.Identifier
+import dev.ohs.fhir.model.r4.Instant
+import dev.ohs.fhir.model.r4.Integer
+import dev.ohs.fhir.model.r4.Location
+import dev.ohs.fhir.model.r4.Money
+import dev.ohs.fhir.model.r4.Period
+import dev.ohs.fhir.model.r4.Quantity
+import dev.ohs.fhir.model.r4.Reference
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.Timing
+import dev.ohs.fhir.model.r4.Uri
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -178,7 +178,7 @@ internal class ResourceIndexer(
             )
           }
         }
-        is com.google.fhir.model.r4.String -> {
+        is dev.ohs.fhir.model.r4.String -> {
           // e.g. CarePlan may have schedule as a string value 2011-06-27T09:30:10+01:00
           // OR 'daily'. Only the former is parseable as a date-time.
           value.value?.let { str ->
@@ -238,7 +238,7 @@ internal class ResourceIndexer(
           if (value.isNotBlank()) StringIndex(searchParam.name, searchParam.path, value) else null
         }
         // Defensive fallback for kotlin-fhir wrapper.
-        is com.google.fhir.model.r4.String -> {
+        is dev.ohs.fhir.model.r4.String -> {
           value.value?.takeIf { it.isNotBlank() }?.let {
             StringIndex(searchParam.name, searchParam.path, it)
           }
@@ -288,7 +288,7 @@ internal class ResourceIndexer(
             )
           } ?: emptyList()
         // Defensive fallbacks for kotlin-fhir wrappers that might leak through unconverted.
-        is com.google.fhir.model.r4.Boolean ->
+        is dev.ohs.fhir.model.r4.Boolean ->
           value.value?.let {
             listOf(TokenIndex(searchParam.name, searchParam.path, system = null, it.toString()))
           } ?: emptyList()

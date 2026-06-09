@@ -25,56 +25,56 @@ import dev.ohs.fhir.index.entities.ReferenceIndex
 import dev.ohs.fhir.index.entities.StringIndex
 import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.index.entities.UriIndex
-import com.google.fhir.model.r4.ActivityDefinition
-import com.google.fhir.model.r4.Address
-import com.google.fhir.model.r4.Canonical
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Questionnaire
-import com.google.fhir.model.r4.CarePlan
-import com.google.fhir.model.r4.Code
-import com.google.fhir.model.r4.CodeableConcept
-import com.google.fhir.model.r4.Coding
-import com.google.fhir.model.r4.Date
-import com.google.fhir.model.r4.Device
-import com.google.fhir.model.r4.Encounter
-import com.google.fhir.model.r4.Enumeration
-import com.google.fhir.model.r4.Extension
-import com.google.fhir.model.r4.FhirDate
-import com.google.fhir.model.r4.FhirDateTime
-import com.google.fhir.model.r4.HumanName
-import com.google.fhir.model.r4.Identifier
-import com.google.fhir.model.r4.Instant
-import com.google.fhir.model.r4.Invoice
-import com.google.fhir.model.r4.Location
-import com.google.fhir.model.r4.Meta
-import com.google.fhir.model.r4.MolecularSequence
-import com.google.fhir.model.r4.Money
-import com.google.fhir.model.r4.Observation
-import com.google.fhir.model.r4.Patient
-import com.google.fhir.model.r4.Period
-import com.google.fhir.model.r4.PlanDefinition
-import com.google.fhir.model.r4.PositiveInt
-import com.google.fhir.model.r4.terminologies.AdministrativeGender
-import com.google.fhir.model.r4.terminologies.Currencies
-import com.google.fhir.model.r4.terminologies.PublicationStatus
-import com.google.fhir.model.r4.Quantity
-import com.google.fhir.model.r4.Reference
-import com.google.fhir.model.r4.RelatedArtifact
-import com.google.fhir.model.r4.RiskAssessment
-import com.google.fhir.model.r4.Substance
-import com.google.fhir.model.r4.Timing
-import com.google.fhir.model.r4.Uri
+import dev.ohs.fhir.model.r4.ActivityDefinition
+import dev.ohs.fhir.model.r4.Address
+import dev.ohs.fhir.model.r4.Canonical
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Questionnaire
+import dev.ohs.fhir.model.r4.CarePlan
+import dev.ohs.fhir.model.r4.Code
+import dev.ohs.fhir.model.r4.CodeableConcept
+import dev.ohs.fhir.model.r4.Coding
+import dev.ohs.fhir.model.r4.Date
+import dev.ohs.fhir.model.r4.Device
+import dev.ohs.fhir.model.r4.Encounter
+import dev.ohs.fhir.model.r4.Enumeration
+import dev.ohs.fhir.model.r4.Extension
+import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.Identifier
+import dev.ohs.fhir.model.r4.Instant
+import dev.ohs.fhir.model.r4.Invoice
+import dev.ohs.fhir.model.r4.Location
+import dev.ohs.fhir.model.r4.Meta
+import dev.ohs.fhir.model.r4.MolecularSequence
+import dev.ohs.fhir.model.r4.Money
+import dev.ohs.fhir.model.r4.Observation
+import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.Period
+import dev.ohs.fhir.model.r4.PlanDefinition
+import dev.ohs.fhir.model.r4.PositiveInt
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
+import dev.ohs.fhir.model.r4.terminologies.Currencies
+import dev.ohs.fhir.model.r4.terminologies.PublicationStatus
+import dev.ohs.fhir.model.r4.Quantity
+import dev.ohs.fhir.model.r4.Reference
+import dev.ohs.fhir.model.r4.RelatedArtifact
+import dev.ohs.fhir.model.r4.RiskAssessment
+import dev.ohs.fhir.model.r4.Substance
+import dev.ohs.fhir.model.r4.Timing
+import dev.ohs.fhir.model.r4.Uri
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import com.google.fhir.model.r4.Boolean as FhirBoolean
-import com.google.fhir.model.r4.DateTime as FhirDateTimeWrapper
-import com.google.fhir.model.r4.Decimal as FhirDecimal
-import com.google.fhir.model.r4.Integer as FhirInteger
-import com.google.fhir.model.r4.String as FhirString
+import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
+import dev.ohs.fhir.model.r4.DateTime as FhirDateTimeWrapper
+import dev.ohs.fhir.model.r4.Decimal as FhirDecimal
+import dev.ohs.fhir.model.r4.Integer as FhirInteger
+import dev.ohs.fhir.model.r4.String as FhirString
 
 /** Integration & Unit tests for {@link ResourceIndexerImpl}. */
 class ResourceIndexerTest {
@@ -1373,7 +1373,7 @@ class ResourceIndexerTest {
    */
   @Test
   fun index_invoice() {
-    val invoice = FhirR4Json().decodeFromString(INVOICE_JSON) as com.google.fhir.model.r4.Invoice
+    val invoice = FhirR4Json().decodeFromString(INVOICE_JSON) as dev.ohs.fhir.model.r4.Invoice
     val resourceIndices = resourceIndexer.index(invoice)
 
     assertContains(
