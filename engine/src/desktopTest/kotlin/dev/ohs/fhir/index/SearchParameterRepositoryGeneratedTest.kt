@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.index
 
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.assertEquals
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

@@ -16,10 +16,10 @@
 
 package dev.ohs.fhir
 
-import com.google.fhir.model.r4.FhirDateTime
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Resource
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.reflect.KClass
 import kotlin.time.Instant
 import kotlinx.datetime.toInstant

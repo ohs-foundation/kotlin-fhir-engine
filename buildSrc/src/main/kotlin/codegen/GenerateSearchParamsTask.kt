@@ -16,8 +16,8 @@
 
 package codegen
 
-import com.google.fhir.model.r4.Bundle
-import com.google.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.FhirR4Json
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory

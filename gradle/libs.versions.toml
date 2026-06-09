@@ -6,12 +6,12 @@ androidx-room = "2.7.1"
 androidx-sqlite = "2.5.0"
 androidx-test-core = "1.6.1"
 androidx-work = "2.8.1"
-fhir-path = "1.0.0-beta01"
+fhir-path = "1.0.0-beta03"
 fhir-ucum = "1.0.3"
 junit = "4.13.2"
 kermit = "2.0.8"
 kotlin = "2.2.20"
-kotlin-fhir = "1.0.0-beta02"
+kotlin-fhir = "1.0.0-beta03"
 kotlinpoet = "2.2.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.6.2"
@@ -28,11 +28,11 @@ androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.r
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
-fhir-path = { module = "com.google.fhir:fhir-path", version.ref = "fhir-path" }
+fhir-path = { module = "dev.ohs.fhir:fhir-path", version.ref = "fhir-path" }
 fhir-ucum = { module = "org.fhir:ucum", version.ref = "fhir-ucum" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
-kotlin-fhir = { module = "com.google.fhir:fhir-model", version.ref = "kotlin-fhir" }
+kotlin-fhir = { module = "dev.ohs.fhir:fhir-model", version.ref = "kotlin-fhir" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }

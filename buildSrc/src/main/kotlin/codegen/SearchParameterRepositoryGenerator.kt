@@ -16,9 +16,9 @@
 
 package codegen
 
-import com.google.fhir.model.r4.Bundle
-import com.google.fhir.model.r4.SearchParameter
-import com.google.fhir.model.r4.terminologies.ResourceType as FhirResourceType
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.SearchParameter
+import dev.ohs.fhir.model.r4.terminologies.ResourceType as FhirResourceType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -47,7 +47,7 @@ internal data class SearchParamDef(
 internal object SearchParameterRepositoryGenerator {
 
   private const val indexPackage = "dev.ohs.fhir.index"
-  private const val resourcePackage = "com.google.fhir.model.r4"
+  private const val resourcePackage = "dev.ohs.fhir.model.r4"
   private const val generatedClassName = "SearchParameterRepository_Generated"
   private const val generatedComment =
     "This File is Generated from codegen.SearchParameterRepositoryGenerator. All changes to this " +

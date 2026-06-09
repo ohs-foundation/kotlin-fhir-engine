@@ -17,7 +17,7 @@
 package dev.ohs.fhir.index
 
 import dev.ohs.fhir.resourceType
-import com.google.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.Resource
 
 /** Provides a list of [SearchParamDefinition]s for a [Resource]. */
 internal fun interface SearchParamDefinitionsProvider {

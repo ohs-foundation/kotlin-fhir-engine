@@ -16,12 +16,12 @@
 
 package dev.ohs.fhir
 
-import com.google.fhir.model.r4.FhirDateTime
-import com.google.fhir.model.r4.Id
-import com.google.fhir.model.r4.Instant as FhirInstant
-import com.google.fhir.model.r4.Meta
-import com.google.fhir.model.r4.Patient
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.Id
+import dev.ohs.fhir.model.r4.Instant as FhirInstant
+import dev.ohs.fhir.model.r4.Meta
+import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
