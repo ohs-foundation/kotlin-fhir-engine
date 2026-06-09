@@ -64,13 +64,11 @@ kotlin {
         implementation(libs.androidx.work.runtime)
         implementation(libs.androidx.lifecycle.livedata)
         implementation(libs.ktor.client.okhttp)
-        implementation(libs.fhir.ucum)
       }
     }
     val desktopMain by getting {
       dependencies {
         implementation(libs.ktor.client.java)
-        implementation(libs.fhir.ucum)
       }
     }
     iosMain {
