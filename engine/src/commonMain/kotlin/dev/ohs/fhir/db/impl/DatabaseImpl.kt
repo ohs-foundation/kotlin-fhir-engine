@@ -48,9 +48,9 @@ import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.toLocalChange
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.withId
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Resource
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
