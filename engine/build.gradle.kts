@@ -1,9 +1,16 @@
+import codegen.GenerateSearchParamsTask
+
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
   id("com.android.kotlin.multiplatform.library")
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.serialization)
 }
+
+val generateSearchParamsTask =
+  tasks.register("generateSearchParamsTask", GenerateSearchParamsTask::class) {
+    srcOutputDir.set(layout.buildDirectory.dir("generated/sources/searchparams/commonMain/kotlin"))
+  }
 
 kotlin {
   jvmToolchain(21)
@@ -35,6 +42,7 @@ kotlin {
 
   sourceSets {
     commonMain {
+      kotlin.srcDir(generateSearchParamsTask.map { it.srcOutputDir })
       dependencies {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
@@ -75,6 +83,11 @@ kotlin {
       dependencies {
         implementation(libs.ktor.client.darwin)
       }
+    }
+    val desktopTest by getting {
+      // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
+      // the codegen consumes at build time, so the test classpath needs access to it.
+      resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
     }
     getByName("androidHostTest") {
       dependencies {
