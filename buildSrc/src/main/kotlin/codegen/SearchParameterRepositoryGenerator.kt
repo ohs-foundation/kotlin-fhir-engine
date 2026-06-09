@@ -49,9 +49,12 @@ internal object SearchParameterRepositoryGenerator {
   private const val indexPackage = "dev.ohs.fhir.index"
   private const val resourcePackage = "dev.ohs.fhir.model.r4"
   private const val generatedClassName = "SearchParameterRepository_Generated"
-  private const val generatedComment =
-    "This File is Generated from codegen.SearchParameterRepositoryGenerator. All changes to this " +
-      "file must be made through the aforementioned file only."
+  private val generatedComment =
+    """
+      This File is Generated from codegen.SearchParameterRepositoryGenerator. All changes to this
+      file must be made through the aforementioned file only.
+    """
+      .trimIndent()
 
   private val searchParamDefinitionClass = ClassName(indexPackage, "SearchParamDefinition")
   private val searchParamTypeClass = ClassName(indexPackage, "SearchParamType")
