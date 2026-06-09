@@ -21,7 +21,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.uuid.Uuid
 import dev.ohs.fhir.index.entities.PositionIndex
 
