@@ -22,8 +22,8 @@ import dev.ohs.fhir.db.impl.dao.ForwardIncludeSearchResult
 import dev.ohs.fhir.db.impl.dao.ReverseIncludeSearchResult
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.search.SearchQuery
-import com.google.fhir.model.r4.Resource
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

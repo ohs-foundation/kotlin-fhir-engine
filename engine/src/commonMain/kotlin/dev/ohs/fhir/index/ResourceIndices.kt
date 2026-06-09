@@ -25,7 +25,7 @@ import dev.ohs.fhir.index.entities.ReferenceIndex
 import dev.ohs.fhir.index.entities.StringIndex
 import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.index.entities.UriIndex
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /**
  * Indices extracted from the resource of [resourceType] and [resourceId]. Used to create index
