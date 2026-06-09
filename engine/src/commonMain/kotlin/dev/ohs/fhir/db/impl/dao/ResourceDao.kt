@@ -42,13 +42,13 @@ import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.versionId
 import dev.ohs.fhir.withId
-import com.google.fhir.model.r4.FhirDateTime
-import com.google.fhir.model.r4.FhirR4Json
-import com.google.fhir.model.r4.Resource
-import com.google.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import com.google.fhir.model.r4.Instant as FhirInstant
+import dev.ohs.fhir.model.r4.Instant as FhirInstant
 
 @Dao
 internal abstract class ResourceDao {
