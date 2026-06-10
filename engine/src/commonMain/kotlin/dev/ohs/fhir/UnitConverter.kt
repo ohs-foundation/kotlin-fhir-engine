@@ -30,9 +30,6 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
  */
 internal data class UcumValue(val code: String, val value: BigDecimal)
 
-internal class ConverterException(message: String, cause: Throwable? = null) :
-  Exception(message, cause)
-
 /**
  * Returns the canonical form of this value using FHIRPath's strict "equal" canonicalization
  * (handles UCUM prefixes and definite-duration units like `wk`/`d`/`h`). Returns the original value
