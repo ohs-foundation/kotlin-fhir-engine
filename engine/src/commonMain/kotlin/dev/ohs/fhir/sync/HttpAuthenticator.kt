@@ -16,6 +16,9 @@
 
 package dev.ohs.fhir.sync
 
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
+
 /**
  * Provides an authorization method for the HTTP requests FHIR Engine sends to the FHIR server.
  *
@@ -27,4 +30,30 @@ package dev.ohs.fhir.sync
  * The implementation can provide different `HttpAuthenticationMethod`s at runtime. This is
  * important if the authentication token expires or the user needs to re-authenticate.
  */
-interface HttpAuthenticator
+fun interface HttpAuthenticator {
+  fun getAuthenticationMethod(): HttpAuthenticationMethod
+}
+
+/**
+ * The HTTP authentication method to be used for generating HTTP authorization header.
+ *
+ * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication.
+ */
+sealed interface HttpAuthenticationMethod {
+  /** @return The authorization header for the engine to make requests on user's behalf. */
+  fun getAuthorizationHeader(): String
+
+  /** See https://datatracker.ietf.org/doc/html/rfc7617. */
+  data class Basic(val username: String, val password: String) : HttpAuthenticationMethod {
+    @OptIn(ExperimentalEncodingApi::class)
+    override fun getAuthorizationHeader(): String {
+      val credentials = "$username:$password"
+      return "Basic ${Base64.encode(credentials.encodeToByteArray())}"
+    }
+  }
+
+  /** See https://datatracker.ietf.org/doc/html/rfc6750. */
+  data class Bearer(val token: String) : HttpAuthenticationMethod {
+    override fun getAuthorizationHeader(): String = "Bearer $token"
+  }
+}

@@ -36,3 +36,9 @@ fun interface ConflictResolver {
 sealed class ConflictResolutionResult
 
 data class Resolved(val resolved: Resource) : ConflictResolutionResult()
+
+/** Accepts the local change and rejects the remote change. */
+val AcceptLocalConflictResolver = ConflictResolver { local, _ -> Resolved(local) }
+
+/** Accepts the remote change and rejects the local change. */
+val AcceptRemoteConflictResolver = ConflictResolver { _, remote -> Resolved(remote) }
