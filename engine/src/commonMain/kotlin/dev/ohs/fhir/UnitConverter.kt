@@ -22,40 +22,38 @@ import dev.ohs.fhir.fhirpath.types.FhirPathQuantity
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 /**
- * Canonicalizes UCUM values by delegating to kotlin-fhir-path's canonicalization functions.
+ * UCUM canonicalization for [UcumValue], delegating to kotlin-fhir-path's `FhirPathQuantity`
+ * extensions.
  *
- * For details of UCUM, see http://unitsofmeasure.org/
- *
- * For using UCUM with FHIR, see https://www.hl7.org/fhir/ucum.html
+ * For details of UCUM, see http://unitsofmeasure.org/. For using UCUM with FHIR, see
+ * https://www.hl7.org/fhir/ucum.html.
  */
-internal object UnitConverter {
-
-  /**
-   * Returns the canonical form of [value] using FHIRPath's strict "equal" canonicalization (handles
-   * UCUM prefixes and definite-duration units like `wk`/`d`/`h`). Returns the original value if no
-   * canonical form is known.
-   */
-  fun toEqualCanonical(value: UcumValue): UcumValue = value.toFhirPathQuantity().toEqualCanonicalized().toUcumValue(fallback = value)
-
-  /**
-   * Returns the canonical form of [value] using FHIRPath's loose "equivalent" canonicalization
-   * (additionally handles calendar units like `year`/`month`). Returns the original value if no
-   * canonical form is known.
-   */
-  fun toEquivalentCanonical(value: UcumValue): UcumValue =
-    value.toFhirPathQuantity().toEquivalentCanonicalized().toUcumValue(fallback = value)
-
-  private fun UcumValue.toFhirPathQuantity(): FhirPathQuantity =
-    FhirPathQuantity(value = value, unit = "'$code'")
-
-  private fun FhirPathQuantity.toUcumValue(fallback: UcumValue): UcumValue =
-    UcumValue(
-      code = unit?.trim('\'') ?: fallback.code,
-      value = value ?: fallback.value,
-    )
-}
+internal data class UcumValue(val code: String, val value: BigDecimal)
 
 internal class ConverterException(message: String, cause: Throwable? = null) :
   Exception(message, cause)
 
-internal data class UcumValue(val code: String, val value: BigDecimal)
+/**
+ * Returns the canonical form of this value using FHIRPath's strict "equal" canonicalization
+ * (handles UCUM prefixes and definite-duration units like `wk`/`d`/`h`). Returns the original value
+ * if no canonical form is known.
+ */
+internal fun UcumValue.toEqualCanonical(): UcumValue =
+  toFhirPathQuantity().toEqualCanonicalized().toUcumValue(fallback = this)
+
+/**
+ * Returns the canonical form of this value using FHIRPath's loose "equivalent" canonicalization
+ * (additionally handles calendar units like `year`/`month`). Returns the original value if no
+ * canonical form is known.
+ */
+internal fun UcumValue.toEquivalentCanonical(): UcumValue =
+  toFhirPathQuantity().toEquivalentCanonicalized().toUcumValue(fallback = this)
+
+private fun UcumValue.toFhirPathQuantity(): FhirPathQuantity =
+  FhirPathQuantity(value = value, unit = "'$code'")
+
+private fun FhirPathQuantity.toUcumValue(fallback: UcumValue): UcumValue =
+  UcumValue(
+    code = unit?.trim('\'') ?: fallback.code,
+    value = value ?: fallback.value,
+  )
