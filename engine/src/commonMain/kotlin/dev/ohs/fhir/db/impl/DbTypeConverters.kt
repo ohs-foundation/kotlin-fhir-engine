@@ -22,7 +22,13 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
+/**
+ * Type converters for Room to persist ResourceType as a string. see:
+ * https://developer.android.com/training/data-storage/room/referencing-data
+ */
 internal object DbTypeConverters {
+  // Since we're narrowing BigDecimal to double, search/sort precision is limited.
+  // Search/sort for values that are close enough to resolve to the same double will be undefined.
   @TypeConverter fun bigDecimalToDouble(value: BigDecimal): Double = value.doubleValue(false)
 
   @TypeConverter fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)
@@ -36,8 +42,13 @@ internal object DbTypeConverters {
   @TypeConverter
   fun epochMillisToInstant(value: Long?): Instant? = value?.let(Instant::fromEpochMilliseconds)
 
+  /**
+   * Converts a [ResourceType] into a String to be persisted in the database. This allows us to save
+   * [ResourceType] into the database while keeping it as the real type in entities.
+   */
   @TypeConverter fun resourceTypeToString(type: ResourceType?): String? = type?.name
 
+  /** Converts a String into a [ResourceType]. Called when a query returns a [ResourceType]. */
   @TypeConverter
   fun stringToResourceType(value: String?): ResourceType? = value?.let(ResourceType::valueOf)
 }
