@@ -16,6 +16,7 @@
 
 package dev.ohs.fhir.db.impl
 
+import androidx.room.PooledConnection
 import androidx.room.Transactor
 import androidx.room.execSQL
 import androidx.room.useReaderConnection
@@ -72,21 +73,15 @@ internal class DatabaseImpl(
 ) : Database {
 
   private companion object {
-    private val ALL_TABLES =
-      listOf(
-        "ResourceEntity",
-        "StringIndexEntity",
-        "ReferenceIndexEntity",
-        "TokenIndexEntity",
-        "QuantityIndexEntity",
-        "UriIndexEntity",
-        "DateIndexEntity",
-        "DateTimeIndexEntity",
-        "NumberIndexEntity",
-        "PositionIndexEntity",
-        "LocalChangeEntity",
-        "LocalChangeResourceReferenceEntity",
-      )
+    private val USER_TABLES_QUERY =
+      """
+      SELECT name FROM sqlite_master
+      WHERE type = 'table'
+        AND name NOT LIKE 'sqlite_%'
+        AND name != 'room_master_table'
+        AND name != 'android_metadata'
+      """
+        .trimIndent()
   }
 
   private val db: ResourceDatabase =
@@ -204,18 +199,22 @@ internal class DatabaseImpl(
 
   override suspend fun clearDatabase() {
     db.useWriterConnection { transactor ->
-      // Group the deletes together — if any one fails, nothing is left half-deleted.
-      transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
-        // Some tables reference rows in other tables; this lets us delete in any order and
-        // only check those references at the end (when there's nothing left to reference).
-        execSQL("PRAGMA defer_foreign_keys = TRUE")
-        ALL_TABLES.forEach { execSQL("DELETE FROM `$it`") }
-      }
-      // Save the pending deletes to the database file on disk.
-      transactor.execSQL("PRAGMA wal_checkpoint(FULL)")
-      // Shrink the database file to reclaim disk space.
-      transactor.execSQL("VACUUM")
+      transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) { clearAllTables() }
     }
+  }
+
+  /**
+   * Deletes all rows from every user table. Enumerated from `sqlite_master` because Room KMP's
+   * commonMain doesn't expose `clearAllTables()`.
+   */
+  private suspend fun PooledConnection.clearAllTables() {
+    val tables = mutableListOf<String>()
+    usePrepared(USER_TABLES_QUERY) { statement ->
+      while (statement.step()) {
+        tables.add(statement.getText(0))
+      }
+    }
+    tables.forEach { execSQL("DELETE FROM `$it`") }
   }
 
   override suspend fun update(vararg resources: Resource) {
