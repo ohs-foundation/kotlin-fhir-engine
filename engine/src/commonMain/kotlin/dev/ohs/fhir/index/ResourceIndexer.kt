@@ -16,9 +16,8 @@
 
 package dev.ohs.fhir.index
 
-import dev.ohs.fhir.ConverterException
 import dev.ohs.fhir.UcumValue
-import dev.ohs.fhir.UnitConverter
+import dev.ohs.fhir.toEqualCanonical
 import dev.ohs.fhir.getResourceType
 import dev.ohs.fhir.index.entities.DateIndex
 import dev.ohs.fhir.index.entities.DateTimeIndex
@@ -358,14 +357,9 @@ internal class ResourceIndexer(
           var canonicalValue = numericValue
           val systemUri = value.system?.value
           if (systemUri == ucumUrl && canonicalCode != null) {
-            try {
-              val ucumUnit =
-                UnitConverter.getCanonicalFormOrOriginal(UcumValue(canonicalCode, numericValue))
-              canonicalCode = ucumUnit.code
-              canonicalValue = ucumUnit.value
-            } catch (exception: ConverterException) {
-              exception.printStackTrace()
-            }
+            val ucumUnit = UcumValue(canonicalCode, numericValue).toEqualCanonical()
+            canonicalCode = ucumUnit.code
+            canonicalValue = ucumUnit.value
           }
           quantityIndices.add(
             QuantityIndex(
