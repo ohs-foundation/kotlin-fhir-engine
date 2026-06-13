@@ -640,18 +640,18 @@ private data class ApproximateDateRange(val start: Long, val end: Long)
 internal fun fhirDateToEpochDayRange(date: FhirDate): Pair<Long, Long> =
   when (date) {
     is FhirDate.Date -> {
-      val epochDay = date.date.toEpochDays().toLong()
+      val epochDay = date.date.toEpochDays()
       epochDay to epochDay
     }
     is FhirDate.YearMonth -> {
       val firstDay = LocalDate(date.value.year, date.value.month, 1)
       val nextMonth = firstDay.plus(1, DateTimeUnit.MONTH)
-      firstDay.toEpochDays().toLong() to (nextMonth.toEpochDays().toLong() - 1)
+      firstDay.toEpochDays() to (nextMonth.toEpochDays() - 1)
     }
     is FhirDate.Year -> {
       val firstDay = LocalDate(date.value, 1, 1)
       val nextYear = LocalDate(date.value + 1, 1, 1)
-      firstDay.toEpochDays().toLong() to (nextYear.toEpochDays().toLong() - 1)
+      firstDay.toEpochDays() to (nextYear.toEpochDays() - 1)
     }
   }
 
