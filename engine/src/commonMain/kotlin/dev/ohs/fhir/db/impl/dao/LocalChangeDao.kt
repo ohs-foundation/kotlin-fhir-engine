@@ -514,7 +514,8 @@ internal abstract class LocalChangeDao {
           payload = updatedPatchArray.toString(),
         )
       }
-      else -> localChange // Type.DELETE
+      Type.DELETE.value -> localChange
+      else -> error("Unexpected LocalChange type: ${localChange.type}")
     }
   }
 
