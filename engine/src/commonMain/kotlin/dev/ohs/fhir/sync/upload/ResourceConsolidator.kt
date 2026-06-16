@@ -16,11 +16,11 @@
 
 package dev.ohs.fhir.sync.upload
 
-import com.google.android.fhir.LocalChangeToken
-import com.google.android.fhir.db.Database
-import com.google.android.fhir.lastUpdated
+import dev.ohs.fhir.LocalChangeToken
+import dev.ohs.fhir.db.Database
+import dev.ohs.fhir.lastUpdated
 import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorMode
-import com.google.android.fhir.versionId
+import dev.ohs.fhir.versionId
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.DomainResource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType

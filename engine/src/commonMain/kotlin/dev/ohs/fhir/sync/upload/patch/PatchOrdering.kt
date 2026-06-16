@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.sync.upload.patch
 
-import com.google.android.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.db.LocalChangeResourceReference
 
 /** Represents a resource e.g. 'Patient/123' , 'Encounter/123'. */
 internal typealias Node = String

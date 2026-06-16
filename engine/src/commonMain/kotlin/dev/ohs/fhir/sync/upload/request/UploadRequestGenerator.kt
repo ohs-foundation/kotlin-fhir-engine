@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.sync.upload.request
 
-import com.google.android.fhir.LocalChange
+import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.sync.upload.patch.Patch
 import dev.ohs.fhir.sync.upload.patch.PatchMapping
 import dev.ohs.fhir.sync.upload.patch.StronglyConnectedPatchMappings

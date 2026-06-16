@@ -17,9 +17,9 @@
 package dev.ohs.fhir.sync.upload
 
 import co.touchlab.kermit.Logger
-import com.google.android.fhir.LocalChange
-import com.google.android.fhir.db.LocalChangeResourceReference
-import com.google.android.fhir.resourceType
+import dev.ohs.fhir.LocalChange
+import dev.ohs.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.sync.DataSource
 import dev.ohs.fhir.sync.ResourceSyncException
 import dev.ohs.fhir.sync.upload.patch.PatchGenerator

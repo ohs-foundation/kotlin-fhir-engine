@@ -12,6 +12,7 @@ androidx-work = "2.8.1"
 fhir-path = "1.0.0-beta03"
 junit = "4.13.2"
 kermit = "2.0.8"
+kotest = "6.2.0"
 kotlin = "2.3.20"
 kotlin-fhir = "1.0.0-beta03"
 kotlinpoet = "2.2.0"
@@ -36,6 +37,7 @@ androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "
 fhir-path = { module = "dev.ohs.fhir:fhir-path", version.ref = "fhir-path" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+kotest-assertions-core = {module = "io.kotest:kotest-assertions-core", version.ref="kotest"}
 kotlin-fhir = { module = "dev.ohs.fhir:fhir-model", version.ref = "kotlin-fhir" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -53,6 +55,7 @@ ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "kto
 ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
 ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+ktor-client-mock-engine = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

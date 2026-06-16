@@ -16,9 +16,9 @@
 
 package dev.ohs.fhir.sync.upload.patch
 
-import com.google.android.fhir.LocalChange
-import com.google.android.fhir.LocalChange.Type
-import com.google.android.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.LocalChange
+import dev.ohs.fhir.LocalChange.Type
+import dev.ohs.fhir.db.LocalChangeResourceReference
 import dev.ohs.fhir.sync.upload.patch.PatchOrdering.sccOrderByReferences
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

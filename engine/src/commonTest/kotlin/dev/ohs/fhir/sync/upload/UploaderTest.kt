@@ -22,7 +22,10 @@ import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.Database
 import dev.ohs.fhir.db.LocalChangeResourceReference
 import dev.ohs.fhir.db.ResourceWithUUID
+import dev.ohs.fhir.db.impl.dao.ForwardIncludeSearchResult
+import dev.ohs.fhir.db.impl.dao.ReverseIncludeSearchResult
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
+import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.FhirR4Json
@@ -31,7 +34,6 @@ import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.search.ReferencedResourceResult
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.sync.BundleDataSource
 import dev.ohs.fhir.sync.UrlRequestDataSource
@@ -518,7 +520,7 @@ class UploaderTest {
           resourceType = ResourceType.Patient.name,
           resourceUuid = Uuid.random(),
           resourceId = patient1Id,
-          type = LocalChangeEntity.Type.INSERT,
+          type = LocalChangeEntity.Type.INSERT.value,
           payload =
             fhirR4Json
               .encodeToString(patient1),
@@ -605,6 +607,13 @@ class UploaderTest {
       TODO("Not yet implemented")
     }
 
+    override suspend fun selectEntity(
+      type: ResourceType,
+      id: String
+    ): ResourceEntity {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun insertSyncedResources(resources: List<Resource>) {
       TODO("Not yet implemented")
     }
@@ -621,7 +630,11 @@ class UploaderTest {
       TODO("Not yet implemented")
     }
 
-    override suspend fun searchReferencedResources(query: SearchQuery): List<ReferencedResourceResult> {
+    override suspend fun searchForwardReferencedResources(query: SearchQuery): List<ForwardIncludeSearchResult> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun searchReverseReferencedResources(query: SearchQuery): List<ReverseIncludeSearchResult> {
       TODO("Not yet implemented")
     }
 

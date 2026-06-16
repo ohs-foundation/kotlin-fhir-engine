@@ -22,9 +22,11 @@ import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.Database
 import dev.ohs.fhir.db.LocalChangeResourceReference
 import dev.ohs.fhir.db.ResourceWithUUID
+import dev.ohs.fhir.db.impl.dao.ForwardIncludeSearchResult
+import dev.ohs.fhir.db.impl.dao.ReverseIncludeSearchResult
+import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.search.ReferencedResourceResult
 import dev.ohs.fhir.search.SearchQuery
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -106,6 +108,13 @@ private val fakeDatabase = object : Database {
         TODO("Not yet implemented")
     }
 
+    override suspend fun selectEntity(
+        type: ResourceType,
+        id: String
+    ): ResourceEntity {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun insertSyncedResources(resources: List<Resource>) {
         TODO("Not yet implemented")
     }
@@ -125,7 +134,11 @@ private val fakeDatabase = object : Database {
         TODO("Not yet implemented")
     }
 
-    override suspend fun searchReferencedResources(query: SearchQuery): List<ReferencedResourceResult> {
+    override suspend fun searchForwardReferencedResources(query: SearchQuery): List<ForwardIncludeSearchResult> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun searchReverseReferencedResources(query: SearchQuery): List<ReverseIncludeSearchResult> {
         TODO("Not yet implemented")
     }
 

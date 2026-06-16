@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.sync.upload.patch
 
-import com.google.android.fhir.LocalChange
+import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant

@@ -16,8 +16,8 @@
 
 package dev.ohs.fhir.sync.upload.patch
 
-import com.google.android.fhir.LocalChange
-import com.google.android.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.LocalChange
+import dev.ohs.fhir.db.LocalChangeResourceReference
 
 /**
  * Generates [Patch]es from [LocalChange]s and output [List<[StronglyConnectedPatchMappings]>] to

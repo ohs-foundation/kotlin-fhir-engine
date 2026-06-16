@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.sync.upload.request
 
-import com.google.android.fhir.ContentTypes
+import dev.ohs.fhir.ContentTypes
 import dev.ohs.fhir.sync.upload.patch.Patch
 import dev.ohs.fhir.model.r4.Base64Binary
 import dev.ohs.fhir.model.r4.Binary

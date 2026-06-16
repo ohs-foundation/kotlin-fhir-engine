@@ -17,12 +17,14 @@
 package dev.ohs.fhir.sync.remote
 
 import co.touchlab.kermit.Logger as KermitLogger
-import com.google.android.fhir.NetworkConfiguration
+import dev.ohs.fhir.NetworkConfiguration
 import dev.ohs.fhir.sync.HttpAuthenticator
 import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.cache.HttpCache
@@ -163,56 +165,67 @@ internal class KtorHttpService(
     private var authenticator: HttpAuthenticator? = null
     private var httpLogger: HttpLogger? = null
 
+    private fun HttpClientConfig<*>.configureClient() {
+      install(HttpTimeout) {
+        connectTimeoutMillis = networkConfiguration.connectionTimeOut * 1000
+        requestTimeoutMillis = networkConfiguration.readTimeOut * 1000
+        socketTimeoutMillis = networkConfiguration.writeTimeOut * 1000
+      }
+
+      if (networkConfiguration.uploadWithGzip) {
+        install(ContentEncoding) { gzip() }
+      }
+
+      if (networkConfiguration.httpCache != null) {
+        install(HttpCache)
+      }
+
+      install(DefaultRequest) {
+        url(baseUrl)
+        authenticator?.let {
+          headers {
+            val authMethod = it.getAuthenticationMethod()
+            append(HttpHeaders.Authorization, authMethod.getAuthorizationHeader())
+          }
+        }
+      }
+
+      httpLogger?.let { loggerConfig ->
+        install(Logging) {
+          level =
+            when (loggerConfig.level) {
+              HttpLogger.Level.NONE -> LogLevel.NONE
+              HttpLogger.Level.BASIC -> LogLevel.INFO
+              HttpLogger.Level.HEADERS -> LogLevel.HEADERS
+              HttpLogger.Level.BODY -> LogLevel.ALL
+            }
+          logger =
+            object : io.ktor.client.plugins.logging.Logger {
+              override fun log(message: String) {
+                KermitLogger.v { message }
+              }
+            }
+          sanitizeHeader { header -> loggerConfig.headersToIgnore.contains(header) }
+        }
+      }
+    }
+
     fun setAuthenticator(authenticator: HttpAuthenticator?) = apply {
       this.authenticator = authenticator
     }
 
     fun setHttpLogger(httpLogger: HttpLogger) = apply { this.httpLogger = httpLogger }
 
+    internal fun build(engine: HttpClientEngine): KtorHttpService {
+      val client = HttpClient(engine) {
+        configureClient()
+      }
+      return KtorHttpService(client)
+    }
+
     fun build(): KtorHttpService {
       val client = HttpClient {
-        install(HttpTimeout) {
-          connectTimeoutMillis = networkConfiguration.connectionTimeOut * 1000
-          requestTimeoutMillis = networkConfiguration.readTimeOut * 1000
-          socketTimeoutMillis = networkConfiguration.writeTimeOut * 1000
-        }
-
-        if (networkConfiguration.uploadWithGzip) {
-          install(ContentEncoding) { gzip() }
-        }
-
-        if (networkConfiguration.httpCache != null) {
-          install(HttpCache)
-        }
-
-        install(DefaultRequest) {
-          url(baseUrl)
-          authenticator?.let {
-            headers {
-              val authMethod = it.getAuthenticationMethod()
-              append(HttpHeaders.Authorization, authMethod.getAuthorizationHeader())
-            }
-          }
-        }
-
-        httpLogger?.let { loggerConfig ->
-          install(Logging) {
-            level =
-              when (loggerConfig.level) {
-                HttpLogger.Level.NONE -> LogLevel.NONE
-                HttpLogger.Level.BASIC -> LogLevel.INFO
-                HttpLogger.Level.HEADERS -> LogLevel.HEADERS
-                HttpLogger.Level.BODY -> LogLevel.ALL
-              }
-            logger =
-              object : io.ktor.client.plugins.logging.Logger {
-                override fun log(message: String) {
-                  KermitLogger.v { message }
-                }
-              }
-            sanitizeHeader { header -> loggerConfig.headersToIgnore.contains(header) }
-          }
-        }
+        configureClient()
       }
       return KtorHttpService(client)
     }

@@ -16,8 +16,8 @@
 
 package dev.ohs.fhir.sync.upload
 
-import com.google.android.fhir.LocalChange
-import com.google.android.fhir.db.Database
+import dev.ohs.fhir.LocalChange
+import dev.ohs.fhir.db.Database
 import dev.ohs.fhir.sync.ResourceSyncException
 import kotlin.properties.Delegates
 
@@ -46,12 +46,6 @@ internal interface LocalChangeFetcher {
    */
   suspend fun getProgress(): SyncUploadProgress
 }
-
-data class SyncUploadProgress(
-  val remaining: Int,
-  val initialTotal: Int,
-  val uploadError: ResourceSyncException? = null,
-)
 
 internal class AllChangesLocalChangeFetcher(
   private val database: Database,

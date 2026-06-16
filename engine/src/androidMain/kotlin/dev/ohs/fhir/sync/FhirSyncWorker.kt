@@ -22,8 +22,8 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import co.touchlab.kermit.Logger
-import com.google.android.fhir.FhirEngine
-import com.google.android.fhir.FhirEngineProvider
+import dev.ohs.fhir.FhirEngine
+import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.upload.UploadStrategy
 import kotlinx.serialization.json.Json
 

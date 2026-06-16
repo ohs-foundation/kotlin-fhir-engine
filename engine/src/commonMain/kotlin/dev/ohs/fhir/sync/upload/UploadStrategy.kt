@@ -22,7 +22,7 @@ import dev.ohs.fhir.model.r4.Bundle.HTTPVerb
 
 /**
  * Defines strategies for uploading FHIR resource
- * [local changes][com.google.android.fhir.LocalChange] to a server during synchronization. It is
+ * [local changes][dev.ohs.fhir.LocalChange] to a server during synchronization. It is
  * used by the [dev.ohs.fhir.sync.SyncScheduler] to determine the specific upload
  * behavior.
  *

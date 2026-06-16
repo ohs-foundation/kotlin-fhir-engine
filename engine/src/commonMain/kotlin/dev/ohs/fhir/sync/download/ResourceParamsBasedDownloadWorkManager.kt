@@ -16,14 +16,14 @@
 
 package dev.ohs.fhir.sync.download
 
-import com.google.android.fhir.lastUpdated
-import com.google.android.fhir.resourceType
+import dev.ohs.fhir.lastUpdated
+import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.sync.DownloadWorkManager
 import dev.ohs.fhir.sync.GREATER_THAN_PREFIX
 import dev.ohs.fhir.sync.ParamMap
 import dev.ohs.fhir.sync.SyncDataParams
 import dev.ohs.fhir.sync.concatParams
-import com.google.android.fhir.toTimeZoneString
+import dev.ohs.fhir.toTimeZoneString
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Resource

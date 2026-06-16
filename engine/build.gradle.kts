@@ -60,8 +60,10 @@ kotlin {
     }
     commonTest {
       dependencies {
+        implementation(libs.kotest.assertions.core)
         implementation(libs.kotlin.test)
         implementation(libs.kotlinx.coroutines.test)
+        implementation(libs.ktor.client.mock.engine)
       }
     }
     val androidMain by getting {

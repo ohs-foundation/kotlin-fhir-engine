@@ -16,7 +16,7 @@
 
 package dev.ohs.fhir.sync
 
-import com.google.android.fhir.FhirEngine
+import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.sync.download.DownloadState
 import dev.ohs.fhir.sync.download.Downloader
 import dev.ohs.fhir.sync.upload.UploadStrategy
