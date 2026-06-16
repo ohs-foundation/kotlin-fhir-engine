@@ -299,11 +299,11 @@ internal abstract class LocalChangeDao {
         WHERE LocalChangeEntity.id = (:id)
     """,
   )
-  abstract suspend fun discardLocalChanges(id: Long)
+  abstract suspend fun discardLocalChange(id: Long)
 
   @Transaction
   open suspend fun discardLocalChanges(token: LocalChangeToken) {
-    token.ids.forEach { discardLocalChanges(it) }
+    token.ids.forEach { discardLocalChange(it) }
   }
 
   @Query(
@@ -482,7 +482,7 @@ internal abstract class LocalChangeDao {
             )
           }
         }
-      discardLocalChanges(localChangeEntityWithOldReferences.id)
+      discardLocalChange(localChangeEntityWithOldReferences.id)
       createLocalChange(updatedLocalChangeEntity, updatedLocalChangeReferences)
     }
     return localChangeEntitiesWithOldReferences.map { it.resourceUuid }.distinct()
