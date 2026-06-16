@@ -238,13 +238,9 @@ internal abstract class LocalChangeDao {
     require(oldVersionResource.resourceTypeEnum == newVersionResource.resourceTypeEnum)
     val oldVersionResourceReferences = extractResourceReferences(oldVersionResource).toSet()
     val newVersionResourceReferences = extractResourceReferences(newVersionResource).toSet()
-    return oldVersionResourceReferences.minus(newVersionResourceReferences) +
-      newVersionResourceReferences.minus(oldVersionResourceReferences)
+    return (oldVersionResourceReferences - newVersionResourceReferences) +
+      (newVersionResourceReferences - oldVersionResourceReferences)
   }
-
-  private fun Set<ResourceReferenceInfo>.minus(set: Set<ResourceReferenceInfo>) =
-    filter { ref -> set.none { it.name == ref.name && it.referenceValue == ref.referenceValue } }
-      .toSet()
 
   @Query(
     """
