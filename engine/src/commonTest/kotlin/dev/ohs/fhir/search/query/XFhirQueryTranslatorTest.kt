@@ -77,7 +77,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should add descending sort for sort param with hyphen`() {
+  fun translate_sortParamWithHyphen_addsDescendingSort() {
     val search = translate("Patient?_sort=-name")
 
     assertEquals("name", search.sort!!.paramName)
@@ -85,7 +85,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should add ascending sort for sort param`() {
+  fun translate_sortParam_addsAscendingSort() {
     val search = translate("Patient?_sort=address-country")
 
     assertEquals("address-country", search.sort!!.paramName)
@@ -93,7 +93,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should not add sort for missing value for sort param`() {
+  fun translate_sortParamMissingValue_doesNotAddSort() {
     val search = translate("Patient?_sort=")
 
     assertNull(search.sort)
@@ -101,7 +101,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should not add sort for missing sort param`() {
+  fun translate_missingSortParam_doesNotAddSort() {
     val search = translate("Patient")
 
     assertNull(search.sort)
@@ -109,35 +109,35 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should throw IllegalArgumentException for unrecognized sort param`() {
+  fun translate_unrecognizedSortParam_throwsIllegalArgumentException() {
     val exception =
       assertFailsWith<IllegalArgumentException> { translate("Patient?_sort=customParam") }
     assertEquals("customParam not found in Patient", exception.message)
   }
 
   @Test
-  fun `translate should add limit for count param`() {
+  fun translate_countParam_addsLimit() {
     val search = translate("Patient?_count=10")
 
     assertEquals(10, search.count)
   }
 
   @Test
-  fun `translate should not add limit for missing value for count param`() {
+  fun translate_countParamMissingValue_doesNotAddLimit() {
     val search = translate("Patient?_count=")
 
     assertNull(search.count)
   }
 
   @Test
-  fun `translate should not add limit for missing count param`() {
+  fun translate_missingCountParam_doesNotAddLimit() {
     val search = translate("Patient")
 
     assertNull(search.count)
   }
 
   @Test
-  fun `translate should add filters`() {
+  fun translate_filterParam_addsFilters() {
     val search =
       translate("Patient?gender=male&name=John&birthdate=2012-01-11&general-practitioner=12345")
 
@@ -161,14 +161,14 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should throw IllegalArgumentException for unrecognized filter param`() {
+  fun translate_unrecognizedFilterParam_throwsIllegalArgumentException() {
     val exception =
       assertFailsWith<IllegalArgumentException> { translate("Patient?customParam=Abc") }
     assertEquals("customParam not found in Patient", exception.message)
   }
 
   @Test
-  fun `translate should not add filters for missing value for filter param`() {
+  fun translate_filterParamMissingValue_doesNotAddFilters() {
     val search = translate("Patient?gender=&name=&birthdate=&general-practitioner=")
 
     assertTrue(search.stringFilterCriteria.isEmpty())
@@ -178,7 +178,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applySortParam should add sort param for string type`() {
+  fun applySortParam_stringType_addsSortParam() {
     val search = Search(ResourceType.Patient)
 
     search.applySortParam(
@@ -193,7 +193,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applySortParam should add sort param for number type`() {
+  fun applySortParam_numberType_addsSortParam() {
     val search = Search(ResourceType.RiskAssessment)
 
     search.applySortParam(
@@ -208,7 +208,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applySortParam should add sort param for date type`() {
+  fun applySortParam_dateType_addsSortParam() {
     val search = Search(ResourceType.Patient)
 
     search.applySortParam(
@@ -219,7 +219,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applySortParam should throw UnsupportedOperationException for unsupported type`() {
+  fun applySortParam_unsupportedType_throwsUnsupportedOperationException() {
     val search = Search(ResourceType.Patient)
 
     val exception =
@@ -236,7 +236,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for number type`() {
+  fun applyFilterParam_numberType_addsFilterParam() {
     val search = Search(ResourceType.RiskAssessment)
 
     search.applyFilterParam(
@@ -254,7 +254,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for date type`() {
+  fun applyFilterParam_dateType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
     search.applyFilterParam(
@@ -268,7 +268,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for datetime type`() {
+  fun applyFilterParam_datetimeType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
     // kotlin-fhir's FhirDateTime requires a timezone offset for a dateTime with a time component
@@ -284,7 +284,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for quantity type`() {
+  fun applyFilterParam_quantityType_addsFilterParam() {
     val search = Search(ResourceType.Encounter)
 
     search.applyFilterParam(
@@ -300,7 +300,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for string type`() {
+  fun applyFilterParam_stringType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
     search.applyFilterParam(
@@ -318,7 +318,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for token type`() {
+  fun applyFilterParam_tokenType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
     search.applyFilterParam(
@@ -333,7 +333,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for reference type`() {
+  fun applyFilterParam_referenceType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
     search.applyFilterParam(
@@ -351,7 +351,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should add filter param for uri type`() {
+  fun applyFilterParam_uriType_addsFilterParam() {
     val search = Search(ResourceType.Measure)
 
     search.applyFilterParam(
@@ -365,7 +365,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `applyFilterParam should throw UnsupportedOperationException for unrecognized type`() {
+  fun applyFilterParam_unrecognizedType_throwsUnsupportedOperationException() {
     val search = Search(ResourceType.Location)
 
     val exception =
@@ -379,7 +379,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should add a filter for search parameter _tag`() {
+  fun translate_tagSearchParameter_addsFilter() {
     val search = translate("Location?_tag=salima-catchment")
 
     search.tokenFilterCriteria.first().run {
@@ -389,7 +389,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should add a filter for search parameter _profile`() {
+  fun translate_profileSearchParameter_addsFilter() {
     val search =
       translate("Patient?_profile=http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient")
 
@@ -403,7 +403,7 @@ class XFhirQueryTranslatorTest {
   }
 
   @Test
-  fun `translate should consider custom search parameter through fhir engine configuration`() {
+  fun translate_customSearchParameterFromEngineConfiguration_isConsidered() {
     val search = translate("Patient?maritalStatus=M")
 
     search.tokenFilterCriteria.first().run {

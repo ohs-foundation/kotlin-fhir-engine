@@ -69,7 +69,7 @@ class NumberSearchParameterizedTest {
       .trimIndent()
 
   @Test
-  fun `should search equal values`() {
+  fun search_equalValues() {
     cases.forEach { (num, lowerBound, upperBound) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -105,7 +105,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search unequal values`() {
+  fun search_unequalValues() {
     cases.forEach { (num, lowerBound, upperBound) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -141,7 +141,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search values greater than a number`() {
+  fun search_valuesGreaterThanNumber() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -172,7 +172,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search values greater than or equal to a number`() {
+  fun search_valuesGreaterThanOrEqualToNumber() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -203,7 +203,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search values less than a number`() {
+  fun search_valuesLessThanNumber() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -234,7 +234,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search values less than or equal to a number`() {
+  fun search_valuesLessThanOrEqualToNumber() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -265,7 +265,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should throw error when ENDS_BEFORE prefix given with integer value`() {
+  fun search_endsBeforePrefixWithIntegerValue_throwsError() {
     val exception =
       assertFailsWith<IllegalArgumentException> {
         Search(ResourceType.RiskAssessment)
@@ -284,7 +284,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search value when ENDS_BEFORE prefix given with decimal value`() {
+  fun search_endsBeforePrefixWithDecimalValue() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -315,7 +315,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should throw error when STARTS_AFTER prefix given with integer value`() {
+  fun search_startsAfterPrefixWithIntegerValue_throwsError() {
     val exception =
       assertFailsWith<IllegalArgumentException> {
         Search(ResourceType.RiskAssessment)
@@ -334,7 +334,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search value when STARTS_AFTER prefix given with decimal value`() {
+  fun search_startsAfterPrefixWithDecimalValue() {
     cases.forEach { (num, _, _) ->
       val search =
         Search(ResourceType.RiskAssessment)
@@ -365,7 +365,7 @@ class NumberSearchParameterizedTest {
   }
 
   @Test
-  fun `should search approximate values`() {
+  fun search_approximateValues() {
     val search =
       Search(ResourceType.RiskAssessment)
         .apply {
