@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "kotlin-fhir-engine"
 
 include(":engine")
+include(":engine-app")
