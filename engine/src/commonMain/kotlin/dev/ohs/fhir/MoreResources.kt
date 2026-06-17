@@ -16,8 +16,8 @@
 
 package dev.ohs.fhir
 
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.reflect.KClass
@@ -88,7 +88,7 @@ internal val Resource.lastUpdated: Instant?
  */
 internal fun Resource.updateMeta(versionId: String?, lastUpdated: Instant?): Resource {
   if (versionId == null && lastUpdated == null) return this
-  val parser = FhirR4Json()
+  val parser = fhirJsonParser
   val obj = Json.parseToJsonElement(parser.encodeToString(this)).jsonObject.toMutableMap()
   val meta = (obj["meta"] as? JsonObject)?.toMutableMap() ?: mutableMapOf()
   versionId?.let { meta["versionId"] = JsonPrimitive(it) }
@@ -103,7 +103,7 @@ internal fun Resource.updateMeta(versionId: String?, lastUpdated: Instant?): Res
  * polymorphically.
  */
 internal fun Resource.withId(newId: String): Resource {
-  val parser = FhirR4Json()
+  val parser = fhirJsonParser
   val obj = Json.parseToJsonElement(parser.encodeToString(this)).jsonObject.toMutableMap()
   obj["id"] = JsonPrimitive(newId)
   return parser.decodeFromString(JsonObject(obj).toString())

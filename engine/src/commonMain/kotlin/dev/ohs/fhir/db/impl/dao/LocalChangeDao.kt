@@ -29,10 +29,10 @@ import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity.Type
 import dev.ohs.fhir.db.impl.entities.LocalChangeResourceReferenceEntity
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.db.impl.replaceJsonValue
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.versionId
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
@@ -68,7 +68,7 @@ internal abstract class LocalChangeDao {
   open suspend fun addInsert(resource: Resource, resourceUuid: Uuid, timeOfLocalChange: Instant) {
     val resourceId = resource.id.orEmpty()
     val resourceType = resource.resourceTypeEnum
-    val resourceString = FhirR4Json().encodeToString(resource)
+    val resourceString = fhirJsonParser.encodeToString(resource)
 
     val localChangeEntity =
       LocalChangeEntity(
@@ -122,7 +122,7 @@ internal abstract class LocalChangeDao {
         "Unexpected DELETE when updating ${resourceType.name}/$resourceId. UPDATE failed.",
       )
     }
-    val newSerializedResource = FhirR4Json().encodeToString(updatedResource)
+    val newSerializedResource = fhirJsonParser.encodeToString(updatedResource)
     val jsonDiff = diff(oldEntity.serializedResource, newSerializedResource)
     if (jsonDiff == EMPTY_JSON_ARRAY) {
       Logger.i {
@@ -143,7 +143,7 @@ internal abstract class LocalChangeDao {
         versionId = oldEntity.versionId,
       )
 
-    val oldResource = FhirR4Json().decodeFromString(oldEntity.serializedResource)
+    val oldResource = fhirJsonParser.decodeFromString(oldEntity.serializedResource)
     val localChangeReferences =
       extractReferencesDiff(oldResource, updatedResource).map { resourceReferenceInfo ->
         LocalChangeResourceReferenceEntity(
@@ -184,7 +184,7 @@ internal abstract class LocalChangeDao {
   private fun extractResourceReferences(resource: Resource): Set<ResourceReferenceInfo> {
     val references = mutableListOf<ResourceReferenceInfo>()
     val element =
-      runCatching { Json.parseToJsonElement(FhirR4Json().encodeToString(resource)) }.getOrNull()
+      runCatching { Json.parseToJsonElement(fhirJsonParser.encodeToString(resource)) }.getOrNull()
         ?: return emptySet()
     collectReferences(path = "", element = element, references = references)
     return references.toSet()
@@ -495,7 +495,7 @@ internal abstract class LocalChangeDao {
   ): LocalChangeEntity {
     return when (localChange.type) {
       Type.INSERT.value -> {
-        val insertResourcePayload = FhirR4Json().decodeFromString(localChange.payload)
+        val insertResourcePayload = fhirJsonParser.decodeFromString(localChange.payload)
         val updatedResourcePayload =
           addUpdatedReferenceToResource(
             insertResourcePayload,
@@ -503,7 +503,7 @@ internal abstract class LocalChangeDao {
             updatedReference,
           )
         return localChange.copy(
-          payload = FhirR4Json().encodeToString(updatedResourcePayload),
+          payload = fhirJsonParser.encodeToString(updatedResourcePayload),
         )
       }
       Type.UPDATE.value -> {

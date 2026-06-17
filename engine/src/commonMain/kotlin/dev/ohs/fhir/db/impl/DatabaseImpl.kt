@@ -49,7 +49,6 @@ import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.toLocalChange
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.withId
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
@@ -260,7 +259,7 @@ internal class DatabaseImpl(
     inTransaction {
       resourceDao.getResourceEntity(oldResourceId, resourceType)?.let { oldResourceEntity ->
         val updatedResource =
-          FhirR4Json()
+          fhirJsonParser
             .decodeFromString(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
@@ -374,7 +373,7 @@ internal class DatabaseImpl(
   ) {
     withTransaction {
       val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource = FhirR4Json().decodeFromString(currentResourceEntity.serializedResource)
+      val oldResource = fhirJsonParser.decodeFromString(currentResourceEntity.serializedResource)
       val resourceUuid = currentResourceEntity.resourceUuid
       updateResourceEntity(resourceUuid, updatedResource)
 
@@ -419,7 +418,7 @@ internal class DatabaseImpl(
       "${updatedResource.resourceTypeEnum.name}/${updatedResource.id.orEmpty()}"
     referringResourcesUuids.forEach { resourceUuid ->
       resourceDao.getResourceEntity(resourceUuid)?.let {
-        val referringResource = FhirR4Json().decodeFromString(it.serializedResource)
+        val referringResource = fhirJsonParser.decodeFromString(it.serializedResource)
         val updatedReferringResource =
           addUpdatedReferenceToResource(
             referringResource,
