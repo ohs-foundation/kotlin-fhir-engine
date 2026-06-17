@@ -38,7 +38,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Adapted from
+ * Adapted from google/android-fhir:
  * engine/src/test/java/com/google/android/fhir/search/query/XFhirQueryTranslatorTest.kt
  *
  * KMP adaptations:

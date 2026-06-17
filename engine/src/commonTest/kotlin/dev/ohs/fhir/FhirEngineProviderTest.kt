@@ -23,7 +23,7 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 /**
- * Adapted from engine/src/test/java/com/google/android/fhir/FhirEngineProviderTest.kt
+ * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/FhirEngineProviderTest.kt
  *
  * KMP adaptations: Robolectric/Context removed (`getInstance()` takes no Context on Desktop/iOS);
  * `forceCleanup()`/`cleanup()` → `clearInstance()`; `CacheConfiguration.cacheDir` is a String path.

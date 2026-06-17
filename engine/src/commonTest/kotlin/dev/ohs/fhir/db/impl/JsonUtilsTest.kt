@@ -27,7 +27,7 @@ import kotlin.test.assertEquals
 import kotlinx.serialization.json.Json
 
 /**
- * Adapted from engine/src/test/java/com/google/android/fhir/JsonUtilsTest.kt
+ * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/JsonUtilsTest.kt
  *
  * KMP adaptations: HAPI parser/resources → kotlin-fhir; org.json `JSONObject` + JSONAssert →
  * kotlinx.serialization `JsonElement` with structural equality.

@@ -38,7 +38,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 /**
- * Adapted from engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
+ * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
  *
  * Ported: CRUD, x-fhir-query search, getLocalChanges, purge, withTransaction.
  *
@@ -169,7 +169,7 @@ class FhirEngineImplTest {
   // (DatabaseImpl processes updates one-by-one with forEach), so the first update IS applied before
   // the second fails. This test is skipped until withTransaction is implemented with Room KMP's
   // useWriterConnection. See:
-  // engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
+  // google/android-fhir: engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
 
   @Test
   fun update_existingAndNonExistingResource_shouldThrowResourceNotFoundException() = runTest {

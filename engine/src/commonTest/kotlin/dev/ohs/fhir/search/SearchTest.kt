@@ -32,7 +32,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
 /**
- * Adapted from engine/src/test/java/com/google/android/fhir/search/SearchTest.kt
+ * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/search/SearchTest.kt
  *
  * Tests SQL query generation from Search DSL. Each test builds a Search, calls getQuery(), and
  * asserts on the generated SQL string and argument list.

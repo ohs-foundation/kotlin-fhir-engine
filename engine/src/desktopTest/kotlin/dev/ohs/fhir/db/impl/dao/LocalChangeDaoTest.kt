@@ -40,7 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 
 /**
- * Adapted from engine/src/androidTest/.../db/impl/dao/LocalChangeDaoTest.kt
+ * Adapted from google/android-fhir: engine/src/androidTest/.../db/impl/dao/LocalChangeDaoTest.kt
  *
  * Lives in desktopTest (not commonTest) because it constructs a [ResourceDatabase] directly, which
  * needs the desktop in-memory Room builder + BundledSQLiteDriver.
