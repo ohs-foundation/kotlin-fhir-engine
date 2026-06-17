@@ -103,15 +103,7 @@ internal class DatabaseImpl(
         val resourceTypeEnum = res.resourceTypeEnum
         val now = Clock.System.now()
 
-        // If the resource has no id, create a copy with the generated id via JSON round-trip
-        val resourceWithId =
-          if (res.id == null) {
-            val json = serializeResource(res)
-            val jsonWithId = ensureIdInJson(json, resourceId)
-            deserializeResource(jsonWithId)
-          } else {
-            res
-          }
+        val resourceWithId = if (res.id == null) res.withId(resourceId) else res
 
         val serialized = serializeResource(resourceWithId)
         val entity =
@@ -494,20 +486,6 @@ internal class DatabaseImpl(
         else -> statement.bindText(i + 1, arg.toString())
       }
     }
-  }
-
-  /** Injects an `"id"` field into a JSON resource string if not already present. */
-  private fun ensureIdInJson(json: String, id: String): String {
-    val jsonObj = kotlinx.serialization.json.Json.parseToJsonElement(json)
-    if (jsonObj is kotlinx.serialization.json.JsonObject && "id" !in jsonObj) {
-      val mutable = jsonObj.toMutableMap()
-      mutable["id"] = kotlinx.serialization.json.JsonPrimitive(id)
-      return kotlinx.serialization.json.Json.encodeToString(
-        kotlinx.serialization.json.JsonObject.serializer(),
-        kotlinx.serialization.json.JsonObject(mutable),
-      )
-    }
-    return json
   }
 
   private suspend fun insertIndices(
