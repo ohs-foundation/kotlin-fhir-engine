@@ -38,8 +38,6 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 /**
- * Adapted from google/android-fhir: engine/src/androidTest/.../db/impl/DatabaseImplTest.kt
- *
  * Lives in desktopTest (constructs [DatabaseImpl] directly, which needs a platform DB). Only the
  * indexer-independent DB-layer tests are ported here:
  * - core CRUD + local-change + purge + counts + remote-insert meta

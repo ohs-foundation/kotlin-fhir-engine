@@ -23,8 +23,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/search/NumberSearchParameterizedTest.kt
- *
  * KMP adaptations:
  * - ParameterizedRobolectricTestRunner is unavailable; each parameterized test instead loops over
  *   the [cases] list internally.

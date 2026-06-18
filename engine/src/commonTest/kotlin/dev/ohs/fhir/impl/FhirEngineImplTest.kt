@@ -38,8 +38,6 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 /**
- * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
- *
  * Ported: CRUD, x-fhir-query search, getLocalChanges, purge, withTransaction.
  *
  * Not yet ported (blocked, not arbitrary):
@@ -168,8 +166,7 @@ class FhirEngineImplTest {
   // NOT be updated because the batch fails. Engine-kmp's withTransaction is currently a no-op
   // (DatabaseImpl processes updates one-by-one with forEach), so the first update IS applied before
   // the second fails. This test is skipped until withTransaction is implemented with Room KMP's
-  // useWriterConnection. See:
-  // google/android-fhir: engine/src/test/java/com/google/android/fhir/impl/FhirEngineImplTest.kt
+  // useWriterConnection.
 
   @Test
   fun update_existingAndNonExistingResource_shouldThrowResourceNotFoundException() = runTest {
@@ -246,21 +243,18 @@ class FhirEngineImplTest {
     val fhirEngine = FhirEngineProvider.getInstance()
     val id = "crud-cycle-1"
 
-    // Create
     fhirEngine.create(Patient(id = id, name = listOf(HumanName(family = FhirString(value = "A")))))
     assertEquals(
       "A",
       (fhirEngine.get(ResourceType.Patient, id) as Patient).name.first().family?.value,
     )
 
-    // Update
     fhirEngine.update(Patient(id = id, name = listOf(HumanName(family = FhirString(value = "B")))))
     assertEquals(
       "B",
       (fhirEngine.get(ResourceType.Patient, id) as Patient).name.first().family?.value,
     )
 
-    // Delete
     fhirEngine.delete(ResourceType.Patient, id)
     assertFailsWith<ResourceNotFoundException> { fhirEngine.get(ResourceType.Patient, id) }
   }
@@ -289,8 +283,6 @@ class FhirEngineImplTest {
       }
     assertEquals("customParam not found in Patient", exception.message)
   }
-
-  // --- getLocalChanges ---
 
   @Test
   fun getLocalChanges_shouldReturnSingleLocalChange() = runTest {
@@ -344,8 +336,6 @@ class FhirEngineImplTest {
     assertTrue(fhirEngine.getLocalChanges(ResourceType.Encounter, "lc-type").isEmpty())
   }
 
-  // --- purge ---
-
   @Test
   fun purge_withLocalChangeAndForcePurgeTrue_shouldPurgeResource() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
@@ -391,8 +381,6 @@ class FhirEngineImplTest {
       }
     assertTrue(exception.message!!.contains("nonexistent_patient"))
   }
-
-  // --- withTransaction ---
 
   @Test
   fun withTransaction_savesChangesSuccessfully() = runTest {

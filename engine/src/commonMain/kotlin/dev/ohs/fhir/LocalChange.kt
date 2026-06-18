@@ -40,9 +40,9 @@ data class LocalChange(
   var token: LocalChangeToken,
 ) {
   enum class Type(val value: Int) {
-    INSERT(1), // create a new resource. payload is the entire resource json.
-    UPDATE(2), // patch. payload is the json patch.
-    DELETE(3), // delete. payload is empty string.
+    INSERT(1), // payload is the entire resource json.
+    UPDATE(2), // payload is the json patch.
+    DELETE(3), // payload is empty string.
     ;
 
     companion object {
@@ -51,7 +51,6 @@ data class LocalChange(
   }
 }
 
-/** Method to convert LocalChangeEntity to LocalChange instance. */
 internal fun LocalChangeEntity.toLocalChange(): LocalChange =
   LocalChange(
     resourceType = resourceType,

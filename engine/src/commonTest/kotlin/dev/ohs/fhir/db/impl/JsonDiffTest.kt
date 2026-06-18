@@ -29,8 +29,6 @@ import kotlinx.serialization.json.jsonPrimitive
 
 class JsonDiffTest {
 
-  // --- round-trip: applying the generated patch to source must reconstruct target ---
-
   @Test
   fun diff_changedPrimitive_roundTrips() {
     assertRoundTrip("""{"active":false}""", """{"active":true}""")
@@ -108,8 +106,6 @@ class JsonDiffTest {
     assertEquals("""[{"op":"replace","path":"/name/0/family","value":"Nucleus"}]""", patch)
   }
 
-  // --- intentional /meta and /text filtering ---
-
   @Test
   fun diff_metaChange_isFilteredOut() {
     val patch =
@@ -141,8 +137,6 @@ class JsonDiffTest {
       )
     assertEquals("""[{"op":"replace","path":"/active","value":false}]""", patch)
   }
-
-  // --- helpers ---
 
   /**
    * Asserts that applying `JsonDiff.diff(source, target)` to `source` reconstructs `target`. Use

@@ -240,9 +240,6 @@ internal abstract class ResourceDao {
   suspend fun insertLocalResource(resource: Resource, timeOfChange: Instant) =
     insertResource(resource, timeOfChange)
 
-  // Check if the resource already exists using its logical ID, if it does, we just update the
-  // existing [ResourceEntity]
-  // Else, we insert with a new [ResourceEntity]
   private suspend fun insertRemoteResource(resource: Resource): Uuid {
     val existingResourceEntity = getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)
     if (existingResourceEntity != null) {

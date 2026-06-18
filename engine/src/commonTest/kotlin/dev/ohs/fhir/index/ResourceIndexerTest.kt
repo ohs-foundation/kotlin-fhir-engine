@@ -89,7 +89,6 @@ class ResourceIndexerTest {
   private fun epochMillis(iso: String): Long =
     kotlin.time.Instant.parse(iso).toEpochMilliseconds()
 
-  /** Unit tests for resource indexer */
   @Test
   fun index_id() {
     val patient = Patient(id = "3f511720-43c4-451a-830b-7f4817c619fb")
@@ -1365,8 +1364,6 @@ class ResourceIndexerTest {
   }
 
   /**
-   * Integration tests for ResourceIndexer.
-   *
    * KMP note: engine's versions read fixture FHIR resources from JSON files via HAPI's
    * `readFromFile(...)`. commonTest can't do filesystem reads portably, so the fixture JSONs are
    * embedded as multi-line string constants and parsed via `FhirR4Json().decodeFromString(...)`.

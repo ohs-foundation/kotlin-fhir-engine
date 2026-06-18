@@ -398,8 +398,6 @@ internal class ResourceIndexer(
     //   (they're `internal` today). After the release, add `is FhirPath*` branches to
     //   dateIndex/dateTimeIndex/quantityIndex.
 
-    // --- Date / DateTime range helpers ---
-
     /** Returns the [start, end] epoch-day range for a [FhirDate], inclusive on both ends. */
     private fun fhirDateToEpochDaysRange(fhirDate: FhirDate): Pair<Long, Long> =
       when (fhirDate) {

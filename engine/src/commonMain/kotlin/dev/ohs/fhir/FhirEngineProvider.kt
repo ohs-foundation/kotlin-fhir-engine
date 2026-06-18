@@ -35,7 +35,6 @@ import dev.ohs.fhir.sync.remote.KtorHttpService
  * // Initialize (once, e.g. in Application.onCreate on Android)
  * FhirEngineProvider.init(FhirEngineConfiguration())
  *
- * // Get the engine
  * val fhirEngine = FhirEngineProvider.getInstance(context)
  * ```
  */

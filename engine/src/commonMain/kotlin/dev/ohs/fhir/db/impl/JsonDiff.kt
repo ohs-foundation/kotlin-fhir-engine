@@ -68,19 +68,16 @@ internal object JsonDiff {
     target: JsonObject,
     ops: MutableList<JsonObject>,
   ) {
-    // Removed keys
     for (key in source.keys) {
       if (key !in target) {
         ops.add(removeOp("$path/${escapeJsonPointer(key)}"))
       }
     }
-    // Added keys
     for (key in target.keys) {
       if (key !in source) {
         ops.add(addOp("$path/${escapeJsonPointer(key)}", target[key]!!))
       }
     }
-    // Changed keys
     for (key in source.keys) {
       if (key in target) {
         generateDiff("$path/${escapeJsonPointer(key)}", source[key]!!, target[key]!!, ops)

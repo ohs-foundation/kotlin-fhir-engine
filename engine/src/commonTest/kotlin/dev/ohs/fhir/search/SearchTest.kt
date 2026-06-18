@@ -32,8 +32,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
 /**
- * Adapted from google/android-fhir: engine/src/test/java/com/google/android/fhir/search/SearchTest.kt
- *
  * Tests SQL query generation from Search DSL. Each test builds a Search, calls getQuery(), and
  * asserts on the generated SQL string and argument list.
  *
@@ -67,8 +65,6 @@ import kotlinx.datetime.atStartOfDayIn
  *   tests, so the giant exact-string literal isn't reproduced.
  */
 class SearchTest {
-
-  // --- Basic query tests ---
 
   @Test
   fun search() {
@@ -141,8 +137,6 @@ class SearchTest {
     )
     assertEquals(listOf(ResourceType.Patient.name, 10, 20), query.args)
   }
-
-  // --- String filter tests ---
 
   @Test
   fun search_filter_string_default() {
@@ -234,8 +228,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- Token filter tests ---
 
   @Test
   fun search_filter_token_coding() {
@@ -541,8 +533,6 @@ class SearchTest {
     )
   }
 
-  // --- Quantity filter tests ---
-
   @Test
   fun search_filter_quantity_equals() {
     val query =
@@ -661,8 +651,6 @@ class SearchTest {
     )
   }
 
-  // --- URI filter test ---
-
   @Test
   fun search_filter_uri() {
     val query =
@@ -687,8 +675,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- Sort tests ---
 
   @Test
   fun search_sort_string_ascending() {
@@ -737,8 +723,6 @@ class SearchTest {
     )
     assertEquals(listOf("given", ResourceType.Patient.name), query.args)
   }
-
-  // --- Token index SQL format tests ---
 
   @Test
   fun search_filter_shouldAppendIndexNameOnly_forTokenFilter_withCodeOnly() {
@@ -805,8 +789,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- Remaining quantity filter tests ---
 
   @Test
   fun search_filter_quantity_less_or_equal() {
@@ -1000,7 +982,6 @@ class SearchTest {
   // with value 5403mg → 5.403g. Engine-kmp UnitConverter is currently a no-op (returns original
   // value unchanged). Skip until UCUM conversion is implemented.
 
-  // --- Date filter tests ---
   //
   // NOTE: search_filter_date_approximate / search_filter_dateTime_approximate are NOT ported: the
   // engine mocks "now" via DateProvider, but engine-kmp's APPROXIMATE branch reads
@@ -1283,8 +1264,6 @@ class SearchTest {
     )
   }
 
-  // --- DateTime filter tests ---
-
   @Test
   fun search_filter_dateTime_starts_after() {
     val query =
@@ -1563,8 +1542,6 @@ class SearchTest {
     )
   }
 
-  // --- Number sort test ---
-
   @Test
   fun search_sort_numbers_ascending() {
     val query =
@@ -1587,8 +1564,6 @@ class SearchTest {
       query.query,
     )
   }
-
-  // --- Combined filter + sort + pagination test ---
 
   @Test
   fun search_filter_sort_size_from() {
@@ -1632,8 +1607,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- Date sort tests ---
 
   @Test
   fun search_date_sort() {
@@ -1684,8 +1657,6 @@ class SearchTest {
       query.query,
     )
   }
-
-  // --- Disjunction tests ---
 
   @Test
   fun search_patient_single_search_param_multiple_values_disjunction() {
@@ -1796,8 +1767,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- HAS tests ---
 
   @Test
   fun search_has_patient_with_diabetes() {
@@ -2007,8 +1976,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- RevInclude tests ---
 
   @Test
   fun search_revInclude_all_conditions_for_patients() {
@@ -2251,8 +2218,6 @@ class SearchTest {
     )
   }
 
-  // --- Include tests ---
-
   @Test
   fun search_include_all_practitioners() {
     val query =
@@ -2472,8 +2437,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // --- Reference filter tests ---
 
   @Test
   fun search_CarePlan_filter_with_no_reference() {

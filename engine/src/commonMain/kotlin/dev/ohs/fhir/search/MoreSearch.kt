@@ -399,8 +399,6 @@ private val Order?.sqlString: String
       null -> ""
     }
 
-// --- Condition param pair helpers ---
-
 internal fun getConditionParamPairForDate(
   prefix: ParamPrefixEnum,
   value: FhirDate,
@@ -634,8 +632,6 @@ private fun getApproximateDateRange(
 }
 
 private data class ApproximateDateRange(val start: Long, val end: Long)
-
-// --- Date utility functions (reused from ResourceIndexer patterns) ---
 
 internal fun fhirDateToEpochDayRange(date: FhirDate): Pair<Long, Long> =
   when (date) {

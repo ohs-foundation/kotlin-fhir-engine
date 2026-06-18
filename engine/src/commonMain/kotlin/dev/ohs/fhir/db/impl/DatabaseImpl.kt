@@ -121,7 +121,6 @@ internal class DatabaseImpl(
         val indices = resourceIndexer.index(resourceWithId)
         insertIndices(resourceUuid, resourceTypeEnum, indices)
 
-        // Track local change
         localChangeDao.addInsert(resourceWithId, resourceUuid, now)
 
         logicalIds.add(resourceId)
@@ -439,11 +438,8 @@ internal class DatabaseImpl(
   override suspend fun purge(type: ResourceType, ids: Set<String>, forcePurge: Boolean) {
     inTransaction {
       ids.forEach { id ->
-        // 1. Verify resource presence:
         selectEntity(type, id)
 
-        // 2. Check for local changes (which can only be cleared without syncing in FORCE_PURGE
-        // mode):
         val localChanges = localChangeDao.getLocalChanges(type, id)
         if (localChanges.isNotEmpty() && !forcePurge) {
           throw IllegalStateException(
@@ -451,7 +447,6 @@ internal class DatabaseImpl(
           )
         }
 
-        // 3. Delete resource and discard local changes (if applicable):
         resourceDao.deleteResource(id, type)
         if (localChanges.isNotEmpty()) {
           localChangeDao.discardLocalChanges(id, type)
@@ -472,8 +467,6 @@ internal class DatabaseImpl(
       )
     }
   }
-
-  // --- Private helpers ---
 
   private fun bindArgs(statement: SQLiteStatement, args: List<Any>) {
     args.forEachIndexed { i, arg ->
