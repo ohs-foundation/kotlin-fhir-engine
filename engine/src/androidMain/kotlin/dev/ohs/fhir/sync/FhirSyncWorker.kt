@@ -23,7 +23,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.FhirEngine
-import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.upload.UploadStrategy
 import kotlinx.serialization.json.Json
 
@@ -35,58 +34,29 @@ import kotlinx.serialization.json.Json
  * synchronization jobs using [Sync].
  */
 abstract class FhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
-  CoroutineWorker(appContext, workerParams) {
+  CoroutineWorker(appContext, workerParams), FhirSyncTask {
 
-  /** Returns the [FhirEngine] instance used for interacting with the local FHIR data store. */
-  abstract fun getFhirEngine(): FhirEngine
+  abstract override fun getFhirEngine(): FhirEngine
 
-  /** Returns the [DownloadWorkManager] instance that manages the download process. */
-  abstract fun getDownloadWorkManager(): DownloadWorkManager
+  abstract override fun getDownloadWorkManager(): DownloadWorkManager
 
-  /**
-   * Returns the [ConflictResolver] instance that defines how to handle conflicts between local and
-   * remote data during synchronization.
-   */
-  abstract fun getConflictResolver(): ConflictResolver
+  abstract override fun getConflictResolver(): ConflictResolver
 
-  /**
-   * Returns the [UploadStrategy] instance that defines how local changes are uploaded to the
-   * server.
-   */
-  abstract fun getUploadStrategy(): UploadStrategy
-
-  /** Returns the [DataSource] instance from [FhirEngineProvider]. */
-  internal open fun getDataSource(): DataSource? = FhirEngineProvider.getDataSource()
-
-  /** Returns the [FhirDataStore] instance for persisting sync state and metadata. */
-  internal open fun getFhirDataStore(): FhirDataStore =
-    FhirDataStore(createDataStore(applicationContext))
+  abstract override fun getUploadStrategy(): UploadStrategy
 
   private val json = Json { ignoreUnknownKeys = true }
 
   override suspend fun doWork(): Result {
-    val dataSource =
-      getDataSource()
-        ?: return Result.failure(
-          buildErrorData(
-            IllegalStateException(
-              "FhirEngineConfiguration.ServerConfiguration is not set. Call FhirEngineProvider.init to initialize with appropriate configuration.",
-            ),
-          ),
+    val result =
+      try {
+        runSync(
+          taskName = inputData.getString(UNIQUE_WORK_NAME),
+          dataStore = createDataStore(applicationContext),
+          onProgress = { setProgress(buildWorkData(it)) },
         )
-
-    val result = FhirSyncCore(
-      fhirEngine = getFhirEngine(),
-      dataSource = dataSource,
-      downloadWorkManager = getDownloadWorkManager(),
-      conflictResolver = getConflictResolver(),
-      uploadStrategy = getUploadStrategy(),
-      fhirDataStore = getFhirDataStore(),
-    )
-      .execute(
-        workerName = inputData.getString(UNIQUE_WORK_NAME),
-        onProgress = { setProgress(buildWorkData(it)) },
-      )
+      } catch (e: IllegalStateException) {
+        return Result.failure(buildErrorData(e))
+      }
 
     val output = buildWorkData(result)
     Logger.d { "Received result from worker $result and sending output $output" }

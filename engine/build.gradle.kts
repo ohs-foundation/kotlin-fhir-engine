@@ -7,6 +7,8 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+group = "dev.ohs.fhir"
+
 val generateSearchParamsTask =
   tasks.register("generateSearchParamsTask", GenerateSearchParamsTask::class) {
     srcOutputDir.set(layout.buildDirectory.dir("generated/sources/searchparams/commonMain/kotlin"))

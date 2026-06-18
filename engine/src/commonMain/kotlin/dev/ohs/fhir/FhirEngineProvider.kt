@@ -22,6 +22,8 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.sync.DataSource
+import dev.ohs.fhir.sync.FhirDataStore
+import dev.ohs.fhir.sync.getDataStore
 import dev.ohs.fhir.sync.remote.FhirHttpDataSource
 import dev.ohs.fhir.sync.remote.KtorHttpService
 
@@ -42,6 +44,7 @@ object FhirEngineProvider {
   private var configuration: FhirEngineConfiguration? = null
   private var fhirEngine: FhirEngine? = null
   private var dataSource: DataSource? = null
+  private var fhirDataStore: FhirDataStore? = null
   private var platformContext: Any = Unit
   private var searchParamProvider: SearchParamDefinitionsProviderImpl? = null
 
@@ -55,6 +58,7 @@ object FhirEngineProvider {
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
+    this.fhirDataStore = FhirDataStore(getDataStore(platformContext))
   }
 
   /**
@@ -86,6 +90,14 @@ object FhirEngineProvider {
       "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
     }
     return dataSource
+  }
+
+  @PublishedApi
+  internal fun getFhirDataStore(): FhirDataStore {
+    checkNotNull(fhirDataStore) {
+      "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
+    }
+    return fhirDataStore!!
   }
 
   /**

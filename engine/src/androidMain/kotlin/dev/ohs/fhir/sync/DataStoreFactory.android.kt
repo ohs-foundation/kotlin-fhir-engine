@@ -19,8 +19,6 @@ package dev.ohs.fhir.sync
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import dev.ohs.fhir.sync.createDataStore
-import dev.ohs.fhir.sync.fhirDataStoreFileName
 
 private var dataStoreInstance: DataStore<Preferences>? = null
 
@@ -29,3 +27,5 @@ internal fun createDataStore(context: Context): DataStore<Preferences> =
   dataStoreInstance ?: createDataStore {
     context.filesDir.resolve(fhirDataStoreFileName).absolutePath
   }.also { dataStoreInstance = it }
+
+internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore(platformContext as Context)

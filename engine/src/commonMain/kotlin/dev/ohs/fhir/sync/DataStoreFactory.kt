@@ -25,3 +25,5 @@ internal const val fhirDataStoreFileName = "fhir.engine.preferences_pb"
 
 fun createDataStore(producePath: () -> String): DataStore<Preferences> =
   PreferenceDataStoreFactory.createWithPath(produceFile = { producePath().toPath() })
+
+internal expect fun getDataStore(platformContext: Any): DataStore<Preferences>

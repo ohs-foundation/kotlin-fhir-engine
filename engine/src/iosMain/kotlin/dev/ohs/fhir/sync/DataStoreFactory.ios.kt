@@ -35,3 +35,5 @@ internal fun createDataStore(): DataStore<Preferences> = createDataStore {
     )
   requireNotNull(docDir).path + "/$fhirDataStoreFileName"
 }
+
+internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()

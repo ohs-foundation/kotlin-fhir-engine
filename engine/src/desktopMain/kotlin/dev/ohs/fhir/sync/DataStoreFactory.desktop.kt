@@ -23,3 +23,5 @@ import java.io.File
 internal fun createDataStore(): DataStore<Preferences> = createDataStore {
   File(System.getProperty("user.home"), ".fhir-engine/$fhirDataStoreFileName").absolutePath
 }
+
+internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()
