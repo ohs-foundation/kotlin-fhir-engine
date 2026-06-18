@@ -96,6 +96,18 @@ class JsonDiffTest {
     assertEquals("[]", JsonDiff.diff(json, json))
   }
 
+  @Test
+  fun diff_arrayElementFieldChange_producesElementLevelPatch() {
+    // Index-based array diff descends into elements, matching fge json-patch's documented output
+    // for a family-name update (`/name/0/family`) rather than replacing the whole `/name` array.
+    val patch =
+      JsonDiff.diff(
+        """{"name":[{"family":"Chalmers"}]}""",
+        """{"name":[{"family":"Nucleus"}]}""",
+      )
+    assertEquals("""[{"op":"replace","path":"/name/0/family","value":"Nucleus"}]""", patch)
+  }
+
   // --- intentional /meta and /text filtering ---
 
   @Test
@@ -146,7 +158,10 @@ class JsonDiffTest {
     )
   }
 
-  /** Minimal RFC 6902 apply supporting the op set JsonDiff emits (replace/add/remove). */
+  /**
+   * Minimal RFC 6902 apply supporting the op set JsonDiff emits (replace/add/remove) over both
+   * objects and arrays (paths can descend through array indices, e.g. `/name/0/family`).
+   */
   private fun applyPatch(source: JsonElement, patch: JsonArray): JsonElement {
     var result = source
     for (opElement in patch) {
@@ -155,8 +170,8 @@ class JsonDiffTest {
       val segments = parsePointer(op["path"]!!.jsonPrimitive.content)
       result =
         when (type) {
-          "replace",
-          "add", -> setAtPath(result, segments, op["value"]!!)
+          "replace" -> replaceAtPath(result, segments, op["value"]!!)
+          "add" -> addAtPath(result, segments, op["value"]!!)
           "remove" -> removeAtPath(result, segments)
           else -> error("unsupported op $type")
         }
@@ -171,27 +186,61 @@ class JsonDiffTest {
       pointer.removePrefix("/").split("/").map { it.replace("~1", "/").replace("~0", "~") }
     }
 
-  private fun setAtPath(
+  /** Sets [value] at an existing [segments] path through objects and arrays. */
+  private fun replaceAtPath(
     element: JsonElement,
     segments: List<String>,
     value: JsonElement,
   ): JsonElement {
     if (segments.isEmpty()) return value
-    val obj = element.jsonObject
-    val key = segments.first()
-    val child = obj[key] ?: JsonObject(emptyMap())
-    val newChild = setAtPath(child, segments.drop(1), value)
-    return JsonObject(obj.toMutableMap().apply { this[key] = newChild })
+    val head = segments.first()
+    val rest = segments.drop(1)
+    return when (element) {
+      is JsonObject ->
+        JsonObject(element.toMutableMap().apply { this[head] = replaceAtPath(getValue(head), rest, value) })
+      is JsonArray ->
+        JsonArray(element.toMutableList().apply { this[head.toInt()] = replaceAtPath(this[head.toInt()], rest, value) })
+      else -> error("cannot descend into $element at $head")
+    }
+  }
+
+  /** Adds [value] at [segments]: object key, array index, or array append (`-`). */
+  private fun addAtPath(
+    element: JsonElement,
+    segments: List<String>,
+    value: JsonElement,
+  ): JsonElement {
+    val head = segments.first()
+    val rest = segments.drop(1)
+    return when (element) {
+      is JsonObject ->
+        JsonObject(
+          element.toMutableMap().apply {
+            this[head] = if (rest.isEmpty()) value else addAtPath(getValue(head), rest, value)
+          },
+        )
+      is JsonArray ->
+        if (rest.isEmpty()) {
+          if (head == "-") JsonArray(element + value)
+          else JsonArray(element.toMutableList().apply { add(head.toInt(), value) })
+        } else {
+          JsonArray(element.toMutableList().apply { this[head.toInt()] = addAtPath(this[head.toInt()], rest, value) })
+        }
+      else -> error("cannot descend into $element at $head")
+    }
   }
 
   private fun removeAtPath(element: JsonElement, segments: List<String>): JsonElement {
-    val obj = element.jsonObject
-    val key = segments.first()
-    return if (segments.size == 1) {
-      JsonObject(obj.toMutableMap().apply { remove(key) })
-    } else {
-      val newChild = removeAtPath(obj.getValue(key), segments.drop(1))
-      JsonObject(obj.toMutableMap().apply { this[key] = newChild })
+    val head = segments.first()
+    val rest = segments.drop(1)
+    return when (element) {
+      is JsonObject ->
+        if (rest.isEmpty()) JsonObject(element.toMutableMap().apply { remove(head) })
+        else JsonObject(element.toMutableMap().apply { this[head] = removeAtPath(getValue(head), rest) })
+      is JsonArray ->
+        if (rest.isEmpty()) JsonArray(element.toMutableList().apply { removeAt(head.toInt()) })
+        else JsonArray(element.toMutableList().apply { this[head.toInt()] = removeAtPath(this[head.toInt()], rest) })
+      else -> error("cannot descend into $element at $head")
     }
   }
 
