@@ -26,6 +26,7 @@ import dev.ohs.fhir.ucumUrl
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.math.absoluteValue
@@ -480,12 +481,12 @@ private val Order?.sqlString: String
  * date index's `index_from`/`index_to` epoch-day range. See https://www.hl7.org/fhir/search.html#date.
  */
 internal fun getConditionParamPairForDate(
-  prefix: ParamPrefixEnum,
+  prefix: SearchComparator,
   value: FhirDate,
 ): ConditionParam<Long> {
   val (start, end) = fhirDateToEpochDayRange(value)
   return when (prefix) {
-    ParamPrefixEnum.APPROXIMATE -> {
+    SearchComparator.Ap -> {
       val now = Clock.System.now().toEpochMilliseconds()
       val nowDay = now / 86400000L
       val currentRange = nowDay to nowDay
@@ -499,9 +500,9 @@ internal fun getConditionParamPairForDate(
         diffEnd,
       )
     }
-    ParamPrefixEnum.STARTS_AFTER -> ConditionParam("index_from > ?", end)
-    ParamPrefixEnum.ENDS_BEFORE -> ConditionParam("index_to < ?", start)
-    ParamPrefixEnum.NOT_EQUAL ->
+    SearchComparator.Sa -> ConditionParam("index_from > ?", end)
+    SearchComparator.Eb -> ConditionParam("index_to < ?", start)
+    SearchComparator.Ne ->
       ConditionParam(
         "index_from NOT BETWEEN ? AND ? OR index_to NOT BETWEEN ? AND ?",
         start,
@@ -509,7 +510,7 @@ internal fun getConditionParamPairForDate(
         start,
         end,
       )
-    ParamPrefixEnum.EQUAL ->
+    SearchComparator.Eq ->
       ConditionParam(
         "index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?",
         start,
@@ -517,10 +518,10 @@ internal fun getConditionParamPairForDate(
         start,
         end,
       )
-    ParamPrefixEnum.GREATERTHAN -> ConditionParam("index_to > ?", end)
-    ParamPrefixEnum.GREATERTHAN_OR_EQUALS -> ConditionParam("index_to >= ?", start)
-    ParamPrefixEnum.LESSTHAN -> ConditionParam("index_from < ?", start)
-    ParamPrefixEnum.LESSTHAN_OR_EQUALS -> ConditionParam("index_from <= ?", end)
+    SearchComparator.Gt -> ConditionParam("index_to > ?", end)
+    SearchComparator.Ge -> ConditionParam("index_to >= ?", start)
+    SearchComparator.Lt -> ConditionParam("index_from < ?", start)
+    SearchComparator.Le -> ConditionParam("index_from <= ?", end)
   }
 }
 
@@ -529,12 +530,12 @@ internal fun getConditionParamPairForDate(
  * dateTime index's `index_from`/`index_to` epoch-millis range. See https://www.hl7.org/fhir/search.html#date.
  */
 internal fun getConditionParamPairForDateTime(
-  prefix: ParamPrefixEnum,
+  prefix: SearchComparator,
   value: FhirDateTime,
 ): ConditionParam<Long> {
   val (start, end) = fhirDateTimeToEpochMillisRange(value)
   return when (prefix) {
-    ParamPrefixEnum.APPROXIMATE -> {
+    SearchComparator.Ap -> {
       val nowMs = Clock.System.now().toEpochMilliseconds()
       val (diffStart, diffEnd) = getApproximateDateRange(start..end, nowMs..nowMs)
       ConditionParam(
@@ -545,9 +546,9 @@ internal fun getConditionParamPairForDateTime(
         diffEnd,
       )
     }
-    ParamPrefixEnum.STARTS_AFTER -> ConditionParam("index_from > ?", end)
-    ParamPrefixEnum.ENDS_BEFORE -> ConditionParam("index_to < ?", start)
-    ParamPrefixEnum.NOT_EQUAL ->
+    SearchComparator.Sa -> ConditionParam("index_from > ?", end)
+    SearchComparator.Eb -> ConditionParam("index_to < ?", start)
+    SearchComparator.Ne ->
       ConditionParam(
         "index_from NOT BETWEEN ? AND ? OR index_to NOT BETWEEN ? AND ?",
         start,
@@ -555,7 +556,7 @@ internal fun getConditionParamPairForDateTime(
         start,
         end,
       )
-    ParamPrefixEnum.EQUAL ->
+    SearchComparator.Eq ->
       ConditionParam(
         "index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?",
         start,
@@ -563,10 +564,10 @@ internal fun getConditionParamPairForDateTime(
         start,
         end,
       )
-    ParamPrefixEnum.GREATERTHAN -> ConditionParam("index_to > ?", end)
-    ParamPrefixEnum.GREATERTHAN_OR_EQUALS -> ConditionParam("index_to >= ?", start)
-    ParamPrefixEnum.LESSTHAN -> ConditionParam("index_from < ?", start)
-    ParamPrefixEnum.LESSTHAN_OR_EQUALS -> ConditionParam("index_from <= ?", end)
+    SearchComparator.Gt -> ConditionParam("index_to > ?", end)
+    SearchComparator.Ge -> ConditionParam("index_to >= ?", start)
+    SearchComparator.Lt -> ConditionParam("index_from < ?", start)
+    SearchComparator.Le -> ConditionParam("index_from <= ?", end)
   }
 }
 
@@ -575,17 +576,17 @@ internal fun getConditionParamPairForDateTime(
  * https://www.hl7.org/fhir/search.html#number.
  */
 internal fun getConditionParamPair(
-  prefix: ParamPrefixEnum?,
+  prefix: SearchComparator?,
   value: BigDecimal,
 ): ConditionParam<Double> {
   require(
     (value.precision - 1 - value.exponent) > 0 ||
-      (prefix != ParamPrefixEnum.STARTS_AFTER && prefix != ParamPrefixEnum.ENDS_BEFORE),
+      (prefix != SearchComparator.Sa && prefix != SearchComparator.Eb),
   ) {
     "Prefix $prefix not allowed for Integer type"
   }
   return when (prefix) {
-    ParamPrefixEnum.EQUAL,
+    SearchComparator.Eq,
     null, -> {
       val precision = value.getRange()
       ConditionParam(
@@ -594,13 +595,13 @@ internal fun getConditionParamPair(
         (value + precision).doubleValue(false),
       )
     }
-    ParamPrefixEnum.GREATERTHAN -> ConditionParam("index_value > ?", value.doubleValue(false))
-    ParamPrefixEnum.GREATERTHAN_OR_EQUALS ->
+    SearchComparator.Gt -> ConditionParam("index_value > ?", value.doubleValue(false))
+    SearchComparator.Ge ->
       ConditionParam("index_value >= ?", value.doubleValue(false))
-    ParamPrefixEnum.LESSTHAN -> ConditionParam("index_value < ?", value.doubleValue(false))
-    ParamPrefixEnum.LESSTHAN_OR_EQUALS ->
+    SearchComparator.Lt -> ConditionParam("index_value < ?", value.doubleValue(false))
+    SearchComparator.Le ->
       ConditionParam("index_value <= ?", value.doubleValue(false))
-    ParamPrefixEnum.NOT_EQUAL -> {
+    SearchComparator.Ne -> {
       val precision = value.getRange()
       ConditionParam(
         "index_value < ? OR index_value >= ?",
@@ -608,9 +609,9 @@ internal fun getConditionParamPair(
         (value + precision).doubleValue(false),
       )
     }
-    ParamPrefixEnum.ENDS_BEFORE -> ConditionParam("index_value < ?", value.doubleValue(false))
-    ParamPrefixEnum.STARTS_AFTER -> ConditionParam("index_value > ?", value.doubleValue(false))
-    ParamPrefixEnum.APPROXIMATE -> {
+    SearchComparator.Eb -> ConditionParam("index_value < ?", value.doubleValue(false))
+    SearchComparator.Sa -> ConditionParam("index_value > ?", value.doubleValue(false))
+    SearchComparator.Ap -> {
       val range = value.multiply(BigDecimal.fromDouble(APPROXIMATION_COEFFICIENT))
       ConditionParam(
         "index_value >= ? AND index_value <= ?",
@@ -626,7 +627,7 @@ internal fun getConditionParamPair(
  * https://www.hl7.org/fhir/search.html#quantity.
  */
 internal fun getConditionParamPair(
-  prefix: ParamPrefixEnum?,
+  prefix: SearchComparator?,
   value: BigDecimal,
   system: String?,
   unit: String?,

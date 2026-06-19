@@ -18,7 +18,7 @@ package dev.ohs.fhir.search.filter
 
 import dev.ohs.fhir.search.ConditionParam
 import dev.ohs.fhir.search.Operation
-import dev.ohs.fhir.search.ParamPrefixEnum
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.QuantityClientParam
 import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.getConditionParamPair
@@ -31,7 +31,7 @@ import com.ionspin.kotlin.bignum.decimal.BigDecimal
 @SearchDslMarker
 data class QuantityParamFilterCriterion(
   val parameter: QuantityClientParam,
-  var prefix: ParamPrefixEnum? = null,
+  var prefix: SearchComparator? = null,
   var value: BigDecimal? = null,
   var system: String? = null,
   var unit: String? = null,

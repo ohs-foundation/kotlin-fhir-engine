@@ -16,6 +16,7 @@
 
 package dev.ohs.fhir.search
 
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.test.Test
@@ -68,7 +69,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.EQUAL
+                prefix = SearchComparator.Eq
                 value = num
               },
             )
@@ -104,7 +105,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.NOT_EQUAL
+                prefix = SearchComparator.Ne
                 value = num
               },
             )
@@ -140,7 +141,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.GREATERTHAN
+                prefix = SearchComparator.Gt
                 value = num
               },
             )
@@ -171,7 +172,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.GREATERTHAN_OR_EQUALS
+                prefix = SearchComparator.Ge
                 value = num
               },
             )
@@ -202,7 +203,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.LESSTHAN
+                prefix = SearchComparator.Lt
                 value = num
               },
             )
@@ -233,7 +234,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.LESSTHAN_OR_EQUALS
+                prefix = SearchComparator.Le
                 value = num
               },
             )
@@ -264,14 +265,14 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.ENDS_BEFORE
+                prefix = SearchComparator.Eb
                 value = BigDecimal.parseString("100")
               },
             )
           }
           .getQuery()
       }
-    assertEquals("Prefix ENDS_BEFORE not allowed for Integer type", exception.message)
+    assertEquals("Prefix eb not allowed for Integer type", exception.message)
   }
 
   @Test
@@ -283,7 +284,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.ENDS_BEFORE
+                prefix = SearchComparator.Eb
                 value = num
               },
             )
@@ -314,14 +315,14 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.STARTS_AFTER
+                prefix = SearchComparator.Sa
                 value = BigDecimal.fromInt(100)
               },
             )
           }
           .getQuery()
       }
-    assertEquals("Prefix STARTS_AFTER not allowed for Integer type", exception.message)
+    assertEquals("Prefix sa not allowed for Integer type", exception.message)
   }
 
   @Test
@@ -333,7 +334,7 @@ class NumberSearchParameterizedTest {
             filter(
               NumberClientParam("probability"),
               {
-                prefix = ParamPrefixEnum.STARTS_AFTER
+                prefix = SearchComparator.Sa
                 value = num
               },
             )
@@ -363,7 +364,7 @@ class NumberSearchParameterizedTest {
           filter(
             NumberClientParam("probability"),
             {
-              prefix = ParamPrefixEnum.APPROXIMATE
+              prefix = SearchComparator.Ap
               value = BigDecimal.parseString("0.1")
             },
           )
@@ -392,7 +393,7 @@ class NumberSearchParameterizedTest {
           filter(
             NumberClientParam("probability"),
             {
-              prefix = ParamPrefixEnum.EQUAL
+              prefix = SearchComparator.Eq
               value = BigDecimal.parseString("100")
             },
           )

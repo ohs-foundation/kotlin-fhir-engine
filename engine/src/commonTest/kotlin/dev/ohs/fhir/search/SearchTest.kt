@@ -16,6 +16,7 @@
 
 package dev.ohs.fhir.search
 
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.filter.ReferenceParamFilterCriterion
 import dev.ohs.fhir.search.filter.TokenFilterValue
 import dev.ohs.fhir.model.r4.ContactPoint
@@ -508,7 +509,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.EQUAL
+              prefix = SearchComparator.Eq
               unit = "g"
               value = BigDecimal.parseString("5.403")
             },
@@ -548,7 +549,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.LESSTHAN
+              prefix = SearchComparator.Lt
               unit = "g"
               value = BigDecimal.parseString("5.403")
             },
@@ -587,7 +588,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.GREATERTHAN
+              prefix = SearchComparator.Gt
               system = "http://unitsofmeasure.org"
               value = BigDecimal.parseString("5.403")
             },
@@ -765,7 +766,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.LESSTHAN_OR_EQUALS
+              prefix = SearchComparator.Le
               system = "http://unitsofmeasure.org"
               value = BigDecimal.parseString("5.403")
             },
@@ -804,7 +805,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.GREATERTHAN_OR_EQUALS
+              prefix = SearchComparator.Ge
               value = BigDecimal.parseString("5.403")
             },
           )
@@ -841,7 +842,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.NOT_EQUAL
+              prefix = SearchComparator.Ne
               value = BigDecimal.parseString("5.403")
             },
           )
@@ -879,7 +880,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.STARTS_AFTER
+              prefix = SearchComparator.Sa
               value = BigDecimal.parseString("5.403")
             },
           )
@@ -916,7 +917,7 @@ class SearchTest {
           filter(
             QuantityClientParam("value-quantity"),
             {
-              prefix = ParamPrefixEnum.ENDS_BEFORE
+              prefix = SearchComparator.Eb
               value = BigDecimal.parseString("5.403")
             },
           )
@@ -958,7 +959,7 @@ class SearchTest {
           filter(
             DateClientParam("birthdate"),
             {
-              prefix = ParamPrefixEnum.STARTS_AFTER
+              prefix = SearchComparator.Sa
               value = of(FhirDate.fromString("2013-03-14")!!)
             },
           )
@@ -992,7 +993,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.ENDS_BEFORE
+              prefix = SearchComparator.Eb
             },
           )
         }
@@ -1025,7 +1026,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.NOT_EQUAL
+              prefix = SearchComparator.Ne
             },
           )
         }
@@ -1099,7 +1100,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.GREATERTHAN
+              prefix = SearchComparator.Gt
             },
           )
         }
@@ -1132,7 +1133,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.GREATERTHAN_OR_EQUALS
+              prefix = SearchComparator.Ge
             },
           )
         }
@@ -1165,7 +1166,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.LESSTHAN
+              prefix = SearchComparator.Lt
             },
           )
         }
@@ -1198,7 +1199,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDate.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.LESSTHAN_OR_EQUALS
+              prefix = SearchComparator.Le
             },
           )
         }
@@ -1231,7 +1232,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.STARTS_AFTER
+              prefix = SearchComparator.Sa
             },
           )
         }
@@ -1264,7 +1265,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.ENDS_BEFORE
+              prefix = SearchComparator.Eb
             },
           )
         }
@@ -1297,7 +1298,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.NOT_EQUAL
+              prefix = SearchComparator.Ne
             },
           )
         }
@@ -1337,7 +1338,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.EQUAL
+              prefix = SearchComparator.Eq
             },
           )
         }
@@ -1377,7 +1378,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.GREATERTHAN
+              prefix = SearchComparator.Gt
             },
           )
         }
@@ -1410,7 +1411,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.GREATERTHAN_OR_EQUALS
+              prefix = SearchComparator.Ge
             },
           )
         }
@@ -1443,7 +1444,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.LESSTHAN
+              prefix = SearchComparator.Lt
             },
           )
         }
@@ -1476,7 +1477,7 @@ class SearchTest {
             DateClientParam("birthdate"),
             {
               value = of(FhirDateTime.fromString("2013-03-14")!!)
-              prefix = ParamPrefixEnum.LESSTHAN_OR_EQUALS
+              prefix = SearchComparator.Le
             },
           )
         }

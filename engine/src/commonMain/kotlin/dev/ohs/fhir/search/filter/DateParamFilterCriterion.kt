@@ -19,7 +19,7 @@ package dev.ohs.fhir.search.filter
 import dev.ohs.fhir.search.ConditionParam
 import dev.ohs.fhir.search.DateClientParam
 import dev.ohs.fhir.search.Operation
-import dev.ohs.fhir.search.ParamPrefixEnum
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.search.getConditionParamPairForDate
@@ -35,7 +35,7 @@ import dev.ohs.fhir.model.r4.terminologies.ResourceType
 @SearchDslMarker
 data class DateParamFilterCriterion(
   val parameter: DateClientParam,
-  var prefix: ParamPrefixEnum = ParamPrefixEnum.EQUAL,
+  var prefix: SearchComparator = SearchComparator.Eq,
   var value: DateFilterValues? = null,
 ) : FilterCriterion {
   /** Returns [DateFilterValues] from [FhirDate]. */
