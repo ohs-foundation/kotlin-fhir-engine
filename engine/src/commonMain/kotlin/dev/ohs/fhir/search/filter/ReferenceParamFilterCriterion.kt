@@ -21,6 +21,10 @@ import dev.ohs.fhir.search.Operation
 import dev.ohs.fhir.search.ReferenceClientParam
 import dev.ohs.fhir.search.SearchDslMarker
 
+/**
+ * Represents a criterion for filtering [ReferenceClientParam]. e.g. filter(Observation.SUBJECT, {
+ * value = "Patient/001" })
+ */
 @SearchDslMarker
 data class ReferenceParamFilterCriterion(
   val parameter: ReferenceClientParam,

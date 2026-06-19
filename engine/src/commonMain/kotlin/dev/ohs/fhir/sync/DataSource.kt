@@ -16,4 +16,5 @@
 
 package dev.ohs.fhir.sync
 
+/** Interface for an abstraction of retrieving FHIR data from a network source. */
 interface DataSource

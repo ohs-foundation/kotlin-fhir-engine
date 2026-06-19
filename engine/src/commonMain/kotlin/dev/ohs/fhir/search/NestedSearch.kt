@@ -39,6 +39,19 @@ inline fun <reified R : Resource> Search.has(
   )
 }
 
+/**
+ * Provide limited support for reverse chaining on [Search] (See
+ * [this](https://www.hl7.org/fhir/search.html#has)).
+ *
+ * Example usage (Search for all Patients with Condition - Diabetes):
+ * ```
+ *   fhirEngine.search<Patient> {
+ *        has(resourceType = ResourceType.Condition, referenceParam = (Condition.SUBJECT) {
+ *          filter(Condition.CODE, Coding("http://snomed.info/sct", "44054006", "Diabetes"))
+ *        }
+ *     }
+ * ```
+ */
 fun Search.has(
   resourceType: ResourceType,
   referenceParam: ReferenceClientParam,
@@ -62,6 +75,28 @@ inline fun <reified R : Resource> Search.include(
   )
 }
 
+/**
+ * Includes additional resources in the search results that reference the resource on which
+ * [include] is being called. The developers may call [include] multiple times with different
+ * [ResourceType] to allow search api to return multiple referenced resource types.
+ *
+ * e.g. The below example would return all the Patients with given-name as James and their
+ * associated active [Practitioner] and Organizations.
+ *
+ * ```
+ * fhirEngine.search<Patient> {
+ *  filter(Patient.GIVEN, { value = "James" })
+ *   include(ResourceType.Practitioner, Patient.GENERAL_PRACTITIONER) {
+ *    filter(Practitioner.ACTIVE, { value = of(true) })
+ *   }
+ *   include(ResourceType.Organization,Patient.ORGANIZATION)
+ * }
+ * ```
+ *
+ * **NOTE**:
+ * * [include] doesn't support count.
+ * * Multiple includes of the same resource type do not guarantee the order of returned resources.
+ */
 fun Search.include(
   resourceType: ResourceType,
   referenceParam: ReferenceClientParam,
@@ -85,6 +120,29 @@ inline fun <reified R : Resource> Search.revInclude(
   )
 }
 
+/**
+ * Includes additional resources in the search results that reference the resource on which
+ * [revInclude] is being called. The developers may call [revInclude] multiple times with different
+ * [ResourceType] to allow search api to return multiple referenced resource types.
+ *
+ * e.g. The below example would return all the Patients with given-name as James and their
+ * associated Encounters and Conditions.
+ *
+ * ```
+ * fhirEngine.search<Patient> {
+ *  filter(Patient.GIVEN, { value = "James" })
+ *  revInclude(ResourceType.Encounter, Encounter.PATIENT)
+ *  revInclude(ResourceType.Condition, Condition.PATIENT) {
+ *     filter(Condition.CODE, { value = of(diabetesCodeableConcept) })
+ *  }
+ * }
+ * ```
+ *
+ * **NOTE**:
+ * * [revInclude] doesn't support count.
+ * * Multiple revIncludes of the same resource type do not guarantee the order of returned
+ *   resources.
+ */
 fun Search.revInclude(
   resourceType: ResourceType,
   referenceParam: ReferenceClientParam,

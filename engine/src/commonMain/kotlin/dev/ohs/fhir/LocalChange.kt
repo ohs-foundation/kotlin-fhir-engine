@@ -51,6 +51,7 @@ data class LocalChange(
   }
 }
 
+/** Method to convert LocalChangeEntity to LocalChange instance. */
 internal fun LocalChangeEntity.toLocalChange(): LocalChange =
   LocalChange(
     resourceType = resourceType,

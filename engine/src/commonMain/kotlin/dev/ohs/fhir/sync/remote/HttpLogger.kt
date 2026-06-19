@@ -16,8 +16,10 @@
 
 package dev.ohs.fhir.sync.remote
 
+/** Logger for the network communication between the engine and the remote server */
 class HttpLogger {
   companion object {
+    /** The logger will not log any data. */
     val NONE = HttpLogger()
   }
 }

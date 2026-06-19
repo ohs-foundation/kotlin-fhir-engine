@@ -20,9 +20,19 @@ import dev.ohs.fhir.model.r4.Resource
 
 /** Resolves conflicts between the client and remote changes in a Resource. */
 fun interface ConflictResolver {
+  /**
+   * @param local The modified resource on the client.
+   * @param remote The latest version of the resource downloaded from the remote server.
+   */
   fun resolve(local: Resource, remote: Resource): ConflictResolutionResult
 }
 
+/**
+ * Contains the result of the conflict resolution. For now, [Resolved] is the only acceptable result
+ * and the expectation is that the client will resolve each and every conflict in-flight that may
+ * arise during the sync process. There is no way for the client application to abort or defer the
+ * conflict resolution to a later time.
+ */
 sealed class ConflictResolutionResult
 
 data class Resolved(val resolved: Resource) : ConflictResolutionResult()

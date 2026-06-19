@@ -21,6 +21,10 @@ import dev.ohs.fhir.search.Operation
 import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.UriClientParam
 
+/**
+ * Represents a criterion for filtering [UriClientParam]. e.g. filter(ValueSet.URL, { value =
+ * "https://example.com })
+ */
 @SearchDslMarker
 data class UriParamFilterCriterion(
   val parameter: UriClientParam,

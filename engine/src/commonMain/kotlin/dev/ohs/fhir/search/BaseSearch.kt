@@ -28,8 +28,13 @@ import dev.ohs.fhir.search.filter.UriParamFilterCriterion
 @BaseSearchDsl
 interface BaseSearch {
 
+  /** Logical operator between the filters. */
   var operation: Operation
+
+  /** Count of the maximum expected search results. */
   var count: Int?
+
+  /** Index from which the matching search results should be returned. */
   var from: Int?
 
   fun filter(
@@ -74,9 +79,65 @@ interface BaseSearch {
     operation: Operation = Operation.OR,
   )
 
+  /**
+   * When sorting is applied on a field with repeated values (e.g. [Patient.GIVEN] ), the order is
+   * defined by the `value` of the repeated values in the resource (e.g. [HumanName.given] for
+   * [Patient]).
+   *
+   * If there are two Patients p1 and p2 as follows
+   *
+   *  ```
+   *  {
+   *     "resourceType": "Patient",
+   *     "id": "p1",
+   *     "name": [
+   *         {
+   *             "family": "Cooper",
+   *             "given": [
+   *                 "3",
+   *                 "1"
+   *             ]
+   *         }
+   *     ]
+   * }
+   * ```
+   *
+   * AND
+   *
+   * ```
+   * {
+   *     "resourceType": "Patient",
+   *     "id": "p2",
+   *     "name": [
+   *         {
+   *             "family": "Cooper",
+   *             "given": [
+   *                 "2",
+   *                 "4"
+   *             ]
+   *         }
+   *     ]
+   * }
+   * ```
+   *
+   * Then sorting the patients in ascending or descending order with their given i.e [Patient.GIVEN]
+   * depends on the smallest (`1`, `3`) or largest (`2`, `4`) given in the first name respectively .
+   */
   fun sort(parameter: StringClientParam, order: Order)
 
+  /**
+   * When sorting is applied on a field with repeated values, defined by the `value` of the repeated
+   * values in the resource.
+   *
+   * @see sort(parameter: StringClientParam, order: Order) for more details.
+   */
   fun sort(parameter: NumberClientParam, order: Order)
 
+  /**
+   * When sorting is applied on a field with repeated values, defined by the `value` of the repeated
+   * values in the resource.
+   *
+   * @see sort(parameter: StringClientParam, order: Order) for more details.
+   */
   fun sort(parameter: DateClientParam, order: Order)
 }

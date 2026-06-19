@@ -131,6 +131,10 @@ class TokenFilterValue internal constructor() {
   }
 }
 
+/**
+ * A structure like [CodeableConcept] may contain multiple [Coding] values each of which will be a
+ * filter value. We use [TokenParamFilterValueInstance] to represent individual filter value.
+ */
 @SearchDslMarker
 internal data class TokenParamFilterValueInstance(
   var uri: String? = null,

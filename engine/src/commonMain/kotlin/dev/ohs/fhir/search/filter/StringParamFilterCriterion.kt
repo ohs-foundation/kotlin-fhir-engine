@@ -22,6 +22,10 @@ import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.StringClientParam
 import dev.ohs.fhir.search.StringFilterModifier
 
+/**
+ * Represents a criterion for filtering [StringClientParam]. e.g. filter(Patient.FAMILY, { value =
+ * "Jones" })
+ */
 @SearchDslMarker
 data class StringParamFilterCriterion(
   val parameter: StringClientParam,

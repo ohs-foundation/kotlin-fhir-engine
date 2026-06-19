@@ -18,4 +18,9 @@ package dev.ohs.fhir.sync.remote
 
 import dev.ohs.fhir.sync.DataSource
 
+/**
+ * Implementation of [DataSource] to sync data with the FHIR server using HTTP method calls.
+ *
+ * @param service Http service to make requests to the server.
+ */
 class FhirHttpDataSource(private val service: KtorHttpService) : DataSource

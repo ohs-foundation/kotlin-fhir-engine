@@ -19,13 +19,29 @@ package dev.ohs.fhir.sync.upload
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.db.Database
 
+/**
+ * Fetches local changes.
+ *
+ * This interface provides methods to check for the existence of further changes, retrieve the next
+ * batch of changes, and get the progress of fetched changes.
+ *
+ * It is marked as internal to keep [Database] unexposed to clients
+ */
 internal interface LocalChangeFetcher {
+
+  /** Represents the initial total number of local changes to upload. */
   val total: Int
 
+  /** Checks if there are more local changes to be fetched. */
   suspend fun hasNext(): Boolean
 
+  /** Retrieves the next batch of local changes. */
   suspend fun next(): List<LocalChange>
 
+  /**
+   * Returns [SyncUploadProgress], which contains the remaining changes left to upload and the
+   * initial total to upload.
+   */
   suspend fun getProgress(): SyncUploadProgress
 }
 

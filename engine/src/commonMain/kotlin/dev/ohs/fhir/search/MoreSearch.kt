@@ -43,6 +43,11 @@ import kotlinx.datetime.toInstant
  */
 private const val APPROXIMATION_COEFFICIENT = 0.1
 
+/**
+ * SQLite supports signed and unsigned integers with a maximum length of 8 bytes. The signed integers
+ * can range from `-9223372036854775808` to `+9223372036854775807`. See
+ * [Storage Classes and Datatypes](https://www.sqlite.org/datatype3.html)
+ */
 private const val MIN_VALUE = "-9223372036854775808"
 private const val MAX_VALUE = "9223372036854775808"
 
@@ -268,7 +273,34 @@ private fun Search.getSortOrder(
   return Pair(SearchQuery(sortJoinStatement, args), sortOrderStatement)
 }
 
-/** Builds the `GROUP BY`/`HAVING`/`ORDER BY` clause for the given [sort] and [order]. */
+/**
+ * Sorting by a field that has multiple indexed values may result in duplicated resources. So, we use
+ * `GROUP BY` + `HAVING` clause to find distinct values in specified order.
+ *
+ * To make the sorting order a bit predictable, we use MIN and MAX functions with `HAVING` to use the
+ * corresponding values for GROUPING to find the distinct results.
+ *
+ * e.g. If there are Two Patients resources with multiple first names P1 ( first names =`3`, `1`) and
+ * P2 (first names = `2`, `4`), when sorting them in
+ *
+ * *ASCENDING order*: MIN function is used so that the smallest names of both the patients are
+ * considered for Grouping `[P1(`1`), P2(`2`)]`.
+ *
+ * *DESCENDING order*: MAX function is used so that the largest names of both the patients are
+ * considered for Grouping `[P2(`4`), P1(`3`)]`.
+ *
+ * For the special case where the index value is NULL, we use the default 0 value and to complete the
+ * expression, we check that the value is greater than [MIN_VALUE], the minimum value an INTEGER type
+ * can store in SQLITE. The reason to check against [MIN_VALUE] rather that 0, since string is always
+ * greater than integer (StringIndexEntity) and Date/DateTimeIndexEntity will always have positive
+ * integer values, is because the NumberIndexEntity table may contain negative values in it.
+ *
+ * Without the `>= MIN_VALUE` check, NULL values are not included in the results if the default is 0.
+ *
+ * The default values provided in GROUP BY stage are not carried forward during the ORDER BY, so we
+ * provide [MAX_VALUE] and [MIN_VALUE] as default in ORDER BY respectively for ASCENDING and
+ * DESCENDING to make sure that results with null index values are always at the bottom.
+ */
 private fun generateGroupAndOrderQuery(
   sort: ClientParam,
   order: Order,
@@ -613,9 +645,18 @@ internal fun getConditionParamPair(
 }
 
 /**
- * Returns the half-width of the implicit-precision match range for a number search, based on the
- * value's decimal places (see https://www.hl7.org/fhir/search.html#number). E.g. 100.00 → 0.005
- * (matches [99.995, 100.005)), 100 → 0.5 (matches [99.5, 100.5)).
+ * Returns the range in which the value should lie for it to be considered a match (@see
+ * NumberFilter.query). The value is directly related to the scale of the BigDecimal.
+ *
+ * For example, a search with a value 100.00 (has a scale of 2) would match any value in [99.995,
+ * 100.005) and the function returns 0.005.
+ *
+ * For Big integers which have a negative scale the function returns 5 For example A search with a
+ * value 1000 would match any value in [995, 1005) and the function returns 5.
+ *
+ * The original used Java's `BigDecimal.scale()`, which isn't available on the KMP (ionspin)
+ * `BigDecimal`, so we derive the scale (number of decimal places) from `precision` and `exponent`
+ * instead.
  */
 private fun BigDecimal.getRange(): BigDecimal {
   val decimalPlaces = precision - 1 - exponent

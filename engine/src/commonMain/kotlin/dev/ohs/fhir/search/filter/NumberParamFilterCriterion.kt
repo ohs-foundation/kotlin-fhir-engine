@@ -24,6 +24,10 @@ import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.getConditionParamPair
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
+/**
+ * Represents a criterion for filtering [NumberClientParam]. e.g.
+ * filter(RiskAssessment.PROBABILITY,{value = BigDecimal("100")}).
+ */
 @SearchDslMarker
 data class NumberParamFilterCriterion(
   val parameter: NumberClientParam,

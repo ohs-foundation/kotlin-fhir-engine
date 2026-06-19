@@ -24,6 +24,10 @@ import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.getConditionParamPair
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
+/**
+ * Represents a criterion for filtering [QuantityClientParam]. e.g.
+ * filter(Observation.VALUE_QUANTITY,{value = BigDecimal("5.403")} )
+ */
 @SearchDslMarker
 data class QuantityParamFilterCriterion(
   val parameter: QuantityClientParam,

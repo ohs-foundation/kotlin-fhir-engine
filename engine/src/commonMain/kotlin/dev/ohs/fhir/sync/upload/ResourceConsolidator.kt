@@ -18,7 +18,19 @@ package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.db.Database
 
+/**
+ * Represents a mechanism to consolidate resources after they are uploaded.
+ *
+ * INTERNAL ONLY. This interface should NEVER been exposed as an external API because it works
+ * together with other components in the upload package to fulfill a specific upload strategy. After
+ * a resource is uploaded to a remote FHIR server and a response is returned, we need to consolidate
+ * any changes in the database, Examples of this would be, updating the lastUpdated timestamp field,
+ * or deleting the local change from the database, or updating the resource IDs and payloads to
+ * correspond with the server’s feedback.
+ */
 internal interface ResourceConsolidator {
+
+  /** Consolidates the local change token with the provided response from the FHIR server. */
   suspend fun consolidate(uploadRequestResult: UploadRequestResult)
 }
 
