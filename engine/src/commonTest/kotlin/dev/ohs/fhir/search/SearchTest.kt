@@ -1736,6 +1736,7 @@ class SearchTest {
     assertEquals(listOf("Patient", "given", "John", "Patient", "given", "Jane"), query.args)
   }
 
+  // Test for https://github.com/google/android-fhir/issues/903
   @Test
   fun search_patient_search_params_single_given_multiple_family() {
     val query =

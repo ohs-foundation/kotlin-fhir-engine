@@ -741,6 +741,7 @@ class ResourceIndexerTest {
     assertContains(
       resourceIndices.quantityIndices,
       QuantityIndex(
+        // Search parameter names flatten camel case, so "totalNet" becomes "totalnet".
         "totalnet",
         "Invoice.totalNet",
         FHIR_CURRENCY_SYSTEM,
