@@ -161,12 +161,24 @@ class FhirEngineImplTest {
     assertEquals("UpdatedFamily2", retrieved2.name.first().family?.value)
   }
 
-  // TODO: Engine test `update_existingAndNonExistingResource_shouldNotUpdateAnyResource` expects
-  // transactional rollback — when updating [existing, nonExistent], the existing resource should
-  // NOT be updated because the batch fails. Engine-kmp's withTransaction is currently a no-op
-  // (DatabaseImpl processes updates one-by-one with forEach), so the first update IS applied before
-  // the second fails. This test is skipped until withTransaction is implemented with Room KMP's
-  // useWriterConnection.
+  @Test
+  fun update_existingAndNonExistingResource_shouldNotUpdateAnyResource() = runTest {
+    val fhirEngine = FhirEngineProvider.getInstance()
+    val patient1 =
+      Patient(id = "test-update-patient-001", name = listOf(HumanName(family = FhirString(value = "Original"))))
+    fhirEngine.create(patient1)
+
+    val updatedPatient1 =
+      patient1.copy(name = listOf(HumanName(family = FhirString(value = "Updated"))))
+    val nonExistentPatient = Patient(id = "test-update-patient-002")
+
+    assertFailsWith<ResourceNotFoundException> {
+      fhirEngine.update(updatedPatient1, nonExistentPatient)
+    }
+
+    val retrieved = fhirEngine.get(ResourceType.Patient, "test-update-patient-001") as Patient
+    assertEquals("Original", retrieved.name.first().family?.value)
+  }
 
   @Test
   fun update_existingAndNonExistingResource_shouldThrowResourceNotFoundException() = runTest {
