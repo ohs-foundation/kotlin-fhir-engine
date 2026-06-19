@@ -37,27 +37,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
-/**
- * Ported: CRUD, x-fhir-query search, getLocalChanges, purge, withTransaction.
- *
- * Not yet ported (blocked, not arbitrary):
- * - search() by gender/name/_tag/_profile — depend on the 12 pre-existing ResourceIndexerTest
- *   failures (token/string/tag/profile indexing); they would fail until the indexer is fixed.
- * - syncUpload_* / syncDownload_* / conflict-resolution / "local changes consumed" — need the sync
- *   test harness (mocked upload/download lambdas, FhirSynchronizer) which isn't ported yet.
- * - LOCAL_LAST_UPDATED_PARAM tests — depend on local_lastUpdated indexing.
- * - readFromFile-based variants are rewritten to build resources inline (no JVM resource loader in
- *   commonTest).
- *
- * Adaptations:
- * - ApplicationProvider.getApplicationContext() → not needed (KMP provider has no Context)
- * - FhirServices.builder(context).inMemory().build() → FhirEngineProvider.init() + getInstance()
- * - HAPI Patient().apply { id = "x" } → kotlin-fhir Patient(id = "x")
- * - assertResourceEquals → compare IDs and fields directly
- * - Truth assertThat → kotlin.test assertEquals/assertTrue
- * - runBlocking → runTest
- * - Robolectric removed
- */
 class FhirEngineImplTest {
 
   @BeforeTest
@@ -218,7 +197,7 @@ class FhirEngineImplTest {
   fun clearDatabase_shouldClearAllTablesData() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
     fhirEngine.create(Patient(id = "clear-1"), Patient(id = "clear-2"))
-    assertEquals(3, fhirEngine.count<Patient> {}) // 2 + TEST_PATIENT_1
+    assertEquals(3, fhirEngine.count<Patient> {})
 
     fhirEngine.clearDatabase()
 
@@ -228,7 +207,6 @@ class FhirEngineImplTest {
   @Test
   fun delete_shouldRemoveResource() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
-    // TEST_PATIENT_1 is created in setUp.
     assertIs<Patient>(fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID))
 
     fhirEngine.delete(ResourceType.Patient, TEST_PATIENT_1_ID)
@@ -243,10 +221,8 @@ class FhirEngineImplTest {
   fun delete_nonexistentResource_isNoOp() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
 
-    // Deleting a resource that doesn't exist should not throw.
     fhirEngine.delete(ResourceType.Patient, "does-not-exist")
 
-    // The pre-existing resource is untouched.
     assertIs<Patient>(fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID))
   }
 
@@ -276,12 +252,10 @@ class FhirEngineImplTest {
     val fhirEngine = FhirEngineProvider.getInstance()
     fhirEngine.create(Patient(id = "xq1"), Patient(id = "xq2"), Patient(id = "xq3"))
 
-    // _id is a TOKEN search param (reliably indexed).
     val byId = fhirEngine.search("Patient?_id=xq2")
     assertEquals(1, byId.size)
     assertEquals("xq2", (byId.first().resource as Patient).id)
 
-    // _count limits the result set (TEST_PATIENT_1 + xq1/xq2/xq3 = 4 total).
     val limited = fhirEngine.search("Patient?_count=2")
     assertEquals(2, limited.size)
   }
@@ -351,7 +325,6 @@ class FhirEngineImplTest {
   @Test
   fun purge_withLocalChangeAndForcePurgeTrue_shouldPurgeResource() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
-    // TEST_PATIENT_1 is created in setUp and has a pending local change.
     fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID, true)
 
     assertFailsWith<ResourceNotFoundException> {
@@ -376,7 +349,6 @@ class FhirEngineImplTest {
   @Test
   fun purge_withLocalChangeAndForcePurgeFalse_shouldThrowIllegalStateException() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
-    // TEST_PATIENT_1 has a pending local change, so a non-forced purge must fail.
     val exception =
       assertFailsWith<IllegalStateException> {
         fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID)
@@ -412,7 +384,7 @@ class FhirEngineImplTest {
     try {
       fhirEngine.withTransaction {
         create(Patient(id = "txn-rollback"))
-        // Forces the transaction block to fail, rolling back the create above.
+        // An exception will rollback the entire block
         get(ResourceType.Patient, "non_existent_id")
       }
     } catch (_: ResourceNotFoundException) {}

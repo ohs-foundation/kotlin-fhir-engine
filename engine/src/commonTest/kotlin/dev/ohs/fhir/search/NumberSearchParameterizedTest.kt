@@ -22,14 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-/**
- * KMP adaptations:
- * - ParameterizedRobolectricTestRunner is unavailable; each parameterized test instead loops over
- *   the [cases] list internally.
- * - HAPI `RiskAssessment.PROBABILITY` → `NumberClientParam("probability")`.
- * - `java.math.BigDecimal` → ionspin `BigDecimal`; `.toDouble()` → `.doubleValue(false)`.
- * - Truth → kotlin.test; JUnit → kotlin.test.
- */
+/** Unit tests for when [NumberParamFilterCriterion] used in [MoreSearch]. */
 class NumberSearchParameterizedTest {
 
   private data class Case(

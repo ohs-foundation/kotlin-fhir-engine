@@ -22,15 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
-/**
- * KMP adaptations: Robolectric/Context removed (`getInstance()` takes no Context on Desktop/iOS);
- * `forceCleanup()`/`cleanup()` → `clearInstance()`; `CacheConfiguration.cacheDir` is a String path.
- *
- * Not ported:
- * - build_withAppAndActivityContext — Android Context-specific (no Context in KMP).
- * - cleanup_not_in_test_mode_fails — KMP has no public testMode-gated cleanup (only internal
- *   clearInstance()).
- */
+/** Unit tests for [FhirEngineProvider]. */
 class FhirEngineProviderTest {
 
   @AfterTest

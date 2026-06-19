@@ -37,18 +37,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * KMP adaptations:
- * - Robolectric removed; Truth → kotlin.test; JUnit → kotlin.test (`@BeforeTest`/`@AfterTest`).
- * - HAPI `Enumerations.SearchParamType` → `dev.ohs.fhir.index.SearchParamType`.
- * - HAPI `ResourceType` → `dev.ohs.fhir.model.r4.terminologies.ResourceType`.
- * - HAPI `SearchParameter` custom param → `SearchParamDefinition` in `FhirEngineConfiguration`.
- * - `provider.forceCleanup()` → `FhirEngineProvider.clearInstance()`.
- * - `value.toBigDecimal()` → ionspin `BigDecimal.parseString(...)`.
- * - `DateType/DateTimeType.toHumanDisplay()` → compare against
- *   `FhirDate/FhirDateTime.fromString(...)`.
- * - Test names drop `()` (parentheses break Kotlin/Native test naming).
- */
 class XFhirQueryTranslatorTest {
 
   @BeforeTest
@@ -268,8 +256,6 @@ class XFhirQueryTranslatorTest {
   fun applyFilterParam_datetimeType_addsFilterParam() {
     val search = Search(ResourceType.Patient)
 
-    // kotlin-fhir's FhirDateTime requires a timezone offset for a dateTime with a time component
-    // (per FHIR spec); HAPI was lenient and accepted "2022-01-21T12:21:59" without one.
     search.applyFilterParam(
       SearchParamDefinition("birthdate", SearchParamType.DATE, "Patient.birthDate"),
       "2022-01-21T12:21:59Z",

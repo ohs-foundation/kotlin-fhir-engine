@@ -31,39 +31,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
-/**
- * Tests SQL query generation from Search DSL. Each test builds a Search, calls getQuery(), and
- * asserts on the generated SQL string and argument list.
- *
- * Adaptations:
- * - HAPI Patient.BIRTHDATE → DateClientParam("birthdate")
- * - HAPI Patient.FAMILY → StringClientParam("family")
- * - HAPI Patient.GENDER → TokenClientParam("gender")
- * - HAPI Patient.ADDRESS → StringClientParam("address")
- * - HAPI Patient.ACTIVE → TokenClientParam("active")
- * - HAPI Patient.IDENTIFIER → TokenClientParam("identifier")
- * - HAPI Patient.TELECOM → TokenClientParam("telecom")
- * - HAPI Patient.PHONE → TokenClientParam("phone")
- * - HAPI Patient.GIVEN → StringClientParam("given")
- * - HAPI Observation.VALUE_QUANTITY → QuantityClientParam("value-quantity")
- * - HAPI Library.URL → UriClientParam("url")
- * - HAPI CarePlan.SUBJECT → ReferenceClientParam("subject")
- * - HAPI of(Coding(...)) → TokenFilterValue.coding(system, code)
- * - HAPI of(CodeType(...)) → TokenFilterValue.string(code)
- * - HAPI of(true) → TokenFilterValue.boolean(true)
- * - HAPI of(UriType(...)) → TokenFilterValue.string(value)
- * - HAPI of(identifier) → TokenFilterValue.coding(system, value)
- * - Robolectric removed, Truth → kotlin.test
- * - runBlocking → no wrapping needed (getQuery is not suspend)
- *
- * Remaining un-ported tests (4 of 73), all genuinely blocked — not arbitrary:
- * - search_filter_date_approximate / search_filter_dateTime_approximate — engine mocks "now" via
- *   DateProvider, but engine-kmp's APPROXIMATE branch reads Clock.System.now() directly.
- * - search_filter_quantity_canonical_match — engine-kmp UnitConverter is a no-op (UCUM not ported).
- * - search CarePlan filter with large list of patient reference — asserts a ~990-deep nested SQL
- *   literal; the divide-and-conquer toQueryString algorithm is already covered by the disjunction
- *   tests, so the giant exact-string literal isn't reproduced.
- */
 class SearchTest {
 
   @Test
@@ -977,15 +944,6 @@ class SearchTest {
       query.args,
     )
   }
-
-  // TODO: search_filter_quantity_canonical_match — engine test expects UCUM conversion from mg to g
-  // with value 5403mg → 5.403g. Engine-kmp UnitConverter is currently a no-op (returns original
-  // value unchanged). Skip until UCUM conversion is implemented.
-
-  //
-  // NOTE: search_filter_date_approximate / search_filter_dateTime_approximate are NOT ported: the
-  // engine mocks "now" via DateProvider, but engine-kmp's APPROXIMATE branch reads
-  // Clock.System.now() directly, so the result isn't deterministic for a test.
 
   private fun epochDay(date: String): Long = LocalDate.parse(date).toEpochDays().toLong()
 
@@ -2620,6 +2578,4 @@ class SearchTest {
     )
   }
 
-  // Blocked (see class KDoc): date/dateTime APPROXIMATE (Clock.System.now not mockable),
-  // quantity_canonical_match (UCUM not ported), large-reference-list (~990-deep literal).
 }

@@ -748,7 +748,6 @@ class ResourceIndexerTest {
     assertContains(
       resourceIndices.quantityIndices,
       QuantityIndex(
-        // Search parameter names flatten camel case, so "totalNet" becomes "totalnet".
         "totalnet",
         "Invoice.totalNet",
         FHIR_CURRENCY_SYSTEM,
@@ -1385,11 +1384,6 @@ class ResourceIndexerTest {
     )
   }
 
-  /**
-   * KMP note: engine's versions read fixture FHIR resources from JSON files via HAPI's
-   * `readFromFile(...)`. commonTest can't do filesystem reads portably, so the fixture JSONs are
-   * embedded as multi-line string constants and parsed via `FhirR4Json().decodeFromString(...)`.
-   */
   @Test
   fun index_invoice() {
     val invoice = FhirR4Json().decodeFromString(INVOICE_JSON) as dev.ohs.fhir.model.r4.Invoice
@@ -1540,10 +1534,9 @@ class ResourceIndexerTest {
   }
 
   private companion object {
-    /** See: https://www.hl7.org/fhir/valueset-currencies.html */
+    // See: https://www.hl7.org/fhir/valueset-currencies.html
     const val FHIR_CURRENCY_SYSTEM = "urn:iso:std:iso:4217"
 
-    /** Verbatim copy of `engine/test-data/quantity_test_invoice.json`. */
     const val INVOICE_JSON = """
 {
   "resourceType": "Invoice",
@@ -1595,7 +1588,6 @@ class ResourceIndexerTest {
 }
 """
 
-    /** Verbatim copy of `engine/test-data/uri_test_questionnaire.json`. */
     const val QUESTIONNAIRE_JSON = """
 {
   "resourceType": "Questionnaire",
@@ -1647,7 +1639,6 @@ class ResourceIndexerTest {
 }
 """
 
-    /** Verbatim copy of `engine/test-data/location-example-hl7hq.json` (text/div trimmed). */
     const val LOCATION_JSON = """
 {
   "resourceType": "Location",
@@ -1695,7 +1686,6 @@ class ResourceIndexerTest {
 }
 """
 
-    /** Verbatim copy of `engine/test-data/date_test_patient.json` (text/div trimmed). */
     const val PATIENT_JSON = """
 {
   "resourceType": "Patient",
