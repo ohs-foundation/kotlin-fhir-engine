@@ -26,7 +26,7 @@ import dev.ohs.fhir.model.r4.Resource
  * Searches the database and returns a list of resources matching the given [Search] criteria.
  *
  * Example usage:
- * ```
+ * ```kotlin
  * val patients = fhirEngine.search<Patient> {
  *   filter(StringClientParam("name"), { value = "John" })
  *   count = 10
@@ -45,7 +45,7 @@ suspend inline fun <reified R : Resource> FhirEngine.search(
  * Returns the total count of entities available for the given [Search] criteria.
  *
  * Example usage:
- * ```
+ * ```kotlin
  * val count = fhirEngine.count<Patient> {
  *   filter(StringClientParam("name"), { value = "John" })
  * }
