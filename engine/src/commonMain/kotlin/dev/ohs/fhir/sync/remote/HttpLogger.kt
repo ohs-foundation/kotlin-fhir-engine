@@ -16,10 +16,31 @@
 
 package dev.ohs.fhir.sync.remote
 
-/** Logger for the network communication between the engine and the remote server */
-class HttpLogger {
+/**
+ * Configuration for logging HTTP communication between the engine and the remote FHIR server.
+ *
+ * @property level The level of detail to log.
+ * @property headersToIgnore A set of header names to exclude from logged output.
+ */
+data class HttpLogger(
+  val level: Level = Level.NONE,
+  val headersToIgnore: Set<String> = emptySet(),
+) {
+  enum class Level {
+    /** No logs. */
+    NONE,
+
+    /** Logs request and response lines. */
+    BASIC,
+
+    /** Logs request and response lines and their respective headers. */
+    HEADERS,
+
+    /** Logs request and response lines, headers, and bodies. */
+    BODY,
+  }
+
   companion object {
-    /** The logger will not log any data. */
     val NONE = HttpLogger()
   }
 }
