@@ -45,13 +45,13 @@ internal object XFhirQueryTranslator {
   private const val XFHIR_QUERY_SORT_PARAM = "_sort"
   private const val XFHIR_QUERY_COUNT_PARAM = "_count"
 
-  // NOTE: This is a lazy accessor (not an eager `val` like the engine) because the engine relies on
-  // Robolectric's per-test classloader isolation to re-evaluate the provider for each test. KMP
-  // test
-  // runs share a single JVM/object instance, so an eager `val` would capture a stale provider
-  // across
-  // test classes (e.g. one without custom search parameters). Re-reading per call matches the
-  // engine's effective per-test behavior.
+  /**
+   * This is a lazy accessor (not an eager `val` like the engine) because the engine relies on
+   * Robolectric's per-test classloader isolation to re-evaluate the provider for each test. KMP test
+   * runs share a single JVM/object instance, so an eager `val` would capture a stale provider across
+   * test classes (e.g. one without custom search parameters). Re-reading per call matches the
+   * engine's effective per-test behavior.
+   */
   private val searchParamProvider: SearchParamDefinitionsProviderImpl
     get() = FhirEngineProvider.getSearchParamProvider() ?: SearchParamDefinitionsProviderImpl()
 

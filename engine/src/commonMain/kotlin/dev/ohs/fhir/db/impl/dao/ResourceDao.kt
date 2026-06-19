@@ -52,8 +52,10 @@ import dev.ohs.fhir.model.r4.Instant as FhirInstant
 
 @Dao
 internal abstract class ResourceDao {
-  // this is ugly but there is no way to inject these right now in Room as it is the one creating
-  // the dao
+  /**
+   * This is ugly but there is no way to inject these right now in Room as it is the one creating the
+   * dao.
+   */
   lateinit var resourceIndexer: ResourceIndexer
 
   /**

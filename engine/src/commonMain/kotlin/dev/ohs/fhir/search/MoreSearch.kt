@@ -46,6 +46,11 @@ private const val APPROXIMATION_COEFFICIENT = 0.1
 private const val MIN_VALUE = "-9223372036854775808"
 private const val MAX_VALUE = "9223372036854775808"
 
+/**
+ * Executes this search against [database]: runs the base query, then any `_include` (forward)
+ * and `_revinclude` (reverse) reference queries, and assembles the matched [SearchResult]s with
+ * their included/revIncluded resources grouped by search index.
+ */
 internal suspend fun <R : Resource> Search.execute(database: Database): List<SearchResult<R>> {
   val baseResources = database.search<R>(getQuery())
 
@@ -92,14 +97,21 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
   }
 }
 
+/** Returns the number of resources matching this search. */
 internal suspend fun Search.count(database: Database): Long {
   return database.count(getQuery(true))
 }
 
+/** Builds the SQL [SearchQuery] for this search; pass [isCount] to produce a `COUNT(*)` query. */
 fun Search.getQuery(isCount: Boolean = false): SearchQuery {
   return getQuery(isCount, null)
 }
 
+/**
+ * Builds the SQL [SearchQuery] loading resources that reference the base results via
+ * `_revinclude` (one `UNION ALL` branch per reverse include). [includeIds] are the base results'
+ * `type/id` strings.
+ */
 internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
   val uuidsString = CharArray(includeIds.size) { '?' }.joinToString()
@@ -154,6 +166,10 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
     .let { SearchQuery(it, args) }
 }
 
+/**
+ * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include`
+ * (one `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
+ */
 internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
   val baseResourceType = type
@@ -209,6 +225,10 @@ internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
     .let { SearchQuery(it, args) }
 }
 
+/**
+ * Builds the `LEFT JOIN` and `GROUP BY`/`HAVING`/`ORDER BY` fragments needed to sort by the
+ * search's sort parameter. Returns the join query (with its args) paired with the order-by clause.
+ */
 private fun Search.getSortOrder(
   otherTable: String,
   isReferencedSearch: Boolean = false,
@@ -248,6 +268,7 @@ private fun Search.getSortOrder(
   return Pair(SearchQuery(sortJoinStatement, args), sortOrderStatement)
 }
 
+/** Builds the `GROUP BY`/`HAVING`/`ORDER BY` clause for the given [sort] and [order]. */
 private fun generateGroupAndOrderQuery(
   sort: ClientParam,
   order: Order,
@@ -287,6 +308,7 @@ private fun generateGroupAndOrderQuery(
   return sortOrderStatement
 }
 
+/** Maps every filter criterion (string, quantity, number, reference, date/time, token, uri) to its subquery. */
 private fun Search.getFilterQueries() =
   (stringFilterCriteria +
       quantityFilterCriteria +
@@ -297,6 +319,11 @@ private fun Search.getFilterQueries() =
       uriFilterCriteria)
     .map { it.query(type) }
 
+/**
+ * Builds the main SQL [SearchQuery], combining sort, filter, nested, and limit clauses. Produces a
+ * `COUNT(*)` query when [isCount] is set, a nested sub-select when [nestedContext] is provided (for
+ * chained searches), or a normal resource query otherwise.
+ */
 internal fun Search.getQuery(
   isCount: Boolean = false,
   nestedContext: NestedContext? = null,
@@ -391,6 +418,7 @@ internal fun Search.getQuery(
   )
 }
 
+/** The SQL keyword for this sort order (`ASC`, `DESC`, or empty when null). */
 private val Order?.sqlString: String
   get() =
     when (this) {
@@ -399,6 +427,10 @@ private val Order?.sqlString: String
       null -> ""
     }
 
+/**
+ * Returns the SQL condition and bound params for a date [value] filtered with [prefix], over the
+ * date index's `index_from`/`index_to` epoch-day range. See https://www.hl7.org/fhir/search.html#date.
+ */
 internal fun getConditionParamPairForDate(
   prefix: ParamPrefixEnum,
   value: FhirDate,
@@ -444,6 +476,10 @@ internal fun getConditionParamPairForDate(
   }
 }
 
+/**
+ * Returns the SQL condition and bound params for a dateTime [value] filtered with [prefix], over the
+ * dateTime index's `index_from`/`index_to` epoch-millis range. See https://www.hl7.org/fhir/search.html#date.
+ */
 internal fun getConditionParamPairForDateTime(
   prefix: ParamPrefixEnum,
   value: FhirDateTime,
@@ -603,12 +639,14 @@ private fun BigDecimal.getRange(): BigDecimal {
   }
 }
 
+/** A SQL condition fragment paired with its bound [params]. */
 data class ConditionParam<T>(val condition: String, val params: List<T>) {
   constructor(condition: String, vararg params: T) : this(condition, params.asList())
 
   val queryString = if (params.size > 1) "($condition)" else condition
 }
 
+/** Maps each sortable search-param type to the index table and column used to sort on it. */
 private enum class SortTableInfo(val tableName: String, val columnName: String) {
   STRING_SORT_TABLE_INFO("StringIndexEntity", "index_value"),
   NUMBER_SORT_TABLE_INFO("NumberIndexEntity", "index_value"),
@@ -616,6 +654,11 @@ private enum class SortTableInfo(val tableName: String, val columnName: String) 
   DATE_TIME_SORT_TABLE_INFO("DateTimeIndexEntity", "index_from"),
 }
 
+/**
+ * Computes the matching range for the `ap` (approximate) date/dateTime prefix by widening
+ * [valueRange] proportionally to its distance from [currentRange] (now). See
+ * https://www.hl7.org/fhir/search.html#prefix.
+ */
 private fun getApproximateDateRange(
   valueRange: LongRange,
   currentRange: LongRange,
@@ -631,8 +674,10 @@ private fun getApproximateDateRange(
   )
 }
 
+/** The widened [start]..[end] bounds produced for an approximate (`ap`) date search. */
 private data class ApproximateDateRange(val start: Long, val end: Long)
 
+/** Converts a [FhirDate] to its inclusive `[start, end]` epoch-day range (a year or month spans multiple days). */
 internal fun fhirDateToEpochDayRange(date: FhirDate): Pair<Long, Long> =
   when (date) {
     is FhirDate.Date -> {
@@ -651,6 +696,7 @@ internal fun fhirDateToEpochDayRange(date: FhirDate): Pair<Long, Long> =
     }
   }
 
+/** Returns the start of [dateTime] as epoch milliseconds (UTC). */
 internal fun fhirDateTimeToEpochMillis(dateTime: FhirDateTime): Long =
   when (dateTime) {
     is FhirDateTime.DateTime ->
@@ -666,6 +712,7 @@ internal fun fhirDateTimeToEpochMillis(dateTime: FhirDateTime): Long =
     }
   }
 
+/** Returns the end of [dateTime] as epoch milliseconds (UTC) — the last instant of its precision window. */
 internal fun fhirDateTimeToEndEpochMillis(dateTime: FhirDateTime): Long =
   when (dateTime) {
     is FhirDateTime.DateTime ->
@@ -685,5 +732,6 @@ internal fun fhirDateTimeToEndEpochMillis(dateTime: FhirDateTime): Long =
     }
   }
 
+/** Returns the inclusive `[start, end]` epoch-millis range covered by [dateTime]'s precision. */
 internal fun fhirDateTimeToEpochMillisRange(dateTime: FhirDateTime): Pair<Long, Long> =
   fhirDateTimeToEpochMillis(dateTime) to fhirDateTimeToEndEpochMillis(dateTime)

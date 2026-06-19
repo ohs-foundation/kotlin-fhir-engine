@@ -76,6 +76,11 @@ internal data class DateClientParamFilterCriteria(
   override val operation: Operation,
 ) : FilterCriteria(filters, operation, parameter, "") {
 
+  /**
+   * @return a unified DateClientParam [SearchQuery] that joins the individual Date and DateTime
+   *   queries. A filter may carry only one of the two criterion types, so [FilterCriteria] with no
+   *   criterion are filtered out before joining.
+   */
   override fun query(type: ResourceType): SearchQuery {
     val filterCriteria =
       listOf(
@@ -87,9 +92,6 @@ internal data class DateClientParamFilterCriteria(
         ),
       )
 
-    // Join the individual Date and DateTime queries to create a unified DateClientParam query. The
-    // user may have provided either a single type or both types of criterion. So filter weeds
-    // FilterCriteria with no criterion.
     return filterCriteria
       .filter { it.filters.isNotEmpty() }
       .map { it.query(type) }
