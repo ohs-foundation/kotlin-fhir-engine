@@ -120,35 +120,12 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
   val uuidsString = CharArray(includeIds.size) { '?' }.joinToString()
 
-  fun generateFilterQuery(nestedSearch: NestedSearch): String {
-    val (param, search) = nestedSearch
-    val resourceToInclude = search.type
-    args.add(resourceToInclude.name)
-    args.add(param.paramName)
-    args.addAll(includeIds)
-
-    var filterQuery = ""
-    val filters = search.getFilterQueries()
-    val iterator = filters.listIterator()
-    while (iterator.hasNext()) {
-      iterator.next().let {
-        filterQuery += it.query
-        args.addAll(it.args)
-      }
-      if (iterator.hasNext()) {
-        filterQuery += if (search.operation == Operation.OR) "\n UNION \n" else "\n INTERSECT \n"
-      }
-    }
-    if (filters.isEmpty()) args.add(resourceToInclude.name)
-    return filterQuery
-  }
-
   return revIncludes
     .map {
       val (join, order) =
         it.search.getSortOrder(otherTable = "re", groupByColumn = "rie.index_value")
       args.addAll(join.args)
-      val filterQuery = generateFilterQuery(it)
+      val filterQuery = generateRevIncludeFilterQuery(it, args, includeIds)
       """
       SELECT rie.index_name, rie.index_value, re.serializedResource
       FROM ResourceEntity re
@@ -179,35 +156,12 @@ internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
   val baseResourceType = type
   val uuidsString = CharArray(includeIds.size) { '?' }.joinToString()
 
-  fun generateFilterQuery(nestedSearch: NestedSearch): String {
-    val (param, search) = nestedSearch
-    val resourceToInclude = search.type
-    args.add(baseResourceType.name)
-    args.add(param.paramName)
-    args.addAll(includeIds)
-
-    var filterQuery = ""
-    val filters = search.getFilterQueries()
-    val iterator = filters.listIterator()
-    while (iterator.hasNext()) {
-      iterator.next().let {
-        filterQuery += it.query
-        args.addAll(it.args)
-      }
-      if (iterator.hasNext()) {
-        filterQuery += if (search.operation == Operation.OR) "\nUNION\n" else "\nINTERSECT\n"
-      }
-    }
-    if (filters.isEmpty()) args.add(resourceToInclude.name)
-    return filterQuery
-  }
-
   return forwardIncludes
     .map {
       val (join, order) =
         it.search.getSortOrder(otherTable = "re", groupByColumn = "rie.resourceUuid")
       args.addAll(join.args)
-      val filterQuery = generateFilterQuery(it)
+      val filterQuery = generateIncludeFilterQuery(it, args, baseResourceType, includeIds)
       """
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
@@ -227,6 +181,69 @@ internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
     .filter { it.isNotBlank() }
     .joinToString("\n") { it.trim() }
     .let { SearchQuery(it, args) }
+}
+
+/**
+ * Builds the filter sub-query for a single `_revinclude` and appends its bind args to [args]. The
+ * referencing resource type is bound from the nested search's own type.
+ */
+private fun generateRevIncludeFilterQuery(
+  nestedSearch: NestedSearch,
+  args: MutableList<Any>,
+  includeIds: List<String>,
+): String {
+  val (param, search) = nestedSearch
+  val resourceToInclude = search.type
+  args.add(resourceToInclude.name)
+  args.add(param.paramName)
+  args.addAll(includeIds)
+
+  var filterQuery = ""
+  val filters = search.getFilterQueries()
+  val iterator = filters.listIterator()
+  while (iterator.hasNext()) {
+    iterator.next().let {
+      filterQuery += it.query
+      args.addAll(it.args)
+    }
+    if (iterator.hasNext()) {
+      filterQuery += if (search.operation == Operation.OR) "\n UNION \n" else "\n INTERSECT \n"
+    }
+  }
+  if (filters.isEmpty()) args.add(resourceToInclude.name)
+  return filterQuery
+}
+
+/**
+ * Builds the filter sub-query for a single `_include` and appends its bind args to [args]. The
+ * referencing resource type is bound from [baseResourceType] (the base search's type).
+ */
+private fun generateIncludeFilterQuery(
+  nestedSearch: NestedSearch,
+  args: MutableList<Any>,
+  baseResourceType: ResourceType,
+  includeIds: List<String>,
+): String {
+  val (param, search) = nestedSearch
+  val resourceToInclude = search.type
+  args.add(baseResourceType.name)
+  args.add(param.paramName)
+  args.addAll(includeIds)
+
+  var filterQuery = ""
+  val filters = search.getFilterQueries()
+  val iterator = filters.listIterator()
+  while (iterator.hasNext()) {
+    iterator.next().let {
+      filterQuery += it.query
+      args.addAll(it.args)
+    }
+    if (iterator.hasNext()) {
+      filterQuery += if (search.operation == Operation.OR) "\nUNION\n" else "\nINTERSECT\n"
+    }
+  }
+  if (filters.isEmpty()) args.add(resourceToInclude.name)
+  return filterQuery
 }
 
 /**
