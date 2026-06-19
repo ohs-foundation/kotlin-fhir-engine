@@ -613,27 +613,14 @@ internal fun getConditionParamPair(
 }
 
 /**
- * Returns the range for an implicit precision search (see
- * https://www.hl7.org/fhir/search.html#number). The value is directly related to the number of
- * decimal digits.
- *
- * For example, a search with a value 100.00 (has 2 decimal places) would match any value
- * in [99.995, 100.005) and the function returns 0.005.
- *
- * For integers which have no decimal places the function returns 5. For example a search with a
- * value 1000 would match any value in [995, 1005) and the function returns 5.
- *
- * Note: ionspin BigDecimal's `scale` property comes from DecimalMode and is -1 when unset. We
- * compute Java-style scale (number of decimal places) from the exponent instead.
+ * Returns the half-width of the implicit-precision match range for a number search, based on the
+ * value's decimal places (see https://www.hl7.org/fhir/search.html#number). E.g. 100.00 → 0.005
+ * (matches [99.995, 100.005)), 100 → 0.5 (matches [99.5, 100.5)).
  */
 private fun BigDecimal.getRange(): BigDecimal {
-  // In ionspin BigDecimal, value = significand * 10^(exponent - precision + 1).
-  // Java-style scale (number of decimal places) = precision - 1 - exponent.
-  // For example: 5.403 → significand=5403, exponent=0, precision=4 → javaScale=3
-  //              1000  → significand=1,    exponent=3, precision=1 → javaScale=-3 (integer)
-  val javaScale = precision - 1 - exponent
-  return if (javaScale > 0) {
-    BigDecimal.fromDouble(0.5).divide(BigDecimal.fromInt(10).pow(javaScale))
+  val decimalPlaces = precision - 1 - exponent
+  return if (decimalPlaces >= 0) {
+    BigDecimal.fromDouble(0.5).divide(BigDecimal.fromInt(10).pow(decimalPlaces))
   } else {
     BigDecimal.fromInt(5)
   }

@@ -390,4 +390,29 @@ class NumberSearchParameterizedTest {
       search.args,
     )
   }
+
+  @Test
+  fun search_integerValue_usesHalfUnitImplicitPrecision() {
+    val search =
+      Search(ResourceType.RiskAssessment)
+        .apply {
+          filter(
+            NumberClientParam("probability"),
+            {
+              prefix = ParamPrefixEnum.EQUAL
+              value = BigDecimal.parseString("100")
+            },
+          )
+        }
+        .getQuery()
+    assertEquals(
+      listOf(
+        ResourceType.RiskAssessment.name,
+        "probability",
+        BigDecimal.parseString("99.5").doubleValue(false),
+        BigDecimal.parseString("100.5").doubleValue(false),
+      ),
+      search.args,
+    )
+  }
 }
