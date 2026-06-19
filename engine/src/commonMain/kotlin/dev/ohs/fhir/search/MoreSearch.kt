@@ -26,6 +26,7 @@ import dev.ohs.fhir.ucumUrl
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.math.absoluteValue
 import kotlin.math.roundToLong
@@ -92,9 +93,7 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
           }
           ?.groupBy(
             {
-              dev.ohs.fhir.model.r4.terminologies.ResourceType.fromCode(
-                it.resource.resourceType,
-              ) to it.searchIndex
+              ResourceType.fromCode(it.resource.resourceType) to it.searchIndex
             },
             { it.resource },
           ),
