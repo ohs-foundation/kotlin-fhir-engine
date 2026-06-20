@@ -23,17 +23,22 @@ import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
+private var dataStoreInstance: DataStore<Preferences>? = null
+
 @OptIn(ExperimentalForeignApi::class)
-internal fun createDataStore(): DataStore<Preferences> = createDataStore {
-  val docDir =
-    NSFileManager.defaultManager.URLForDirectory(
-      directory = NSDocumentDirectory,
-      inDomain = NSUserDomainMask,
-      appropriateForURL = null,
-      create = false,
-      error = null,
-    )
-  requireNotNull(docDir).path + "/$fhirDataStoreFileName"
-}
+internal fun createDataStore(): DataStore<Preferences> =
+  dataStoreInstance
+    ?: run {
+        val docDir =
+          NSFileManager.defaultManager.URLForDirectory(
+            directory = NSDocumentDirectory,
+            inDomain = NSUserDomainMask,
+            appropriateForURL = null,
+            create = false,
+            error = null,
+          )
+        createDataStore { requireNotNull(docDir).path + "/$fhirDataStoreFileName" }
+          .also { dataStoreInstance = it }
+      }
 
 internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()
