@@ -50,7 +50,6 @@ class SyncViewModel(private val scope: CoroutineScope) {
         delay(600)
         if (!isActive) return@launch
         _status.value = CurrentSyncJobStatus.Running
-        // Simulate work.
         delay(2000)
         if (!isActive) return@launch
         _lastSyncTime.value = now().formatTimestamp()

@@ -44,7 +44,6 @@ class PeriodicSyncViewModel(private val scope: CoroutineScope) {
     job =
       scope.launch {
         while (isActive) {
-          // Run one simulated sync cycle.
           _uiState.value = _uiState.value.copy(currentStatus = "Running", progress = 0)
           for (pct in 0..100 step 20) {
             _uiState.value = _uiState.value.copy(progress = pct)
@@ -58,7 +57,6 @@ class PeriodicSyncViewModel(private val scope: CoroutineScope) {
               lastSyncStatus = "Succeeded",
               lastSyncTime = now().formatTimestamp(),
             )
-          // Wait before the next periodic run.
           delay(5000)
         }
       }

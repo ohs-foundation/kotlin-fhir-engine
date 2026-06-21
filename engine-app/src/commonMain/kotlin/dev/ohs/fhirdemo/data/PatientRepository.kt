@@ -70,8 +70,6 @@ class PatientRepository(private val engine: FhirEngine) {
   }
 }
 
-// --- mapping ---
-
 private fun Patient.toUi(): PatientUiModel {
   val name = name.firstOrNull()
   val phone = telecom.firstOrNull { it.system?.value == ContactPoint.ContactPointSystem.Phone }

@@ -121,7 +121,6 @@ class CrudViewModel(
       repository.createWithId(model)
       currentPatientId = form.id
       notify("Patient is saved.")
-      // Reset for the next create.
       _form.value = CrudFormState(id = newId(), editable = true)
     }
   }
