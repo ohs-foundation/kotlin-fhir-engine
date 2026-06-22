@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,9 @@ data class LocalChange(
   var token: LocalChangeToken,
 ) {
   enum class Type(val value: Int) {
-    INSERT(1), // create a new resource. payload is the entire resource json.
-    UPDATE(2), // patch. payload is the json patch.
-    DELETE(3), // delete. payload is empty string.
+    INSERT(1), // payload is the entire resource json.
+    UPDATE(2), // payload is the json patch.
+    DELETE(3), // payload is empty string.
     ;
 
     companion object {

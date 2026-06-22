@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@ import kotlin.uuid.Uuid
  * https://developer.android.com/training/data-storage/room/referencing-data
  */
 internal object DbTypeConverters {
-  // Since we're narrowing BigDecimal to double, search/sort precision is limited.
-  // Search/sort for values that are close enough to resolve to the same double will be undefined.
+  /**
+   * Since we're narrowing BigDecimal to double, search/sort precision is limited. Search/sort for
+   * values that are close enough to resolve to the same double will be undefined.
+   */
   @TypeConverter fun bigDecimalToDouble(value: BigDecimal): Double = value.doubleValue(false)
 
   @TypeConverter fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)

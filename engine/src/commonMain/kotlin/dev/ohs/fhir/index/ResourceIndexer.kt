@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2026 Google LLC
+ * Copyright 2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 package dev.ohs.fhir.index
 
-import dev.ohs.fhir.ConverterException
 import dev.ohs.fhir.UcumValue
-import dev.ohs.fhir.UnitConverter
+import dev.ohs.fhir.toEqualCanonical
 import dev.ohs.fhir.getResourceType
 import dev.ohs.fhir.index.entities.DateIndex
 import dev.ohs.fhir.index.entities.DateTimeIndex
@@ -33,6 +32,8 @@ import dev.ohs.fhir.search.LAST_UPDATED
 import dev.ohs.fhir.search.LOCAL_LAST_UPDATED
 import dev.ohs.fhir.ucumUrl
 import dev.ohs.fhir.fhirpath.FhirPathEngine
+import dev.ohs.fhir.fhirpath.types.FhirPathDate
+import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
 import dev.ohs.fhir.model.r4.Address
 import dev.ohs.fhir.model.r4.Canonical
 import dev.ohs.fhir.model.r4.Code
@@ -63,6 +64,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
@@ -97,10 +99,11 @@ internal class ResourceIndexer(
           SearchParamType.NUMBER ->
             numberIndex(searchParam, value)?.also { indexBuilder.addNumberIndex(it) }
           SearchParamType.DATE ->
-            if (value is Date) {
-              dateIndex(searchParam, value)?.also { indexBuilder.addDateIndex(it) }
-            } else {
-              dateTimeIndex(searchParam, value)?.also { indexBuilder.addDateTimeIndex(it) }
+            when (value) {
+              is Date -> dateIndex(searchParam, value)?.also { indexBuilder.addDateIndex(it) }
+              is FhirPathDate ->
+                fhirPathDateIndex(searchParam, value)?.also { indexBuilder.addDateIndex(it) }
+              else -> dateTimeIndex(searchParam, value)?.also { indexBuilder.addDateTimeIndex(it) }
             }
           SearchParamType.STRING ->
             stringIndex(searchParam, value)?.also { indexBuilder.addStringIndex(it) }
@@ -188,8 +191,88 @@ internal class ResourceIndexer(
             }
           }
         }
+        is FhirPathDateTime -> {
+          val (from, to) = fhirPathDateTimeToEpochMillisRange(value)
+          DateTimeIndex(searchParam.name, searchParam.path, from, to)
+        }
         else -> null
       }
+
+    /** Builds a [DateIndex] from the [FhirPathDate] that fhir-path returns for `date` params. */
+    private fun fhirPathDateIndex(searchParam: SearchParamDefinition, value: FhirPathDate): DateIndex {
+      val (from, to) = fhirPathDateToEpochDaysRange(value)
+      return DateIndex(searchParam.name, searchParam.path, from, to)
+    }
+
+    /** Inclusive [start, end] epoch-day range for a [FhirPathDate] at its native precision. */
+    private fun fhirPathDateToEpochDaysRange(d: FhirPathDate): Pair<Long, Long> =
+      when (d.precision) {
+        FhirPathDate.Precision.YEAR ->
+          LocalDate(d.year, 1, 1).toEpochDays() to LocalDate(d.year, 12, 31).toEpochDays()
+        FhirPathDate.Precision.MONTH -> {
+          val firstDay = LocalDate(d.year, d.month!!, 1)
+          val lastDay = firstDay.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
+          firstDay.toEpochDays() to lastDay.toEpochDays()
+        }
+        FhirPathDate.Precision.DAY ->
+          LocalDate(d.year, d.month!!, d.day!!).toEpochDays().let { it to it }
+      }
+
+    /** Inclusive [start, end] epoch-millis range for a [FhirPathDateTime] at its native precision. */
+    private fun fhirPathDateTimeToEpochMillisRange(dt: FhirPathDateTime): Pair<Long, Long> {
+      val offset = dt.utcOffset ?: UtcOffset.ZERO
+      return when (dt.precision) {
+        FhirPathDateTime.Precision.YEAR -> {
+          val start = LocalDateTime(dt.year, 1, 1, 0, 0, 0).toInstant(offset).toEpochMilliseconds()
+          val endExclusive =
+            LocalDateTime(dt.year + 1, 1, 1, 0, 0, 0).toInstant(offset).toEpochMilliseconds()
+          start to endExclusive - 1
+        }
+        FhirPathDateTime.Precision.MONTH -> {
+          val next = LocalDate(dt.year, dt.month!!, 1).plus(1, DateTimeUnit.MONTH)
+          val start =
+            LocalDateTime(dt.year, dt.month!!, 1, 0, 0, 0).toInstant(offset).toEpochMilliseconds()
+          val endExclusive =
+            LocalDateTime(next.year, next.month, next.day, 0, 0, 0)
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          start to endExclusive - 1
+        }
+        FhirPathDateTime.Precision.DAY -> {
+          val next = LocalDate(dt.year, dt.month!!, dt.day!!).plus(1, DateTimeUnit.DAY)
+          val start =
+            LocalDateTime(dt.year, dt.month!!, dt.day!!, 0, 0, 0)
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          val endExclusive =
+            LocalDateTime(next.year, next.month, next.day, 0, 0, 0)
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          start to endExclusive - 1
+        }
+        FhirPathDateTime.Precision.HOUR -> {
+          val start =
+            LocalDateTime(dt.year, dt.month!!, dt.day!!, dt.hour!!, 0, 0)
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          start to start + 3_600_000 - 1
+        }
+        FhirPathDateTime.Precision.MINUTE -> {
+          val start =
+            LocalDateTime(dt.year, dt.month!!, dt.day!!, dt.hour!!, dt.minute!!, 0)
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          start to start + 60_000 - 1
+        }
+        FhirPathDateTime.Precision.SECOND -> {
+          val start =
+            LocalDateTime(dt.year, dt.month!!, dt.day!!, dt.hour!!, dt.minute!!, dt.second!!.toInt())
+              .toInstant(offset)
+              .toEpochMilliseconds()
+          start to start + 1_000 - 1
+        }
+      }
+    }
 
     /**
      * Extension to express [HumanName] as a separated string using [separator]. See
@@ -358,14 +441,9 @@ internal class ResourceIndexer(
           var canonicalValue = numericValue
           val systemUri = value.system?.value
           if (systemUri == ucumUrl && canonicalCode != null) {
-            try {
-              val ucumUnit =
-                UnitConverter.getCanonicalFormOrOriginal(UcumValue(canonicalCode, numericValue))
-              canonicalCode = ucumUnit.code
-              canonicalValue = ucumUnit.value
-            } catch (exception: ConverterException) {
-              exception.printStackTrace()
-            }
+            val ucumUnit = UcumValue(canonicalCode, numericValue).toEqualCanonical()
+            canonicalCode = ucumUnit.code
+            canonicalValue = ucumUnit.value
           }
           quantityIndices.add(
             QuantityIndex(
@@ -398,13 +476,6 @@ internal class ResourceIndexer(
       val lon = value.longitude.value?.doubleValue(exactRequired = false) ?: return null
       return PositionIndex(lat, lon)
     }
-
-    // TODO: Date / DateTime / Time / Quantity primitive indexing is blocked until a new fhir-path
-    //   release exposes FhirPathDate / FhirPathDateTime / FhirPathTime / FhirPathQuantity as public
-    //   (they're `internal` today). After the release, add `is FhirPath*` branches to
-    //   dateIndex/dateTimeIndex/quantityIndex.
-
-    // --- Date / DateTime range helpers ---
 
     /** Returns the [start, end] epoch-day range for a [FhirDate], inclusive on both ends. */
     private fun fhirDateToEpochDaysRange(fhirDate: FhirDate): Pair<Long, Long> =

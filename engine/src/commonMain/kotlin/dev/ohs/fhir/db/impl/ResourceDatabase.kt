@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,4 +64,6 @@ internal abstract class ResourceDatabase : RoomDatabase() {
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase>
+internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase> {
+  override fun initialize(): ResourceDatabase
+}
