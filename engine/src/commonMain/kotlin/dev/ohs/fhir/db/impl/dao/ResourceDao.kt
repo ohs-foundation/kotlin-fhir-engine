@@ -55,6 +55,8 @@ internal abstract class ResourceDao {
   /**
    * This is ugly but there is no way to inject these right now in Room as it is the one creating the
    * dao.
+   *
+   * TODO: https://github.com/ohs-foundation/kotlin-fhir-engine/issues/57
    */
   lateinit var resourceIndexer: ResourceIndexer
 
