@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.Room
@@ -21,7 +20,7 @@ import androidx.room.RoomDatabase
 import java.io.File
 
 internal actual fun getDatabaseBuilder(
-  platformContext: Any,
+  platformContext: Any
 ): RoomDatabase.Builder<ResourceDatabase> {
   val dbDir = File(System.getProperty("user.home"), ".fhir-engine")
   dbDir.mkdirs()

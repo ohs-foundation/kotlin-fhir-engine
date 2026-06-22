@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.fhirpath.toEqualCanonicalized
 import dev.ohs.fhir.fhirpath.toEquivalentCanonicalized
 import dev.ohs.fhir.fhirpath.types.FhirPathQuantity
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 /**
  * UCUM canonicalization for [UcumValue], delegating to kotlin-fhir-path's `FhirPathQuantity`
@@ -50,7 +49,4 @@ private fun UcumValue.toFhirPathQuantity(): FhirPathQuantity =
   FhirPathQuantity(value = value, unit = "'$code'")
 
 private fun FhirPathQuantity.toUcumValue(fallback: UcumValue): UcumValue =
-  UcumValue(
-    code = unit?.trim('\'') ?: fallback.code,
-    value = value ?: fallback.value,
-  )
+  UcumValue(code = unit?.trim('\'') ?: fallback.code, value = value ?: fallback.value)

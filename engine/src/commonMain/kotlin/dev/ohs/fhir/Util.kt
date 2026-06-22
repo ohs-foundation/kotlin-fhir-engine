@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import kotlin.time.Instant
@@ -34,10 +33,10 @@ internal fun Instant.toTimeZoneString(): String {
 internal fun isValidDateOnly(date: String): Boolean = Regex("^\\d{4}-\\d{2}-\\d{2}$").matches(date)
 
 /** Implementation of a parallelized map. */
-suspend fun <A, B> Iterable<A>.pmap(
-  dispatcher: CoroutineDispatcher,
-  f: suspend (A) -> B,
-): List<B> = coroutineScope { map { async(dispatcher) { f(it) } }.awaitAll() }
+suspend fun <A, B> Iterable<A>.pmap(dispatcher: CoroutineDispatcher, f: suspend (A) -> B): List<B> =
+  coroutineScope {
+    map { async(dispatcher) { f(it) } }.awaitAll()
+  }
 
 /** Url for the UCUM system of measures. */
 internal const val ucumUrl = "http://unitsofmeasure.org"

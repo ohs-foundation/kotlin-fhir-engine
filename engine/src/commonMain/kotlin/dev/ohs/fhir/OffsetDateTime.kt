@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import kotlin.time.Clock
@@ -42,9 +41,7 @@ import kotlinx.serialization.encoding.Encoder
 data class OffsetDateTime(val dateTime: LocalDateTime, val offset: UtcOffset) {
 
   override fun toString(): String =
-    DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET.format {
-      setDateTimeOffset(dateTime, offset)
-    }
+    DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET.format { setDateTimeOffset(dateTime, offset) }
 
   companion object {
     /** Returns the current local datetime paired with the system's current UTC offset. */
@@ -60,17 +57,13 @@ data class OffsetDateTime(val dateTime: LocalDateTime, val offset: UtcOffset) {
     /** Parses ISO 8601 like `"2026-01-15T10:30:00+05:30"` or `"...Z"`. */
     fun parse(text: String): OffsetDateTime {
       val parsed = DateTimeComponents.Formats.ISO_DATE_TIME_OFFSET.parse(text)
-      return OffsetDateTime(
-        dateTime = parsed.toLocalDateTime(),
-        offset = parsed.toUtcOffset(),
-      )
+      return OffsetDateTime(dateTime = parsed.toLocalDateTime(), offset = parsed.toUtcOffset())
     }
   }
 }
 
 internal object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
-  override val descriptor =
-    PrimitiveSerialDescriptor("OffsetDateTime", PrimitiveKind.STRING)
+  override val descriptor = PrimitiveSerialDescriptor("OffsetDateTime", PrimitiveKind.STRING)
 
   override fun serialize(encoder: Encoder, value: OffsetDateTime) {
     encoder.encodeString(value.toString())

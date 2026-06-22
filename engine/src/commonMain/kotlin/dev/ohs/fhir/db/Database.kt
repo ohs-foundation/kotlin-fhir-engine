@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db
 
 import dev.ohs.fhir.LocalChange
@@ -21,9 +20,9 @@ import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.impl.dao.ForwardIncludeSearchResult
 import dev.ohs.fhir.db.impl.dao.ReverseIncludeSearchResult
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
-import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.search.SearchQuery
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -125,10 +124,7 @@ internal interface Database {
    * Updates the existing resource identified by [currentResourceId] with the [updatedResource],
    * ensuring all associated references in the database are also updated accordingly.
    */
-  suspend fun updateResourceAndReferences(
-    currentResourceId: String,
-    updatedResource: Resource,
-  )
+  suspend fun updateResourceAndReferences(currentResourceId: String, updatedResource: Resource)
 
   /** Runs the block as a database transaction. */
   suspend fun withTransaction(block: suspend () -> Unit)
@@ -164,14 +160,11 @@ internal interface Database {
    *   local change may have one or more [LocalChangeResourceReference] associated with it.
    */
   suspend fun getLocalChangeResourceReferences(
-    localChangeIds: List<Long>,
+    localChangeIds: List<Long>
   ): List<LocalChangeResourceReference>
 }
 
-internal data class ResourceWithUUID<R>(
-  val uuid: Uuid,
-  val resource: R,
-)
+internal data class ResourceWithUUID<R>(val uuid: Uuid, val resource: R)
 
 data class LocalChangeResourceReference(
   val localChangeId: Long,

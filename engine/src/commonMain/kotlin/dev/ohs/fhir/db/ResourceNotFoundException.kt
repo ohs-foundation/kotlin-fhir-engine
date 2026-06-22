@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db
 
 import kotlin.uuid.Uuid
@@ -33,17 +32,12 @@ class ResourceNotFoundException : Exception {
     this.id = id
   }
 
-  constructor(
-    type: String,
-    id: String,
-  ) : super("Resource not found with type $type and id $id!") {
+  constructor(type: String, id: String) : super("Resource not found with type $type and id $id!") {
     this.type = type
     this.id = id
   }
 
-  constructor(
-    uuid: Uuid,
-  ) : super("Resource not found with UUID $uuid!") {
+  constructor(uuid: Uuid) : super("Resource not found with UUID $uuid!") {
     this.uuid = uuid
   }
 }

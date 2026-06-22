@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.index.entities.DateIndex
 import dev.ohs.fhir.index.entities.DateTimeIndex
 import dev.ohs.fhir.index.entities.NumberIndex
@@ -27,23 +27,26 @@ import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.index.entities.UriIndex
 import dev.ohs.fhir.model.r4.ActivityDefinition
 import dev.ohs.fhir.model.r4.Address
+import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
 import dev.ohs.fhir.model.r4.Canonical
-import dev.ohs.fhir.model.r4.FhirR4Json
-import dev.ohs.fhir.model.r4.Questionnaire
 import dev.ohs.fhir.model.r4.CarePlan
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.Date
+import dev.ohs.fhir.model.r4.DateTime as FhirDateTimeWrapper
+import dev.ohs.fhir.model.r4.Decimal as FhirDecimal
 import dev.ohs.fhir.model.r4.Device
 import dev.ohs.fhir.model.r4.Encounter
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Extension
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Identifier
 import dev.ohs.fhir.model.r4.Instant
+import dev.ohs.fhir.model.r4.Integer as FhirInteger
 import dev.ohs.fhir.model.r4.Invoice
 import dev.ohs.fhir.model.r4.Location
 import dev.ohs.fhir.model.r4.Meta
@@ -54,27 +57,23 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Period
 import dev.ohs.fhir.model.r4.PlanDefinition
 import dev.ohs.fhir.model.r4.PositiveInt
-import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
-import dev.ohs.fhir.model.r4.terminologies.Currencies
-import dev.ohs.fhir.model.r4.terminologies.PublicationStatus
 import dev.ohs.fhir.model.r4.Quantity
+import dev.ohs.fhir.model.r4.Questionnaire
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.RelatedArtifact
 import dev.ohs.fhir.model.r4.RiskAssessment
+import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.Substance
 import dev.ohs.fhir.model.r4.Timing
 import dev.ohs.fhir.model.r4.Uri
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
+import dev.ohs.fhir.model.r4.terminologies.Currencies
+import dev.ohs.fhir.model.r4.terminologies.PublicationStatus
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
-import dev.ohs.fhir.model.r4.DateTime as FhirDateTimeWrapper
-import dev.ohs.fhir.model.r4.Decimal as FhirDecimal
-import dev.ohs.fhir.model.r4.Integer as FhirInteger
-import dev.ohs.fhir.model.r4.String as FhirString
 
 /** Integration & Unit tests for {@link ResourceIndexerImpl}. */
 class ResourceIndexerTest {
@@ -86,8 +85,7 @@ class ResourceIndexerTest {
   private fun fhirDateTime(iso: String): FhirDateTimeWrapper =
     FhirDateTimeWrapper(value = FhirDateTime.fromString(iso))
 
-  private fun epochMillis(iso: String): Long =
-    kotlin.time.Instant.parse(iso).toEpochMilliseconds()
+  private fun epochMillis(iso: String): Long = kotlin.time.Instant.parse(iso).toEpochMilliseconds()
 
   /** Unit tests for resource indexer */
   @Test
@@ -115,10 +113,7 @@ class ResourceIndexerTest {
   @Test
   fun index_profile() {
     val patient =
-      Patient(
-        id = "non-null-ID",
-        meta = Meta(profile = listOf(Canonical(value = "Profile/lipid"))),
-      )
+      Patient(id = "non-null-ID", meta = Meta(profile = listOf(Canonical(value = "Profile/lipid"))))
     val resourceIndices = resourceIndexer.index(patient)
     assertContains(
       resourceIndices.uriIndices,
@@ -128,11 +123,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_profile_empty() {
-    val patient =
-      Patient(
-        id = "non-null-ID",
-        meta = Meta(profile = listOf(Canonical(value = ""))),
-      )
+    val patient = Patient(id = "non-null-ID", meta = Meta(profile = listOf(Canonical(value = ""))))
     val resourceIndices = resourceIndexer.index(patient)
     assertFalse(resourceIndices.referenceIndices.any { it.name == "_profile" })
   }
@@ -152,8 +143,8 @@ class ResourceIndexerTest {
                   system = Uri(value = systemString),
                   code = Code(value = codeString),
                   display = FhirString(value = "display"),
-                ),
-              ),
+                )
+              )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -176,8 +167,8 @@ class ResourceIndexerTest {
                   system = Uri(value = ""),
                   code = Code(value = ""),
                   display = FhirString(value = ""),
-                ),
-              ),
+                )
+              )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -191,8 +182,7 @@ class ResourceIndexerTest {
       MolecularSequence(
         id = "non-null-ID",
         coordinateSystem = FhirInteger(value = 0),
-        referenceSeq =
-          MolecularSequence.ReferenceSeq(windowStart = FhirInteger(value = value)),
+        referenceSeq = MolecularSequence.ReferenceSeq(windowStart = FhirInteger(value = value)),
       )
     val resourceIndices = resourceIndexer.index(molecularSequence)
     assertContains(
@@ -217,8 +207,8 @@ class ResourceIndexerTest {
           listOf(
             RiskAssessment.Prediction(
               probability =
-                RiskAssessment.Prediction.Probability.Decimal(FhirDecimal(value = decimalValue)),
-            ),
+                RiskAssessment.Prediction.Probability.Decimal(FhirDecimal(value = decimalValue))
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(riskAssessment)
@@ -239,19 +229,14 @@ class ResourceIndexerTest {
     val resourceIndices = resourceIndexer.index(molecularSequence)
     assertFalse(resourceIndices.numberIndices.any { it.name == "window-start" })
     assertFalse(
-      resourceIndices.numberIndices.any {
-        it.path == "MolecularSequence.referenceSeq.windowStart"
-      },
+      resourceIndices.numberIndices.any { it.path == "MolecularSequence.referenceSeq.windowStart" }
     )
   }
 
   @Test
   fun index_date() {
     val patient =
-      Patient(
-        id = "non-null-ID",
-        birthDate = Date(value = FhirDate.fromString("2001-09-01")),
-      )
+      Patient(id = "non-null-ID", birthDate = Date(value = FhirDate.fromString("2001-09-01")))
     val resourceIndices = resourceIndexer.index(patient)
     val day = kotlinx.datetime.LocalDate(2001, 9, 1).toEpochDays()
     assertContains(
@@ -316,7 +301,7 @@ class ResourceIndexerTest {
         code = CodeableConcept(),
         effective =
           Observation.Effective.Period(
-            Period(start = fhirDateTime(startIso), end = fhirDateTime(endIso)),
+            Period(start = fhirDateTime(startIso), end = fhirDateTime(endIso))
           ),
       )
     val resourceIndices = resourceIndexer.index(observation)
@@ -336,8 +321,7 @@ class ResourceIndexerTest {
         id = "non-null-ID",
         status = Enumeration(value = Observation.ObservationStatus.Final),
         code = CodeableConcept(),
-        effective =
-          Observation.Effective.Period(Period(start = null, end = fhirDateTime(endIso))),
+        effective = Observation.Effective.Period(Period(start = null, end = fhirDateTime(endIso))),
       )
     val resourceIndices = resourceIndexer.index(observation)
     val expectedEnd = epochMillis(endIso) + 999
@@ -355,8 +339,7 @@ class ResourceIndexerTest {
         id = "non-null-ID",
         status = Enumeration(value = Observation.ObservationStatus.Final),
         code = CodeableConcept(),
-        effective =
-          Observation.Effective.Period(Period(start = fhirDateTime(startIso), end = null)),
+        effective = Observation.Effective.Period(Period(start = fhirDateTime(startIso), end = null)),
       )
     val resourceIndices = resourceIndexer.index(observation)
     val expectedStart = epochMillis(startIso)
@@ -369,18 +352,13 @@ class ResourceIndexerTest {
   @Test
   fun index_dateTime_timing() {
     val isoList =
-      listOf(
-        "2001-11-05T21:53:10+09:00",
-        "2002-09-01T20:30:18+09:00",
-        "2003-10-24T18:30:40+09:00",
-      )
+      listOf("2001-11-05T21:53:10+09:00", "2002-09-01T20:30:18+09:00", "2003-10-24T18:30:40+09:00")
     val observation =
       Observation(
         id = "non-null-ID",
         status = Enumeration(value = Observation.ObservationStatus.Final),
         code = CodeableConcept(),
-        effective =
-          Observation.Effective.Timing(Timing(event = isoList.map { fhirDateTime(it) })),
+        effective = Observation.Effective.Timing(Timing(event = isoList.map { fhirDateTime(it) })),
       )
     val resourceIndices = resourceIndexer.index(observation)
     val expectedStart = isoList.minOf { epochMillis(it) }
@@ -406,8 +384,8 @@ class ResourceIndexerTest {
                   frequency = PositiveInt(value = 1),
                   period = FhirDecimal(value = BigDecimal.ONE),
                   periodUnit = Enumeration(value = Timing.UnitsOfTime.D),
-                ),
-            ),
+                )
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(observation)
@@ -429,10 +407,9 @@ class ResourceIndexerTest {
               detail =
                 CarePlan.Activity.Detail(
                   status = Enumeration(value = CarePlan.CarePlanActivityStatus.Not_Started),
-                  scheduled =
-                    CarePlan.Activity.Detail.Scheduled.String(FhirString(value = iso)),
-                ),
-            ),
+                  scheduled = CarePlan.Activity.Detail.Scheduled.String(FhirString(value = iso)),
+                )
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(carePlan)
@@ -475,8 +452,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_string_null() {
-    val patient =
-      Patient(id = "non-null-ID", name = listOf(HumanName(given = listOf())))
+    val patient = Patient(id = "non-null-ID", name = listOf(HumanName(given = listOf())))
     val resourceIndices = resourceIndexer.index(patient)
     assertFalse(resourceIndices.stringIndices.any { it.path == "Patient.name.given" })
     assertFalse(resourceIndices.stringIndices.any { it.name == "given" })
@@ -485,10 +461,7 @@ class ResourceIndexerTest {
   @Test
   fun index_string_empty() {
     val patient =
-      Patient(
-        id = "non_null_ID",
-        name = listOf(HumanName(given = listOf(FhirString(value = "")))),
-      )
+      Patient(id = "non_null_ID", name = listOf(HumanName(given = listOf(FhirString(value = "")))))
     val resourceIndices = resourceIndexer.index(patient)
     assertFalse(resourceIndices.stringIndices.any { it.path == "Patient.name.given" })
     assertFalse(resourceIndices.stringIndices.any { it.name == "given" })
@@ -519,9 +492,7 @@ class ResourceIndexerTest {
         id = "someid",
         status = Enumeration(value = Invoice.InvoiceStatus.Issued),
         identifier =
-          listOf(
-            Identifier(system = Uri(value = system), value = FhirString(value = value)),
-          ),
+          listOf(Identifier(system = Uri(value = system), value = FhirString(value = value))),
       )
     val resourceIndices = resourceIndexer.index(invoice)
     assertContains(
@@ -541,9 +512,7 @@ class ResourceIndexerTest {
         code =
           CodeableConcept(
             coding =
-              listOf(
-                Coding(system = Uri(value = systemString), code = Code(value = codeString)),
-              ),
+              listOf(Coding(system = Uri(value = systemString), code = Code(value = codeString)))
           ),
       )
     val resourceIndices = resourceIndexer.index(observation)
@@ -627,10 +596,9 @@ class ResourceIndexerTest {
           listOf(
             RelatedArtifact(
               id = "someRelatedArtifact",
-              type =
-                Enumeration(value = RelatedArtifact.RelatedArtifactType.Depends_On),
+              type = Enumeration(value = RelatedArtifact.RelatedArtifactType.Depends_On),
               resource = Canonical(value = "Questionnaire/someQuestionnaire"),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(activityDefinition)
@@ -655,12 +623,10 @@ class ResourceIndexerTest {
         action =
           listOf(
             PlanDefinition.Action(
-              definition =
-                PlanDefinition.Action.Definition.Uri(Uri(value = "http://action1.com")),
+              definition = PlanDefinition.Action.Definition.Uri(Uri(value = "http://action1.com"))
             ),
             PlanDefinition.Action(
-              definition =
-                PlanDefinition.Action.Definition.Uri(Uri(value = "http://action2.com")),
+              definition = PlanDefinition.Action.Definition.Uri(Uri(value = "http://action2.com"))
             ),
           ),
       )
@@ -680,42 +646,26 @@ class ResourceIndexerTest {
   fun index_reference_null() {
     val patient = Patient(id = "non-null-ID", managingOrganization = null)
     val resourceIndices = resourceIndexer.index(patient)
-    assertFalse(
-      resourceIndices.referenceIndices.any { it.path == "Patient.managingOrganization" },
-    )
+    assertFalse(resourceIndices.referenceIndices.any { it.path == "Patient.managingOrganization" })
     assertFalse(resourceIndices.referenceIndices.any { it.name == "organization" })
   }
 
   @Test
   fun index_reference_empty() {
     val patient =
-      Patient(
-        id = "someID",
-        managingOrganization = Reference(reference = FhirString(value = "")),
-      )
+      Patient(id = "someID", managingOrganization = Reference(reference = FhirString(value = "")))
     val resourceIndices = resourceIndexer.index(patient)
-    assertFalse(
-      resourceIndices.referenceIndices.any { it.path == "Patient.managingOrganization" },
-    )
+    assertFalse(resourceIndices.referenceIndices.any { it.path == "Patient.managingOrganization" })
     assertFalse(resourceIndices.referenceIndices.any { it.name == "organization" })
   }
 
   @Test
   fun index_gender() {
-    val patient =
-      Patient(
-        id = "someID",
-        gender = Enumeration(value = AdministrativeGender.Unknown),
-      )
+    val patient = Patient(id = "someID", gender = Enumeration(value = AdministrativeGender.Unknown))
     val resourceIndices = resourceIndexer.index(patient)
     assertContains(
       resourceIndices.tokenIndices,
-      TokenIndex(
-        "gender",
-        "Patient.gender",
-        "http://hl7.org/fhir/administrative-gender",
-        "unknown",
-      ),
+      TokenIndex("gender", "Patient.gender", "http://hl7.org/fhir/administrative-gender", "unknown"),
     )
   }
 
@@ -760,8 +710,8 @@ class ResourceIndexerTest {
         instance =
           listOf(
             Substance.Instance(
-              quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(100))),
-            ),
+              quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(100)))
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(substance)
@@ -784,8 +734,8 @@ class ResourceIndexerTest {
                 Quantity(
                   value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   unit = FhirString(value = "kg"),
-                ),
-            ),
+                )
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(substance)
@@ -822,8 +772,8 @@ class ResourceIndexerTest {
                   value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   system = Uri(value = "http://unitsofmeasure.org"),
                   code = Code(value = "mg"),
-                ),
-            ),
+                )
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(substance)
@@ -853,8 +803,8 @@ class ResourceIndexerTest {
                   value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   system = Uri(value = "http://unitsofmeasure.org"),
                   code = Code(value = "randomUnit"),
-                ),
-            ),
+                )
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(substance)
@@ -930,7 +880,7 @@ class ResourceIndexerTest {
               given = listOf(FhirString(value = "Pieter")),
               family = FhirString(value = "van de Heuvel"),
               suffix = listOf(FhirString(value = "MSc")),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -964,7 +914,7 @@ class ResourceIndexerTest {
               given = listOf(),
               family = FhirString(value = ""),
               suffix = listOf(),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -1004,7 +954,7 @@ class ResourceIndexerTest {
                   FhirString(value = "MSc"),
                   FhirString(value = "Phd"),
                 ),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -1031,7 +981,7 @@ class ResourceIndexerTest {
               city = FhirString(value = "Amsterdam"),
               postalCode = FhirString(value = "1024 RJ"),
               country = FhirString(value = "NLD"),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -1065,7 +1015,7 @@ class ResourceIndexerTest {
               city = FhirString(value = ""),
               postalCode = FhirString(value = ""),
               country = FhirString(value = ""),
-            ),
+            )
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -1128,10 +1078,7 @@ class ResourceIndexerTest {
               system = Uri(value = systemIdentity),
               value = FhirString(value = indexValue),
             ),
-            Identifier(
-              system = Uri(value = systemIdentity),
-              value = FhirString(value = indexValue),
-            ),
+            Identifier(system = Uri(value = systemIdentity), value = FhirString(value = indexValue)),
           ),
       )
     val resourceIndices = resourceIndexer.index(patient)
@@ -1162,7 +1109,7 @@ class ResourceIndexerTest {
                   value = FhirDecimal(value = value),
                   system = Uri(value = systemValue),
                   unit = FhirString(value = unitValue),
-                ),
+                )
             ),
             Substance.Instance(
               quantity =
@@ -1170,10 +1117,14 @@ class ResourceIndexerTest {
                   value = FhirDecimal(value = value),
                   system = Uri(value = systemValue),
                   unit = FhirString(value = unitValue),
-                ),
+                )
             ),
-            Substance.Instance(quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(200)))),
-            Substance.Instance(quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(300)))),
+            Substance.Instance(
+              quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(200)))
+            ),
+            Substance.Instance(
+              quantity = Quantity(value = FhirDecimal(value = BigDecimal.fromInt(300)))
+            ),
           ),
       )
     val resourceIndices = resourceIndexer.index(substance)
@@ -1226,7 +1177,7 @@ class ResourceIndexerTest {
                   Quantity(
                     value = FhirDecimal(value = BigDecimal.fromInt(70)),
                     system = Uri(value = "http://unitsofmeasure.org"),
-                  ),
+                  )
                 ),
             ),
             Observation.Component(
@@ -1236,7 +1187,7 @@ class ResourceIndexerTest {
                   Quantity(
                     value = FhirDecimal(value = BigDecimal.fromInt(110)),
                     system = Uri(value = "http://unitsofmeasure.org"),
-                  ),
+                  )
                 ),
             ),
           ),
@@ -1301,7 +1252,7 @@ class ResourceIndexerTest {
             Identifier(
               system = Uri(value = "https://custom-identifier-namespace"),
               value = FhirString(value = "OfficialIdentifier_DarcySmith_0001"),
-            ),
+            )
           ),
         name =
           listOf(
@@ -1309,14 +1260,14 @@ class ResourceIndexerTest {
               use = Enumeration(value = HumanName.NameUse.Official),
               family = FhirString(value = "Smith"),
               given = listOf(FhirString(value = "Darcy")),
-            ),
+            )
           ),
         extension =
           listOf(
             Extension(
               url = "http://hl7.org/fhir/StructureDefinition/patient-mothersMaidenName",
               value = Extension.Value.String(FhirString(value = "Marca")),
-            ),
+            )
           ),
       )
     val indexer =
@@ -1337,9 +1288,9 @@ class ResourceIndexerTest {
                     type = SearchParamType.STRING,
                     path = "Patient.identifier.value",
                   ),
-                ),
-            ),
-        ),
+                )
+            )
+        )
       )
     val resourceIndices = indexer.index(patient)
     assertEquals(
@@ -1376,18 +1327,17 @@ class ResourceIndexerTest {
     val invoice = FhirR4Json().decodeFromString(INVOICE_JSON) as dev.ohs.fhir.model.r4.Invoice
     val resourceIndices = resourceIndexer.index(invoice)
 
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex("_id", "Invoice.id", null, "example"),
-    )
+    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Invoice.id", null, "example"))
     assertContains(
       resourceIndices.tokenIndices,
       TokenIndex("identifier", "Invoice.identifier", "http://myHospital.org/Invoices", "654321"),
     )
     assertTrue(
       resourceIndices.tokenIndices.any {
-        it.name == "participant-role" && it.system == "http://snomed.info/sct" && it.value == "17561000"
-      },
+        it.name == "participant-role" &&
+          it.system == "http://snomed.info/sct" &&
+          it.value == "17561000"
+      }
     )
     assertContains(
       resourceIndices.referenceIndices,
@@ -1421,7 +1371,7 @@ class ResourceIndexerTest {
         it.name == "code" &&
           it.system == "http://example.org/system/code/sections" &&
           it.value == "HISTOPATHOLOGY"
-      },
+      }
     )
     assertContains(
       resourceIndices.stringIndices,
@@ -1434,10 +1384,7 @@ class ResourceIndexerTest {
     val patient = FhirR4Json().decodeFromString(PATIENT_JSON) as Patient
     val resourceIndices = resourceIndexer.index(patient)
 
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex("_id", "Patient.id", null, "f001"),
-    )
+    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Patient.id", null, "f001"))
     assertContains(
       resourceIndices.tokenIndices,
       TokenIndex(
@@ -1447,17 +1394,11 @@ class ResourceIndexerTest {
         "738472983",
       ),
     )
+    assertTrue(resourceIndices.tokenIndices.any { it.name == "active" && it.value == "true" })
     assertTrue(
       resourceIndices.tokenIndices.any {
-        it.name == "active" && it.value == "true"
-      },
-    )
-    assertTrue(
-      resourceIndices.tokenIndices.any {
-        it.name == "language" &&
-          it.system == "urn:ietf:bcp:47" &&
-          it.value == "nl"
-      },
+        it.name == "language" && it.system == "urn:ietf:bcp:47" && it.value == "nl"
+      }
     )
     assertContains(
       resourceIndices.referenceIndices,
@@ -1472,15 +1413,13 @@ class ResourceIndexerTest {
       StringIndex("family", "Patient.name.family", "van de Heuvel"),
     )
     assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Amsterdam" },
+      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Amsterdam" }
     )
     assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "NLD" },
+      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "NLD" }
     )
     assertTrue(
-      resourceIndices.stringIndices.any {
-        it.name == "address-postalcode" && it.value == "1024 RJ"
-      },
+      resourceIndices.stringIndices.any { it.name == "address-postalcode" && it.value == "1024 RJ" }
     )
   }
 
@@ -1490,33 +1429,28 @@ class ResourceIndexerTest {
     val resourceIndices = resourceIndexer.index(location)
 
     assertContains(resourceIndices.positionIndices, PositionIndex(-83.69471, 42.2565))
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex("_id", "Location.id", null, "hl7"),
-    )
+    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Location.id", null, "hl7"))
     assertTrue(
       resourceIndices.tokenIndices.any {
         it.name == "type" &&
           it.system == "http://terminology.hl7.org/CodeSystem/v3-RoleCode" &&
           it.value == "SLEEP"
-      },
+      }
     )
     assertTrue(
       resourceIndices.stringIndices.any {
         it.name == "name" && it.value == "Health Level Seven International"
-      },
+      }
+    )
+    assertTrue(resourceIndices.stringIndices.any { it.name == "address-state" && it.value == "MI" })
+    assertTrue(
+      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Ann Arbor" }
     )
     assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-state" && it.value == "MI" },
+      resourceIndices.stringIndices.any { it.name == "address-postalcode" && it.value == "48104" }
     )
     assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Ann Arbor" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-postalcode" && it.value == "48104" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "USA" },
+      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "USA" }
     )
   }
 
@@ -1525,7 +1459,8 @@ class ResourceIndexerTest {
     const val FHIR_CURRENCY_SYSTEM = "urn:iso:std:iso:4217"
 
     /** Verbatim copy of `engine/test-data/quantity_test_invoice.json`. */
-    const val INVOICE_JSON = """
+    const val INVOICE_JSON =
+      """
 {
   "resourceType": "Invoice",
   "id": "example",
@@ -1577,7 +1512,8 @@ class ResourceIndexerTest {
 """
 
     /** Verbatim copy of `engine/test-data/uri_test_questionnaire.json`. */
-    const val QUESTIONNAIRE_JSON = """
+    const val QUESTIONNAIRE_JSON =
+      """
 {
   "resourceType": "Questionnaire",
   "id": "3141",
@@ -1629,7 +1565,8 @@ class ResourceIndexerTest {
 """
 
     /** Verbatim copy of `engine/test-data/location-example-hl7hq.json` (text/div trimmed). */
-    const val LOCATION_JSON = """
+    const val LOCATION_JSON =
+      """
 {
   "resourceType": "Location",
   "id": "hl7",
@@ -1677,7 +1614,8 @@ class ResourceIndexerTest {
 """
 
     /** Verbatim copy of `engine/test-data/date_test_patient.json` (text/div trimmed). */
-    const val PATIENT_JSON = """
+    const val PATIENT_JSON =
+      """
 {
   "resourceType": "Patient",
   "id": "f001",

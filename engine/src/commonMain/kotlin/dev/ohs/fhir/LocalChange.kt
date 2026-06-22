@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
@@ -42,7 +41,7 @@ data class LocalChange(
   enum class Type(val value: Int) {
     INSERT(1), // create a new resource. payload is the entire resource json.
     UPDATE(2), // patch. payload is the json patch.
-    DELETE(3), // delete. payload is empty string.
+    DELETE(3) // delete. payload is empty string.
     ;
 
     companion object {

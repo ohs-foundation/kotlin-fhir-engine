@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
@@ -69,8 +68,9 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
   }
 
   /**
-   * Mirrors the splitting logic in `codegen.SearchParameterRepositoryGenerator.getResourceToPathMap`.
-   * A SearchParameter may declare multiple `base` resources with a single combined expression like
+   * Mirrors the splitting logic in
+   * `codegen.SearchParameterRepositoryGenerator.getResourceToPathMap`. A SearchParameter may
+   * declare multiple `base` resources with a single combined expression like
    * `AllergyIntolerance.code | Condition.code`; that needs to be split into per-resource paths.
    */
   private fun resourceToPathMap(sp: SpecSearchParameter): Map<String, String> {
@@ -85,8 +85,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
     }
   }
 
-  @Serializable
-  private data class SpecBundle(val entry: List<SpecEntry>)
+  @Serializable private data class SpecBundle(val entry: List<SpecEntry>)
 
   @Serializable private data class SpecEntry(val resource: SpecSearchParameter)
 
@@ -107,7 +106,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
           .java
           .getResourceAsStream("/search-parameters.json")
           ?: error(
-            "search-parameters.json is not on the test classpath — check the resources.srcDir wiring in engine/build.gradle.kts",
+            "search-parameters.json is not on the test classpath — check the resources.srcDir wiring in engine/build.gradle.kts"
           )
       stream.bufferedReader().use { json.decodeFromString(SpecBundle.serializer(), it.readText()) }
     }

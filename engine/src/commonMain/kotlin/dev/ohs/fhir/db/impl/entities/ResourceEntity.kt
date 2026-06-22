@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.entities
 
 import androidx.room.Entity
@@ -28,7 +27,7 @@ import kotlin.uuid.Uuid
     [
       Index(value = ["resourceUuid"], unique = true),
       Index(value = ["resourceType", "resourceId"], unique = true),
-    ],
+    ]
 )
 internal data class ResourceEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,

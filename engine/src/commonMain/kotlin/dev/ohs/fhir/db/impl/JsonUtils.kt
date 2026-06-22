@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import dev.ohs.fhir.model.r4.FhirR4Json
@@ -48,7 +47,7 @@ internal fun replaceJsonValue(
   when (element) {
     is JsonObject ->
       JsonObject(
-        element.mapValues { (_, value) -> replaceJsonValue(value, currentValue, newValue) },
+        element.mapValues { (_, value) -> replaceJsonValue(value, currentValue, newValue) }
       )
     is JsonArray -> JsonArray(element.map { replaceJsonValue(it, currentValue, newValue) })
     is JsonPrimitive ->

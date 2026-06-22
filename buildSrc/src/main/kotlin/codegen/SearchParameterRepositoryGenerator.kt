@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package codegen
 
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.SearchParameter
-import dev.ohs.fhir.model.r4.terminologies.ResourceType as FhirResourceType
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
@@ -26,6 +22,9 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.WildcardTypeName
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.SearchParameter
+import dev.ohs.fhir.model.r4.terminologies.ResourceType as FhirResourceType
 import java.io.File
 import java.util.Locale
 import kotlin.collections.HashMap
@@ -38,11 +37,7 @@ import kotlin.collections.HashMap
  * the file and re-run `./gradlew :engine:generateSearchParamsTask` (or `./gradlew build`) to
  * refresh.
  */
-internal data class SearchParamDef(
-  val name: String,
-  val paramTypeCode: String,
-  val path: String,
-)
+internal data class SearchParamDef(val name: String, val paramTypeCode: String, val path: String)
 
 internal object SearchParameterRepositoryGenerator {
 
@@ -86,7 +81,7 @@ internal object SearchParameterRepositoryGenerator {
       FunSpec.builder("getSearchParamList")
         .addParameter("resourceType", String::class)
         .returns(
-          ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
+          ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
         )
         .addModifiers(KModifier.INTERNAL)
         .addKdoc(generatedComment)
@@ -99,7 +94,7 @@ internal object SearchParameterRepositoryGenerator {
         .apply {
           addModifiers(KModifier.PRIVATE)
           returns(
-            ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
+            ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
           )
           beginControlFlow("return buildList(capacity = %L)", baseResourceSearchParameters.size)
           baseResourceSearchParameters.forEach { def ->
@@ -123,7 +118,7 @@ internal object SearchParameterRepositoryGenerator {
           .apply {
             addModifiers(KModifier.PRIVATE)
             returns(
-              ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
+              ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
             )
             beginControlFlow("return buildList(capacity = %L)", definitions.size)
             definitions.forEach { def ->
@@ -145,7 +140,7 @@ internal object SearchParameterRepositoryGenerator {
 
     getSearchParamListFunction.addStatement("else -> emptyList()").endControlFlow()
     getSearchParamListFunction.addStatement(
-      "return resourceSearchParams + getBaseResourceSearchParamsList(resourceType)",
+      "return resourceSearchParams + getBaseResourceSearchParamsList(resourceType)"
     )
     fileSpec.addFunction(getSearchParamListFunction.build())
 

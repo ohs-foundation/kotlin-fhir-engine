@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.dao
 
 import androidx.room.ColumnInfo
@@ -38,17 +37,17 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndexer.Companion.createLocalLastUpdatedIndex
 import dev.ohs.fhir.index.ResourceIndices
 import dev.ohs.fhir.lastUpdated
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Instant as FhirInstant
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.versionId
 import dev.ohs.fhir.withId
-import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.FhirR4Json
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import dev.ohs.fhir.model.r4.Instant as FhirInstant
 
 @Dao
 internal abstract class ResourceDao {
@@ -72,11 +71,7 @@ internal abstract class ResourceDao {
           lastUpdatedRemote = resource.lastUpdated ?: it.lastUpdatedRemote,
         )
       updateChanges(entity, resource)
-    }
-      ?: throw ResourceNotFoundException(
-        resource.resourceTypeEnum.name,
-        resource.id.orEmpty(),
-      )
+    } ?: throw ResourceNotFoundException(resource.resourceTypeEnum.name, resource.id.orEmpty())
   }
 
   suspend fun updateResourceWithUuid(resourceUuid: Uuid, updatedResource: Resource) {
@@ -89,8 +84,7 @@ internal abstract class ResourceDao {
           versionId = updatedResource.versionId ?: it.versionId,
         )
       updateChanges(entity, updatedResource)
-    }
-      ?: throw ResourceNotFoundException(resourceUuid)
+    } ?: throw ResourceNotFoundException(resourceUuid)
   }
 
   /**
@@ -108,8 +102,7 @@ internal abstract class ResourceDao {
           versionId = resource.versionId,
         )
       updateChanges(entity, resource)
-    }
-      ?: throw ResourceNotFoundException(resource.resourceTypeEnum.name, resource.id.orEmpty())
+    } ?: throw ResourceNotFoundException(resource.resourceTypeEnum.name, resource.id.orEmpty())
   }
 
   private suspend fun updateChanges(entity: ResourceEntity, resource: Resource) {
@@ -126,7 +119,7 @@ internal abstract class ResourceDao {
               createLocalLastUpdatedIndex(
                 resource.resourceTypeEnum,
                 FhirInstant(value = FhirDateTime.fromString(instant.toString())),
-              ),
+              )
             )
           }
         }
@@ -175,7 +168,7 @@ internal abstract class ResourceDao {
             lastUpdatedRemote = :lastUpdatedRemote
         WHERE resourceId = :resourceId
         AND resourceType = :resourceType
-    """,
+    """
   )
   abstract suspend fun updateRemoteVersionIdAndLastUpdate(
     resourceId: String,
@@ -187,7 +180,7 @@ internal abstract class ResourceDao {
   @Query(
     """
         DELETE FROM ResourceEntity
-        WHERE resourceId = :resourceId AND resourceType = :resourceType""",
+        WHERE resourceId = :resourceId AND resourceType = :resourceType"""
   )
   abstract suspend fun deleteResource(resourceId: String, resourceType: ResourceType): Int
 
@@ -195,7 +188,7 @@ internal abstract class ResourceDao {
     """
         SELECT serializedResource
         FROM ResourceEntity
-        WHERE resourceId = :resourceId AND resourceType = :resourceType""",
+        WHERE resourceId = :resourceId AND resourceType = :resourceType"""
   )
   abstract suspend fun getResource(resourceId: String, resourceType: ResourceType): String?
 
@@ -204,7 +197,7 @@ internal abstract class ResourceDao {
         SELECT *
         FROM ResourceEntity
         WHERE resourceId = :resourceId AND resourceType = :resourceType
-    """,
+    """
   )
   abstract suspend fun getResourceEntity(
     resourceId: String,
@@ -216,23 +209,20 @@ internal abstract class ResourceDao {
         SELECT *
         FROM ResourceEntity
         WHERE resourceUuid = :resourceUuid
-    """,
+    """
   )
-  abstract suspend fun getResourceEntity(
-    resourceUuid: Uuid,
-  ): ResourceEntity?
+  abstract suspend fun getResourceEntity(resourceUuid: Uuid): ResourceEntity?
 
-  @RawQuery
-  abstract suspend fun getResources(query: RoomRawQuery): List<SerializedResourceWithUuid>
+  @RawQuery abstract suspend fun getResources(query: RoomRawQuery): List<SerializedResourceWithUuid>
 
   @RawQuery
   abstract suspend fun getForwardReferencedResources(
-    query: RoomRawQuery,
+    query: RoomRawQuery
   ): List<ForwardIncludeSearchResponse>
 
   @RawQuery
   abstract suspend fun getReverseReferencedResources(
-    query: RoomRawQuery,
+    query: RoomRawQuery
   ): List<ReverseIncludeSearchResponse>
 
   @RawQuery abstract suspend fun countResources(query: RoomRawQuery): Long
@@ -257,7 +247,7 @@ internal abstract class ResourceDao {
 
     // Use the local UUID as the logical ID of the resource
     val resourceWithId =
-  if (resource.id.isNullOrEmpty()) resource.withId(resourceUuid.toString()) else resource
+      if (resource.id.isNullOrEmpty()) resource.withId(resourceUuid.toString()) else resource
 
     val entity =
       ResourceEntity(
@@ -280,7 +270,7 @@ internal abstract class ResourceDao {
               createLocalLastUpdatedIndex(
                 entity.resourceType,
                 FhirInstant(value = FhirDateTime.fromString(it.toString())),
-              ),
+              )
             )
           }
         }
@@ -321,7 +311,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.referenceIndices.forEach {
@@ -331,7 +321,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.tokenIndices.forEach {
@@ -341,7 +331,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.quantityIndices.forEach {
@@ -351,17 +341,12 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.uriIndices.forEach {
       insertUriIndex(
-        UriIndexEntity(
-          id = 0,
-          resourceType = resourceType,
-          index = it,
-          resourceUuid = resourceUuid,
-        ),
+        UriIndexEntity(id = 0, resourceType = resourceType, index = it, resourceUuid = resourceUuid)
       )
     }
     index.dateIndices.forEach {
@@ -371,7 +356,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.dateTimeIndices.forEach {
@@ -381,7 +366,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.numberIndices.forEach {
@@ -391,7 +376,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
     index.positionIndices.forEach {
@@ -401,7 +386,7 @@ internal abstract class ResourceDao {
           resourceType = resourceType,
           index = it,
           resourceUuid = resourceUuid,
-        ),
+        )
       )
     }
   }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.entities
 
 import androidx.room.Entity
@@ -56,13 +55,7 @@ import kotlin.uuid.Uuid
  *
  * ] For resource that is fully synced with server this table should not have any rows.
  */
-@Entity(
-  indices =
-    [
-      Index(value = ["resourceType", "resourceId"]),
-      Index(value = ["resourceUuid"]),
-    ],
-)
+@Entity(indices = [Index(value = ["resourceType", "resourceId"]), Index(value = ["resourceUuid"])])
 internal data class LocalChangeEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,
   val resourceType: String,
@@ -76,7 +69,7 @@ internal data class LocalChangeEntity(
   enum class Type(val value: Int) {
     INSERT(1), // create a new resource. payload is the entire resource json.
     UPDATE(2), // patch. payload is the json patch.
-    DELETE(3), // delete. payload is empty string.
+    DELETE(3) // delete. payload is empty string.
     ;
 
     companion object {

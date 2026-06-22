@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.entities
 
 import androidx.room.Entity
@@ -37,7 +36,7 @@ import androidx.room.PrimaryKey
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.NO_ACTION,
         deferred = true,
-      ),
+      )
     ],
 )
 internal data class LocalChangeResourceReferenceEntity(

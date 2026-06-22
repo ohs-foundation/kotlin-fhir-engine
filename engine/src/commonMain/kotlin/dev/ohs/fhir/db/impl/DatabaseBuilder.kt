@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.RoomDatabase
@@ -24,6 +23,4 @@ import androidx.room.RoomDatabase
  * @param platformContext Platform-specific context. On Android, this should be the application
  *   `Context`. On Desktop and iOS, this parameter is ignored.
  */
-internal expect fun getDatabaseBuilder(
-  platformContext: Any,
-): RoomDatabase.Builder<ResourceDatabase>
+internal expect fun getDatabaseBuilder(platformContext: Any): RoomDatabase.Builder<ResourceDatabase>

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import android.content.Context
@@ -21,7 +20,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 internal actual fun getDatabaseBuilder(
-  platformContext: Any,
+  platformContext: Any
 ): RoomDatabase.Builder<ResourceDatabase> {
   val context = platformContext as Context
   val dbFile = context.getDatabasePath(DATABASE_NAME)

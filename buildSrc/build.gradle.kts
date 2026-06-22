@@ -12,6 +12,7 @@ dependencies {
   implementation(libs.kotlinpoet)
   implementation(libs.kotlin.fhir)
   implementation(libs.kotlinx.serialization.json)
+  implementation(libs.spotless.plugin.gradle)
 }
 
 // fhir-model is built with Kotlin 2.2; the kotlin-dsl plugin in Gradle 8.13 still uses 2.0.
