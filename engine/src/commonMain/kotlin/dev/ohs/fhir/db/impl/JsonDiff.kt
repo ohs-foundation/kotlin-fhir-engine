@@ -91,17 +91,14 @@ internal object JsonDiff {
     target: JsonArray,
     ops: MutableList<JsonObject>,
   ) {
-    // Index-based array diff, matching fge json-patch (the library the original engine used):
-    // recurse into elements at common indices, remove trailing source elements, append extra
-    // target elements. This yields element-level paths like `/name/0/family`.
+    // Index-based array diff, matching fge json-patch (the library the original engine used), so
+    // generated patches stay compatible with the sync API.
     val common = minOf(source.size, target.size)
     for (index in 0 until common) {
       generateDiff("$path/$index", source[index], target[index], ops)
     }
-    // Source longer: remove the surplus tail. Each removal shifts the array down, so the index to
-    // remove stays `common`.
+    // Each removal shifts the array down, so the index to remove stays `common`.
     repeat(source.size - common) { ops.add(removeOp("$path/$common")) }
-    // Target longer: append the surplus tail with the RFC 6902 end-of-array token.
     for (index in common until target.size) {
       ops.add(addOp("$path/-", target[index]))
     }
