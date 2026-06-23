@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.home
 
 import androidx.compose.foundation.background
@@ -77,7 +76,9 @@ private fun HomeCard(icon: ImageVector, title: String, onClick: () -> Unit) {
     ) {
       Box(
         modifier =
-          Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+          Modifier.size(48.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
       ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)

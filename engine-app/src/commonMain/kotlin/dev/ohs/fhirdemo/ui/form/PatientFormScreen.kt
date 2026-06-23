@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.form
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -49,16 +47,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -105,7 +102,11 @@ fun PatientFormScreen(
         modifier = Modifier.fillMaxWidth(),
       )
 
-      Text("Gender", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+      Text(
+        "Gender",
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier.padding(top = 8.dp),
+      )
       FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AdministrativeGender.entries.forEach { g ->
           val selected = form.gender == g
@@ -113,12 +114,14 @@ fun PatientFormScreen(
             onClick = { viewModel.setGender(if (selected) null else g) },
             label = { Text(g.getDisplay().orEmpty()) },
             colors =
-              if (selected)
+              if (selected) {
                 AssistChipDefaults.assistChipColors(
                   containerColor = MaterialTheme.colorScheme.primaryContainer,
                   labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-              else AssistChipDefaults.assistChipColors(),
+              } else {
+                AssistChipDefaults.assistChipColors()
+              },
           )
         }
       }
@@ -220,4 +223,3 @@ private fun BirthdatePickerDialog(
     DatePicker(state = state)
   }
 }
-

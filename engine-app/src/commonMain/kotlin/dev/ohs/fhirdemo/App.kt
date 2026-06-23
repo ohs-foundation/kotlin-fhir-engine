@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo
 
 import androidx.compose.runtime.Composable
@@ -81,9 +80,7 @@ fun App(platformContext: Any = Unit) {
 
           entry<Screen.Detail> { key ->
             val vm =
-              remember(key.patientId) {
-                PatientDetailViewModel(key.patientId, repository, scope)
-              }
+              remember(key.patientId) { PatientDetailViewModel(key.patientId, repository, scope) }
             PatientDetailScreen(
               viewModel = vm,
               onBack = {

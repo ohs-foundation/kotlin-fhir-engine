@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.list
 
 import androidx.compose.foundation.background
@@ -36,7 +35,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -125,7 +123,9 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
     ) {
       Box(
         modifier =
-          Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+          Modifier.size(48.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
       ) {
         Icon(
@@ -135,7 +135,11 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
         )
       }
       Column(modifier = Modifier.padding(start = 16.dp).fillMaxWidth()) {
-        Text(text = patient.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+          text = patient.displayName,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+        )
         val sub =
           listOfNotNull(
               patient.gender?.getDisplay(),
@@ -143,7 +147,11 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
             )
             .joinToString(" • ")
         if (sub.isNotEmpty()) {
-          Text(sub, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+          Text(
+            sub,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
         }
       }
     }
@@ -154,7 +162,12 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
 private fun EmptyState(query: String) {
   Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-      Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+      Icon(
+        Icons.Default.Person,
+        contentDescription = null,
+        modifier = Modifier.size(64.dp),
+        tint = MaterialTheme.colorScheme.outline,
+      )
       Text(
         text = if (query.isBlank()) "No patients yet." else "No matches for \"$query\".",
         style = MaterialTheme.typography.bodyLarge,

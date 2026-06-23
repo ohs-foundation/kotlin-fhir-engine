@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo
 
 import androidx.compose.ui.window.ComposeUIViewController
 
-@Suppress("FunctionName", "unused")
-fun MainViewController() = ComposeUIViewController { App() }
+@Suppress("FunctionName", "unused") fun MainViewController() = ComposeUIViewController { App() }

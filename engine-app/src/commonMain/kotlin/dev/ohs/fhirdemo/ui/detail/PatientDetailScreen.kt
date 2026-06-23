@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.detail
 
 import androidx.compose.foundation.layout.Arrangement
@@ -50,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.ohs.fhirdemo.data.PatientUiModel
 
 @Composable
 fun PatientDetailScreen(
@@ -80,7 +78,11 @@ fun PatientDetailScreen(
     }
 
     Column(
-      modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
+      modifier =
+        Modifier.fillMaxSize()
+          .padding(padding)
+          .padding(16.dp)
+          .verticalScroll(rememberScrollState()),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       DetailField("Given name", p.given)
@@ -103,7 +105,8 @@ fun PatientDetailScreen(
         }
         OutlinedButton(
           onClick = { confirmingDelete = true },
-          colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+          colors =
+            ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
           modifier = Modifier.fillMaxWidth(),
         ) {
           Icon(Icons.Default.Delete, contentDescription = null)
@@ -124,7 +127,9 @@ fun PatientDetailScreen(
             confirmingDelete = false
             viewModel.delete(onComplete = onBack)
           },
-        ) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+        ) {
+          Text("Delete", color = MaterialTheme.colorScheme.error)
+        }
       },
       dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } },
     )

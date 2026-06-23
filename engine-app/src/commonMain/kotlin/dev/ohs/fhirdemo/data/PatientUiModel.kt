@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.data
 
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
@@ -31,18 +30,20 @@ data class PatientUiModel(
   val active: Boolean = true,
 ) {
   val displayName: String
-    get() = listOf(given, family).filter { it.isNotBlank() }.joinToString(" ").ifBlank { "(no name)" }
+    get() =
+      listOf(given, family).filter { it.isNotBlank() }.joinToString(" ").ifBlank { "(no name)" }
 
   companion object {
-    val EMPTY = PatientUiModel(
-      id = null,
-      given = "",
-      family = "",
-      gender = null,
-      birthDate = null,
-      phone = "",
-      email = "",
-      active = true,
-    )
+    val EMPTY =
+      PatientUiModel(
+        id = null,
+        given = "",
+        family = "",
+        gender = null,
+        birthDate = null,
+        phone = "",
+        email = "",
+        active = true,
+      )
   }
 }

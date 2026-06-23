@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.detail
 
 import dev.ohs.fhirdemo.data.PatientRepository

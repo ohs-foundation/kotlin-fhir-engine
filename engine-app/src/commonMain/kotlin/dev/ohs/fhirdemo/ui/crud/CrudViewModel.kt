@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.crud
 
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhirdemo.data.PatientRepository
 import dev.ohs.fhirdemo.data.PatientUiModel
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlin.uuid.Uuid
 
 enum class CrudTab {
   CREATE,
@@ -196,7 +195,8 @@ class CrudViewModel(
     }
     scope.launch {
       val model = repository.getOrNull(id)
-      _form.value = model?.toFormState(editable = editable) ?: CrudFormState(id = id, editable = editable)
+      _form.value =
+        model?.toFormState(editable = editable) ?: CrudFormState(id = id, editable = editable)
     }
   }
 

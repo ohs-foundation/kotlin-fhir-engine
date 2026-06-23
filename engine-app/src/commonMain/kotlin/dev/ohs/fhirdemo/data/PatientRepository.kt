@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.data
 
 import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.delete
 import dev.ohs.fhir.get
-import dev.ohs.fhir.search.StringClientParam
-import dev.ohs.fhir.search.Search
-import dev.ohs.fhir.search.search
 import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.search.StringClientParam
+import dev.ohs.fhir.search.search
 
 class PatientRepository(private val engine: FhirEngine) {
 
@@ -43,14 +41,15 @@ class PatientRepository(private val engine: FhirEngine) {
     return engine.create(patient).first()
   }
 
-  /** Creates a patient preserving the caller-supplied [PatientUiModel.id] (used by the CRUD demo). */
+  /**
+   * Creates a patient preserving the caller-supplied [PatientUiModel.id] (used by the CRUD demo).
+   */
   suspend fun createWithId(model: PatientUiModel): String {
     requireNotNull(model.id) { "createWithId requires a non-null id" }
     return engine.create(model.toFhir()).first()
   }
 
-  suspend fun getOrNull(id: String): PatientUiModel? =
-    runCatching { get(id) }.getOrNull()
+  suspend fun getOrNull(id: String): PatientUiModel? = runCatching { get(id) }.getOrNull()
 
   suspend fun update(model: PatientUiModel) {
     requireNotNull(model.id) { "Cannot update a patient with no id" }

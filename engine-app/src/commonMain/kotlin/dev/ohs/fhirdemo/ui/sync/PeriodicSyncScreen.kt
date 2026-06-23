@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.sync
 
 import androidx.compose.foundation.layout.Arrangement
@@ -62,7 +61,11 @@ fun PeriodicSyncScreen(
       modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      Text("Sync Data", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+      Text(
+        "Sync Data",
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+      )
 
       Text(
         text = "Last sync status: ${state.lastSyncStatus ?: "Not available"}",
@@ -101,7 +104,8 @@ fun PeriodicSyncScreen(
       }
 
       Text(
-        text = "Note: sync is not yet implemented in the engine module — this screen demonstrates the UI only.",
+        text =
+          "Note: sync is not yet implemented in the engine module — this screen demonstrates the UI only.",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

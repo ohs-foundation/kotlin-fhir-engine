@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.ui.crud
 
 import androidx.compose.foundation.layout.Arrangement
@@ -36,11 +35,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -58,11 +57,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 
 @Composable
 fun CrudScreen(
@@ -74,9 +73,7 @@ fun CrudScreen(
   val snackbarHostState = remember { SnackbarHostState() }
   var datePickerOpen by remember { mutableStateOf(false) }
 
-  LaunchedEffect(viewModel) {
-    viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
-  }
+  LaunchedEffect(viewModel) { viewModel.messages.collect { snackbarHostState.showSnackbar(it) } }
 
   Scaffold(
     topBar = {
@@ -103,10 +100,7 @@ fun CrudScreen(
       }
 
       Column(
-        modifier =
-          Modifier.fillMaxWidth()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+        modifier = Modifier.fillMaxWidth().padding(16.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         OutlinedTextField(

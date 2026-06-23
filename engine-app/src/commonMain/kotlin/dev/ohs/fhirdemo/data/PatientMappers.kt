@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.data
 
+import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
 import dev.ohs.fhir.model.r4.ContactPoint
 import dev.ohs.fhir.model.r4.Date
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
 import dev.ohs.fhir.model.r4.String as FhirString
 
 internal fun Patient.toUi(): PatientUiModel {
@@ -46,14 +45,16 @@ internal fun PatientUiModel.toFhir(): Patient =
     id = id,
     active = FhirBoolean(value = active),
     name =
-      if (given.isBlank() && family.isBlank()) emptyList()
-      else
+      if (given.isBlank() && family.isBlank()) {
+        emptyList()
+      } else {
         listOf(
           HumanName(
             family = family.takeIf { it.isNotBlank() }?.let { FhirString(value = it) },
             given = if (given.isBlank()) emptyList() else listOf(FhirString(value = given)),
           ),
-        ),
+        )
+      },
     gender = gender?.let { Enumeration(value = it) },
     birthDate = birthDate?.let { Date(value = FhirDate.Date(date = it)) },
     telecom =
