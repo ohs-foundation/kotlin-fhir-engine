@@ -34,7 +34,10 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
- * Provides iOS-specific scheduling for FHIR sync jobs backed by Kotlin Coroutines.
+ * Provides in-process (foreground) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
+ *
+ * For **background** sync that survives app suspension, use [IosSyncScheduler] which bridges to
+ * iOS BGTaskScheduler.
  *
  * Implement [FhirSyncTask] and pass a factory to [oneTimeSync] or [periodicSync]. The returned
  * [Flow] emits state transitions for the lifetime of the sync operation.
@@ -44,7 +47,7 @@ import kotlin.time.Instant
  * val statusFlow = Sync.oneTimeSync { MyFhirSyncTask() }
  * statusFlow.collect { status -> /* handle state */ }
  *
- * // Periodic sync every 15 minutes
+ * // Periodic sync every 15 minutes (foreground only)
  * val periodicFlow = Sync.periodicSync(
  *     PeriodicSyncConfiguration(repeat = RepeatInterval(15.minutes))
  * ) { MyFhirSyncTask() }
@@ -60,7 +63,10 @@ object Sync {
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
 
   /**
-   * Executes a one-time sync using [FhirSyncTask] instances created by [taskFactory].
+   * Executes a one-time foreground sync using [FhirSyncTask] instances created by [taskFactory].
+   *
+   * For background sync that survives app suspension, use [IosSyncScheduler.submitOneTimeSync]
+   * instead.
    *
    * If a one-time sync for [T] is already active, the existing [Flow] is returned immediately
    * without starting a new job.
@@ -78,11 +84,14 @@ object Sync {
   }
 
   /**
-   * Schedules a recurring sync using [FhirSyncTask] instances created by [taskFactory].
+   * Schedules a recurring foreground sync using [FhirSyncTask] instances created by [taskFactory].
    *
-   * The sync repeats at the interval specified in [periodicSyncConfiguration]. If a periodic sync
-   * for [T] is already running, the existing combined [Flow] is returned. Cancel with
-   * [cancelPeriodicSync].
+   * The sync repeats at the interval specified in [periodicSyncConfiguration] only while the
+   * app is in the foreground. For background periodic sync that survives app suspension, use
+   * [IosSyncScheduler.submitPeriodicSync] instead.
+   *
+   * If a periodic sync for [T] is already running, the existing combined [Flow] is returned. Cancel
+   * with [cancelPeriodicSync].
    *
    * @param periodicSyncConfiguration Repeat interval and retry policy.
    * @param taskFactory Creates a fresh [FhirSyncTask] for each sync cycle (including retries).
