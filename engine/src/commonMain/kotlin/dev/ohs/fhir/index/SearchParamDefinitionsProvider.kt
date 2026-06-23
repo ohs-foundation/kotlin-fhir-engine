@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
-import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.resourceType
 
 /** Provides a list of [SearchParamDefinition]s for a [Resource]. */
 internal fun interface SearchParamDefinitionsProvider {
@@ -42,6 +41,5 @@ internal class SearchParamDefinitionsProviderImpl(
    * instance. Used by `XFhirQueryTranslator`, which only has a resource type to work from.
    */
   fun getByResourceType(resourceTypeName: String): List<SearchParamDefinition> =
-    getSearchParamList(resourceTypeName) +
-      customParams.getOrElse(resourceTypeName) { emptyList() }
+    getSearchParamList(resourceTypeName) + customParams.getOrElse(resourceTypeName) { emptyList() }
 }

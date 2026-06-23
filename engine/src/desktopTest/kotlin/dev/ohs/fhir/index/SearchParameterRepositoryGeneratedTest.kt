@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
@@ -24,20 +23,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
-/**
- * Checks the build-time codegen's [getSearchParamList] against the FHIR R4 search-parameters bundle
- * it consumes, one resource type at a time.
- *
- * The codegen reads `buildSrc/src/main/resources/search-parameters.json` and emits a per-resource
- * lookup. This test reads the same file at runtime, walks it with a deliberately separate parser
- * (lightweight kotlinx.serialization data classes rather than kotlin-fhir's `Bundle` model), and
- * asserts the codegen output matches what the spec says for every kotlin-fhir resource type.
- *
- * Both the codegen and the test consult the same source file, so this is not a fully independent
- * oracle the way the original android-fhir test (which read HAPI's `@SearchParamDefinition`
- * annotations) was. It still catches codegen bugs in the code-emission stage — the two paths
- * through the data are different — but it cannot catch a bug shared by both spec readers.
- */
 @RunWith(Parameterized::class)
 class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceType) {
 
@@ -57,8 +42,6 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
         when (base) {
           name -> result.add(SearchParamDefinition(sp.name, type, path))
           "Resource" -> {
-            // The codegen emits base meta params (e.g. `_id`) with the path rewritten from
-            // `Resource.<field>` to `<actualResource>.<field>` at call time.
             val rewrittenPath = "$name.${path.substringAfter(".")}"
             result.add(SearchParamDefinition(sp.name, type, rewrittenPath))
           }
@@ -68,11 +51,6 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
     return result
   }
 
-  /**
-   * Mirrors the splitting logic in `codegen.SearchParameterRepositoryGenerator.getResourceToPathMap`.
-   * A SearchParameter may declare multiple `base` resources with a single combined expression like
-   * `AllergyIntolerance.code | Condition.code`; that needs to be split into per-resource paths.
-   */
   private fun resourceToPathMap(sp: SpecSearchParameter): Map<String, String> {
     val expression = sp.expression!!
     return if (sp.base.size == 1) {
@@ -85,8 +63,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
     }
   }
 
-  @Serializable
-  private data class SpecBundle(val entry: List<SpecEntry>)
+  @Serializable private data class SpecBundle(val entry: List<SpecEntry>)
 
   @Serializable private data class SpecEntry(val resource: SpecSearchParameter)
 

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import kotlin.test.Test
@@ -21,7 +20,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-// TODO: `operationOutcomeIsSuccess_*` tests skipped pending sync implementation.
 class UtilTest {
 
   @Test

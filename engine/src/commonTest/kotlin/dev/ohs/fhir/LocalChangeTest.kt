@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
+import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
@@ -40,18 +39,19 @@ class LocalChangeTest {
         resourceId = "Patient-001",
         type = LocalChangeEntity.Type.INSERT.value,
         payload =
-          FhirR4Json().encodeToString(
-            Patient(
-              id = "Patient-001",
-              name =
-                listOf(
-                  HumanName(
-                    given = listOf(FhirString(value = "John")),
-                    family = FhirString(value = "Doe"),
+          FhirR4Json()
+            .encodeToString(
+              Patient(
+                id = "Patient-001",
+                name =
+                  listOf(
+                    HumanName(
+                      given = listOf(FhirString(value = "John")),
+                      family = FhirString(value = "Doe"),
+                    ),
                   ),
-                ),
+              ),
             ),
-          ),
         timestamp = Clock.System.now(),
       )
 

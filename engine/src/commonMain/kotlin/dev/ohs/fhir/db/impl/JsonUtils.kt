@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -29,7 +27,7 @@ internal fun addUpdatedReferenceToResource(
   outdatedReference: String,
   updatedReference: String,
 ): Resource {
-  val parser = FhirR4Json()
+  val parser = fhirJsonParser
   val resourceJsonElement = Json.parseToJsonElement(parser.encodeToString(resource))
   val updatedResource = replaceJsonValue(resourceJsonElement, outdatedReference, updatedReference)
   return parser.decodeFromString(updatedResource.toString())

@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search
 
 /** Represents a compiled search query ready for database execution. */
-data class SearchQuery(
-  val query: String,
-  val args: List<Any>,
-)
+data class SearchQuery(val query: String, val args: List<Any>)

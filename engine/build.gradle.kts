@@ -32,10 +32,7 @@ kotlin {
     compilations.configureEach {
       compilerOptions.configure {
         freeCompilerArgs.add("-Xexpect-actual-classes")
-        optIn.addAll(
-          "kotlin.time.ExperimentalTime",
-          "kotlin.uuid.ExperimentalUuidApi",
-        )
+        optIn.addAll("kotlin.time.ExperimentalTime", "kotlin.uuid.ExperimentalUuidApi")
       }
     }
   }
@@ -74,16 +71,8 @@ kotlin {
         implementation(libs.ktor.client.okhttp)
       }
     }
-    val desktopMain by getting {
-      dependencies {
-        implementation(libs.ktor.client.java)
-      }
-    }
-    iosMain {
-      dependencies {
-        implementation(libs.ktor.client.darwin)
-      }
-    }
+    val desktopMain by getting { dependencies { implementation(libs.ktor.client.java) } }
+    iosMain { dependencies { implementation(libs.ktor.client.darwin) } }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.
@@ -103,13 +92,7 @@ kotlin {
 }
 
 dependencies {
-  listOf(
-    "kspAndroid",
-    "kspDesktop",
-    "kspIosX64",
-    "kspIosArm64",
-    "kspIosSimulatorArm64",
-  ).forEach {
+  listOf("kspAndroid", "kspDesktop", "kspIosX64", "kspIosArm64", "kspIosSimulatorArm64").forEach {
     add(it, libs.androidx.room.compiler)
   }
 }

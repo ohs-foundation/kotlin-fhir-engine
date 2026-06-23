@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.TypeConverter
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -27,8 +26,10 @@ import kotlin.uuid.Uuid
  * https://developer.android.com/training/data-storage/room/referencing-data
  */
 internal object DbTypeConverters {
-  // Since we're narrowing BigDecimal to double, search/sort precision is limited.
-  // Search/sort for values that are close enough to resolve to the same double will be undefined.
+  /**
+   * Since we're narrowing BigDecimal to double, search/sort precision is limited. Search/sort for
+   * values that are close enough to resolve to the same double will be undefined.
+   */
   @TypeConverter fun bigDecimalToDouble(value: BigDecimal): Double = value.doubleValue(false)
 
   @TypeConverter fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)

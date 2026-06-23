@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
 /** Definition of a search parameter for indexing and querying FHIR resources. */
-data class SearchParamDefinition(
-  val name: String,
-  val type: SearchParamType,
-  val path: String,
-)
+data class SearchParamDefinition(val name: String, val type: SearchParamType, val path: String)
 
 /** The type of a search parameter. */
 enum class SearchParamType {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.ConstructedBy
@@ -64,4 +63,6 @@ internal abstract class ResourceDatabase : RoomDatabase() {
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase>
+internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase> {
+  override fun initialize(): ResourceDatabase
+}
