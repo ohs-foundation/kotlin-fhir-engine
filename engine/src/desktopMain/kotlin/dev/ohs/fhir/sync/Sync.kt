@@ -30,23 +30,36 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
- * Provides desktop-specific scheduling for FHIR sync jobs backed by Kotlin Coroutines.
+ * Provides desktop (foreground-only) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
+ *
+ * Sync runs only while the JVM process is alive. There is no background scheduling — the
+ * application must remain running for the duration of the sync. For long-running syncs (up to
+ * 45 minutes), use [syncTimeout] to ensure stalled operations eventually fail and get retried.
  *
  * Implement [FhirSyncTask] and pass a factory to [oneTimeSync] or [periodicSync]. The returned
  * [Flow] emits state transitions for the lifetime of the sync operation.
  *
  * ```kotlin
- * // One-time sync
- * val statusFlow = Sync.oneTimeSync { MyFhirSyncTask() }
+ * // One-time sync with 45-minute timeout
+ * val statusFlow = Sync.oneTimeSync(
+ *     taskFactory = { MyFhirSyncTask() },
+ *     syncTimeout = 45.minutes,
+ * )
  * statusFlow.collect { status -> /* handle state */ }
  *
- * // Periodic sync every 15 minutes
+ * // Periodic sync every 15 minutes, each attempt capped at 45 minutes
  * val periodicFlow = Sync.periodicSync(
- *     PeriodicSyncConfiguration(repeat = RepeatInterval(15.minutes))
+ *     PeriodicSyncConfiguration(
+ *         repeat = RepeatInterval(15.minutes),
+ *         syncTimeout = 45.minutes,
+ *     )
  * ) { MyFhirSyncTask() }
  * periodicFlow.collect { status -> /* handle state */ }
  *
@@ -58,6 +71,7 @@ object Sync {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val mutex = Mutex()
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
+  private val dataStore = createDataStore()
 
   /**
    * Executes a one-time sync using [FhirSyncTask] instances created by [taskFactory].
@@ -67,24 +81,30 @@ object Sync {
    *
    * @param taskFactory Creates a fresh [FhirSyncTask] for each attempt (including retries).
    * @param retryConfiguration Retry policy on failure, or null to disable retries.
+   * @param syncTimeout Maximum duration for a single sync attempt. If exceeded, the attempt is
+   *   treated as failed and subject to retry. `null` means no timeout.
    * @return A [Flow] of [CurrentSyncJobStatus] tracking the full sync lifecycle.
    */
   suspend inline fun <reified T : FhirSyncTask> oneTimeSync(
     noinline taskFactory: () -> T,
     retryConfiguration: RetryConfiguration? = defaultRetryConfiguration,
+    syncTimeout: Duration? = null,
   ): Flow<CurrentSyncJobStatus> {
     val uniqueWorkName = createSyncUniqueName<T>("oneTimeSync")
-    return runOneTimeSync(uniqueWorkName, taskFactory, retryConfiguration)
+    return runOneTimeSync(uniqueWorkName, taskFactory, retryConfiguration, syncTimeout)
   }
 
   /**
-   * Schedules a recurring sync using [FhirSyncTask] instances created by [taskFactory].
+   * Schedules a recurring foreground sync using [FhirSyncTask] instances created by [taskFactory].
    *
    * The sync repeats at the interval specified in [periodicSyncConfiguration]. If a periodic sync
    * for [T] is already running, the existing combined [Flow] is returned. Cancel with
    * [cancelPeriodicSync].
    *
-   * @param periodicSyncConfiguration Repeat interval and retry policy.
+   * The cadence is wall-clock-based: the delay between cycle completions adjusts so the next
+   * cycle starts [repeat.interval] after the previous one began, regardless of sync duration.
+   *
+   * @param periodicSyncConfiguration Repeat interval, retry policy, and optional sync timeout.
    * @param taskFactory Creates a fresh [FhirSyncTask] for each sync cycle (including retries).
    * @return A [Flow] of [PeriodicSyncJobStatus] combining the current and last-completed state.
    */
@@ -114,13 +134,13 @@ object Sync {
     uniqueWorkName: String,
     taskFactory: () -> FhirSyncTask,
     retryConfiguration: RetryConfiguration?,
+    syncTimeout: Duration? = null,
   ): Flow<CurrentSyncJobStatus> {
     mutex.withLock { activeSyncs[uniqueWorkName] }
       ?.takeIf { it.job.isActive }
       ?.let { return it.progressChannel }
 
     val statusFlow = MutableSharedFlow<CurrentSyncJobStatus>(replay = 1)
-    val dataStore = createDataStore()
     val fhirDataStore = FhirDataStore(dataStore)
     storeUniqueWorkNameInDataStore(fhirDataStore, uniqueWorkName)
 
@@ -138,13 +158,12 @@ object Sync {
         statusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
         lastResult =
           try {
-            taskFactory()
-              .runSync(
-                taskName = uniqueWorkName,
-                dataStore = dataStore,
-                onProgress = { statusFlow.emit(CurrentSyncJobStatus.Running(it)) },
-              )
-          } catch (e: IllegalStateException) {
+            runSyncWithTimeout(taskFactory(), uniqueWorkName, syncTimeout) { syncJobStatus ->
+              statusFlow.emit(CurrentSyncJobStatus.Running(syncJobStatus))
+            }
+          } catch (e: CancellationException) {
+            throw e
+          } catch (e: Exception) {
             Logger.e(e) { "One-time sync failed: ${e.message}" }
             SyncJobStatus.Failed()
           }
@@ -170,17 +189,34 @@ object Sync {
     return statusFlow
   }
 
+  private suspend fun runSyncWithTimeout(
+    task: FhirSyncTask,
+    taskName: String?,
+    syncTimeout: Duration?,
+    onProgress: suspend (SyncJobStatus) -> Unit,
+  ): SyncJobStatus {
+    val call = suspend { task.runSync(taskName = taskName, dataStore = dataStore, onProgress = onProgress) }
+    return if (syncTimeout != null) {
+      withTimeoutOrNull(syncTimeout) { call() } ?: run {
+        Logger.w { "Sync timed out after $syncTimeout" }
+        SyncJobStatus.Failed()
+      }
+    } else {
+      call()
+    }
+  }
+
   @PublishedApi
   internal suspend fun runPeriodicSync(
     uniqueWorkName: String,
     config: PeriodicSyncConfiguration,
     taskFactory: () -> FhirSyncTask,
   ): Flow<PeriodicSyncJobStatus> {
+    val fhirDataStore = FhirDataStore(dataStore)
+
     mutex.withLock { activeSyncs[uniqueWorkName] }
       ?.takeIf { it.job.isActive }
       ?.let { handle ->
-        val dataStore = createDataStore()
-        val fhirDataStore = FhirDataStore(dataStore)
         return combine(handle.progressChannel, fhirDataStore.observeTerminalSyncJobStatus(uniqueWorkName)) { current, last ->
           PeriodicSyncJobStatus(
             lastSyncJobStatus = mapSyncJobStatusToLastSync(last),
@@ -189,8 +225,6 @@ object Sync {
         }
       }
 
-    val dataStore = createDataStore()
-    val fhirDataStore = FhirDataStore(dataStore)
     storeUniqueWorkNameInDataStore(fhirDataStore, uniqueWorkName)
 
     val currentStatusFlow = MutableSharedFlow<CurrentSyncJobStatus>(replay = 1)
@@ -200,6 +234,7 @@ object Sync {
 
     val job = scope.launch {
       while (true) {
+        val cycleStart = Clock.System.now()
         val maxRetries = config.retryConfiguration?.maxRetries ?: 0
         var attempt = 0
         var lastResult: SyncJobStatus = SyncJobStatus.Failed()
@@ -211,13 +246,12 @@ object Sync {
           currentStatusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
           lastResult =
             try {
-              taskFactory()
-                .runSync(
-                  taskName = uniqueWorkName,
-                  dataStore = dataStore,
-                  onProgress = { currentStatusFlow.emit(CurrentSyncJobStatus.Running(it)) },
-                )
-            } catch (e: IllegalStateException) {
+              runSyncWithTimeout(taskFactory(), uniqueWorkName, config.syncTimeout) { syncJobStatus ->
+                currentStatusFlow.emit(CurrentSyncJobStatus.Running(syncJobStatus))
+              }
+            } catch (e: CancellationException) {
+              throw e
+            } catch (e: Exception) {
               Logger.e(e) { "Periodic sync failed: ${e.message}" }
               SyncJobStatus.Failed()
             }
@@ -236,7 +270,9 @@ object Sync {
             )
         }
 
-        delay(config.repeat.interval.inWholeMilliseconds)
+        val elapsed = Clock.System.now() - cycleStart
+        val remaining = (config.repeat.interval - elapsed).coerceAtLeast(Duration.ZERO)
+        delay(remaining.inWholeMilliseconds)
         currentStatusFlow.emit(CurrentSyncJobStatus.Enqueued)
       }
     }

@@ -74,6 +74,12 @@ class PeriodicSyncConfiguration(
 
   /** Configuration for synchronization retry */
   val retryConfiguration: RetryConfiguration? = defaultRetryConfiguration,
+
+  /**
+   * Maximum duration for a single sync attempt. If exceeded, the attempt is treated as failed
+   * and subject to retry. `null` means no timeout. Defaults to `null`.
+   */
+  val syncTimeout: Duration? = null,
 )
 
 data class RepeatInterval(

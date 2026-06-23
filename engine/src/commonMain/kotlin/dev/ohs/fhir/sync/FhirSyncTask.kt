@@ -9,10 +9,10 @@ import dev.ohs.fhir.sync.upload.UploadStrategy
 import dev.ohs.fhir.sync.upload.Uploader
 import dev.ohs.fhir.sync.upload.patch.PatchGeneratorFactory
 import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorFactory
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import co.touchlab.kermit.Logger as KermitLogger
 
@@ -80,8 +80,8 @@ internal suspend fun FhirSyncTask.runSync(
       fhirDataStore ,
     )
 
-  val job =
-    CoroutineScope(Dispatchers.IO).launch {
+  return coroutineScope {
+    launch(Dispatchers.IO) {
       synchronizer.syncState.collect { syncJobStatus ->
         when (syncJobStatus) {
           is SyncJobStatus.Succeeded,
@@ -96,7 +96,6 @@ internal suspend fun FhirSyncTask.runSync(
       }
     }
 
-  val result = synchronizer.synchronize()
-  kotlin.runCatching { job.join() }.onFailure { KermitLogger.w(throwable = it) { it.message ?: "" } }
-  return result
+    synchronizer.synchronize()
+  }
 }
