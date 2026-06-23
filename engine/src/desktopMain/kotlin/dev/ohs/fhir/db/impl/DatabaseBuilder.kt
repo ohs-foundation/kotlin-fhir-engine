@@ -20,7 +20,7 @@ import androidx.room.RoomDatabase
 import java.io.File
 
 internal actual fun getDatabaseBuilder(
-  platformContext: Any
+  platformContext: Any,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val dbDir = File(System.getProperty("user.home"), ".fhir-engine")
   dbDir.mkdirs()

@@ -27,7 +27,7 @@ import kotlin.uuid.Uuid
     [
       Index(value = ["resourceUuid"], unique = true),
       Index(value = ["resourceType", "resourceId"], unique = true),
-    ]
+    ],
 )
 internal data class ResourceEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,

@@ -84,7 +84,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
           .java
           .getResourceAsStream("/search-parameters.json")
           ?: error(
-            "search-parameters.json is not on the test classpath — check the resources.srcDir wiring in engine/build.gradle.kts"
+            "search-parameters.json is not on the test classpath — check the resources.srcDir wiring in engine/build.gradle.kts",
           )
       stream.bufferedReader().use { json.decodeFromString(SpecBundle.serializer(), it.readText()) }
     }

@@ -81,7 +81,7 @@ internal object SearchParameterRepositoryGenerator {
       FunSpec.builder("getSearchParamList")
         .addParameter("resourceType", String::class)
         .returns(
-          ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
+          ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
         )
         .addModifiers(KModifier.INTERNAL)
         .addKdoc(generatedComment)
@@ -94,7 +94,7 @@ internal object SearchParameterRepositoryGenerator {
         .apply {
           addModifiers(KModifier.PRIVATE)
           returns(
-            ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
+            ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
           )
           beginControlFlow("return buildList(capacity = %L)", baseResourceSearchParameters.size)
           baseResourceSearchParameters.forEach { def ->
@@ -118,7 +118,7 @@ internal object SearchParameterRepositoryGenerator {
           .apply {
             addModifiers(KModifier.PRIVATE)
             returns(
-              ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass)
+              ClassName("kotlin.collections", "List").parameterizedBy(searchParamDefinitionClass),
             )
             beginControlFlow("return buildList(capacity = %L)", definitions.size)
             definitions.forEach { def ->
@@ -140,7 +140,7 @@ internal object SearchParameterRepositoryGenerator {
 
     getSearchParamListFunction.addStatement("else -> emptyList()").endControlFlow()
     getSearchParamListFunction.addStatement(
-      "return resourceSearchParams + getBaseResourceSearchParamsList(resourceType)"
+      "return resourceSearchParams + getBaseResourceSearchParamsList(resourceType)",
     )
     fileSpec.addFunction(getSearchParamListFunction.build())
 

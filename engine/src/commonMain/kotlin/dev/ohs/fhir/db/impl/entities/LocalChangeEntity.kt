@@ -69,7 +69,7 @@ internal data class LocalChangeEntity(
   enum class Type(val value: Int) {
     INSERT(1), // create a new resource. payload is the entire resource json.
     UPDATE(2), // patch. payload is the json patch.
-    DELETE(3) // delete. payload is empty string.
+    DELETE(3), // delete. payload is empty string.
     ;
 
     companion object {

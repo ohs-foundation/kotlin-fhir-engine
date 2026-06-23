@@ -20,7 +20,7 @@ import androidx.room.RoomDatabase
 import platform.Foundation.NSHomeDirectory
 
 internal actual fun getDatabaseBuilder(
-  platformContext: Any
+  platformContext: Any,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val dbPath = NSHomeDirectory() + "/$DATABASE_NAME"
   return Room.databaseBuilder<ResourceDatabase>(dbPath)

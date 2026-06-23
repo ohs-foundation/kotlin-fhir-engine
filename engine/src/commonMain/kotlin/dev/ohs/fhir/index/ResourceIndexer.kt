@@ -18,7 +18,8 @@ package dev.ohs.fhir.index
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.UcumValue
 import dev.ohs.fhir.fhirpath.FhirPathEngine
-import dev.ohs.fhir.toEqualCanonical
+import dev.ohs.fhir.fhirpath.types.FhirPathDate
+import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
 import dev.ohs.fhir.getResourceType
 import dev.ohs.fhir.index.entities.DateIndex
 import dev.ohs.fhir.index.entities.DateTimeIndex
@@ -29,8 +30,6 @@ import dev.ohs.fhir.index.entities.ReferenceIndex
 import dev.ohs.fhir.index.entities.StringIndex
 import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.index.entities.UriIndex
-import dev.ohs.fhir.fhirpath.types.FhirPathDate
-import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
 import dev.ohs.fhir.model.r4.Address
 import dev.ohs.fhir.model.r4.Canonical
 import dev.ohs.fhir.model.r4.Code
@@ -57,6 +56,7 @@ import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.LAST_UPDATED
 import dev.ohs.fhir.search.LOCAL_LAST_UPDATED
+import dev.ohs.fhir.toEqualCanonical
 import dev.ohs.fhir.ucumUrl
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -72,7 +72,7 @@ import kotlinx.datetime.toInstant
  * [search parameters](https://www.hl7.org/fhir/searchparameter-registry.html).
  */
 internal class ResourceIndexer(
-  private val searchParamDefinitionsProvider: SearchParamDefinitionsProvider
+  private val searchParamDefinitionsProvider: SearchParamDefinitionsProvider,
 ) {
   private val fhirPathEngine = FhirPathEngine.forR4()
 
@@ -200,7 +200,10 @@ internal class ResourceIndexer(
       }
 
     /** Builds a [DateIndex] from the [FhirPathDate] that fhir-path returns for `date` params. */
-    private fun fhirPathDateIndex(searchParam: SearchParamDefinition, value: FhirPathDate): DateIndex {
+    private fun fhirPathDateIndex(
+      searchParam: SearchParamDefinition,
+      value: FhirPathDate,
+    ): DateIndex {
       val (from, to) = fhirPathDateToEpochDaysRange(value)
       return DateIndex(searchParam.name, searchParam.path, from, to)
     }
@@ -219,7 +222,9 @@ internal class ResourceIndexer(
           LocalDate(d.year, d.month!!, d.day!!).toEpochDays().let { it to it }
       }
 
-    /** Inclusive [start, end] epoch-millis range for a [FhirPathDateTime] at its native precision. */
+    /**
+     * Inclusive [start, end] epoch-millis range for a [FhirPathDateTime] at its native precision.
+     */
     private fun fhirPathDateTimeToEpochMillisRange(dt: FhirPathDateTime): Pair<Long, Long> {
       val offset = dt.utcOffset ?: UtcOffset.ZERO
       return when (dt.precision) {
@@ -267,7 +272,14 @@ internal class ResourceIndexer(
         }
         FhirPathDateTime.Precision.SECOND -> {
           val start =
-            LocalDateTime(dt.year, dt.month!!, dt.day!!, dt.hour!!, dt.minute!!, dt.second!!.toInt())
+            LocalDateTime(
+                dt.year,
+                dt.month!!,
+                dt.day!!,
+                dt.hour!!,
+                dt.minute!!,
+                dt.second!!.toInt(),
+              )
               .toInstant(offset)
               .toEpochMilliseconds()
           start to start + 1_000 - 1
@@ -348,7 +360,8 @@ internal class ResourceIndexer(
         is Identifier ->
           value.value?.value?.let { idValue ->
             listOf(TokenIndex(searchParam.name, searchParam.path, value.system?.value, idValue))
-          } ?: emptyList()
+          }
+            ?: emptyList()
         is CodeableConcept ->
           value.coding.mapNotNull { coding ->
             val codeStr = coding.code?.value ?: return@mapNotNull null
@@ -361,22 +374,26 @@ internal class ResourceIndexer(
             ?.takeIf { it.isNotEmpty() }
             ?.let { codeStr ->
               listOf(
-                TokenIndex(searchParam.name, searchParam.path, value.system?.value ?: "", codeStr)
+                TokenIndex(searchParam.name, searchParam.path, value.system?.value ?: "", codeStr),
               )
-            } ?: emptyList()
+            }
+            ?: emptyList()
         // Defensive fallbacks for kotlin-fhir wrappers that might leak through unconverted.
         is dev.ohs.fhir.model.r4.Boolean ->
           value.value?.let {
             listOf(TokenIndex(searchParam.name, searchParam.path, system = null, it.toString()))
-          } ?: emptyList()
+          }
+            ?: emptyList()
         is Code ->
           value.value?.let {
             listOf(TokenIndex(searchParam.name, searchParam.path, system = "", it))
-          } ?: emptyList()
+          }
+            ?: emptyList()
         is Id ->
           value.value?.let {
             listOf(TokenIndex(searchParam.name, searchParam.path, system = null, it))
-          } ?: emptyList()
+          }
+            ?: emptyList()
         else -> emptyList()
       }
 
@@ -409,7 +426,7 @@ internal class ResourceIndexer(
                 FHIR_CURRENCY_CODE_SYSTEM,
                 currency,
                 amount,
-              )
+              ),
             )
           } else {
             emptyList()
@@ -423,7 +440,7 @@ internal class ResourceIndexer(
           val unit = value.unit?.value
           if (unit != null) {
             quantityIndices.add(
-              QuantityIndex(searchParam.name, searchParam.path, "", unit, numericValue)
+              QuantityIndex(searchParam.name, searchParam.path, "", unit, numericValue),
             )
           }
 
@@ -443,7 +460,7 @@ internal class ResourceIndexer(
               systemUri ?: "",
               canonicalCode ?: "",
               canonicalValue,
-            )
+            ),
           )
           quantityIndices
         }

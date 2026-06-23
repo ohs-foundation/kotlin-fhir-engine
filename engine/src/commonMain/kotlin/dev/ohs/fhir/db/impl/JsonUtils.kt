@@ -46,7 +46,7 @@ internal fun replaceJsonValue(
   when (element) {
     is JsonObject ->
       JsonObject(
-        element.mapValues { (_, value) -> replaceJsonValue(value, currentValue, newValue) }
+        element.mapValues { (_, value) -> replaceJsonValue(value, currentValue, newValue) },
       )
     is JsonArray -> JsonArray(element.map { replaceJsonValue(it, currentValue, newValue) })
     is JsonPrimitive ->

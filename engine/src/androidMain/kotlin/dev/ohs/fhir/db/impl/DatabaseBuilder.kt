@@ -20,7 +20,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 internal actual fun getDatabaseBuilder(
-  platformContext: Any
+  platformContext: Any,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val context = platformContext as Context
   val dbFile = context.getDatabasePath(DATABASE_NAME)

@@ -48,9 +48,9 @@ class LocalChangeTest {
                     HumanName(
                       given = listOf(FhirString(value = "John")),
                       family = FhirString(value = "Doe"),
-                    )
+                    ),
                   ),
-              )
+              ),
             ),
         timestamp = Clock.System.now(),
       )

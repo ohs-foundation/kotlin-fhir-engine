@@ -160,7 +160,7 @@ internal interface Database {
    *   local change may have one or more [LocalChangeResourceReference] associated with it.
    */
   suspend fun getLocalChangeResourceReferences(
-    localChangeIds: List<Long>
+    localChangeIds: List<Long>,
   ): List<LocalChangeResourceReference>
 }
 

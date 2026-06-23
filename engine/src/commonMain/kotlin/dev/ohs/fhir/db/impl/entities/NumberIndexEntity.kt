@@ -40,7 +40,7 @@ import kotlin.uuid.Uuid
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.NO_ACTION,
         deferred = true,
-      )
+      ),
     ],
 )
 internal data class NumberIndexEntity(
