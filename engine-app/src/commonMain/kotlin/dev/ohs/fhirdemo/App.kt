@@ -18,13 +18,13 @@ package dev.ohs.fhirdemo
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import dev.ohs.fhirdemo.data.PatientRepository
 import dev.ohs.fhirdemo.data.fhirEngine
-import dev.ohs.fhirdemo.nav.Navigator
 import dev.ohs.fhirdemo.nav.Screen
 import dev.ohs.fhirdemo.ui.crud.CrudScreen
 import dev.ohs.fhirdemo.ui.crud.CrudViewModel
@@ -45,84 +45,96 @@ import dev.ohs.fhirdemo.ui.theme.DemoTheme
 fun App(platformContext: Any = Unit) {
   val scope = rememberCoroutineScope()
   val repository = remember { PatientRepository(fhirEngine(platformContext)) }
-  val navigator = remember { Navigator() }
-  val current by navigator.current.collectAsState()
+  val backStack = remember { mutableStateListOf<Screen>(Screen.Home) }
   val listViewModel = remember { PatientListViewModel(repository, scope) }
 
+  fun back() {
+    backStack.removeLastOrNull()
+  }
+
   DemoTheme {
-    when (val screen = current) {
-      is Screen.Home ->
-        HomeScreen(
-          onFindPatient = {
-            listViewModel.reload()
-            navigator.go(Screen.List)
-          },
-          onSync = { navigator.go(Screen.Sync) },
-          onPeriodicSync = { navigator.go(Screen.PeriodicSync) },
-          onCrud = { navigator.go(Screen.Crud) },
-        )
+    NavDisplay(
+      backStack = backStack,
+      onBack = { back() },
+      entryProvider =
+        entryProvider {
+          entry<Screen.Home> {
+            HomeScreen(
+              onFindPatient = {
+                listViewModel.reload()
+                backStack.add(Screen.List)
+              },
+              onSync = { backStack.add(Screen.Sync) },
+              onPeriodicSync = { backStack.add(Screen.PeriodicSync) },
+              onCrud = { backStack.add(Screen.Crud) },
+            )
+          }
 
-      is Screen.List ->
-        PatientListScreen(
-          viewModel = listViewModel,
-          onAddClick = { navigator.go(Screen.NewPatient) },
-          onPatientClick = { id -> navigator.go(Screen.Detail(id)) },
-          onBack = { navigator.back() },
-        )
+          entry<Screen.List> {
+            PatientListScreen(
+              viewModel = listViewModel,
+              onAddClick = { backStack.add(Screen.NewPatient) },
+              onPatientClick = { id -> backStack.add(Screen.Detail(id)) },
+              onBack = { back() },
+            )
+          }
 
-      is Screen.Detail -> {
-        val vm = remember(screen.patientId) {
-          PatientDetailViewModel(screen.patientId, repository, scope)
-        }
-        PatientDetailScreen(
-          viewModel = vm,
-          onBack = {
-            listViewModel.reload()
-            navigator.back()
-          },
-          onEdit = { id -> navigator.go(Screen.EditPatient(id)) },
-        )
-      }
+          entry<Screen.Detail> { key ->
+            val vm =
+              remember(key.patientId) {
+                PatientDetailViewModel(key.patientId, repository, scope)
+              }
+            PatientDetailScreen(
+              viewModel = vm,
+              onBack = {
+                listViewModel.reload()
+                back()
+              },
+              onEdit = { id -> backStack.add(Screen.EditPatient(id)) },
+            )
+          }
 
-      is Screen.NewPatient -> {
-        val vm = remember { PatientFormViewModel(patientId = null, repository, scope) }
-        PatientFormScreen(
-          viewModel = vm,
-          onBack = {
-            listViewModel.reload()
-            navigator.back()
-          },
-        )
-      }
+          entry<Screen.NewPatient> {
+            val vm = remember { PatientFormViewModel(patientId = null, repository, scope) }
+            PatientFormScreen(
+              viewModel = vm,
+              onBack = {
+                listViewModel.reload()
+                back()
+              },
+            )
+          }
 
-      is Screen.EditPatient -> {
-        val vm = remember(screen.patientId) {
-          PatientFormViewModel(patientId = screen.patientId, repository, scope)
-        }
-        PatientFormScreen(
-          viewModel = vm,
-          onBack = {
-            listViewModel.reload()
-            navigator.back()
-          },
-        )
-      }
+          entry<Screen.EditPatient> { key ->
+            val vm =
+              remember(key.patientId) {
+                PatientFormViewModel(patientId = key.patientId, repository, scope)
+              }
+            PatientFormScreen(
+              viewModel = vm,
+              onBack = {
+                listViewModel.reload()
+                back()
+              },
+            )
+          }
 
-      is Screen.Sync -> {
-        val vm = remember { SyncViewModel(scope) }
-        SyncScreen(viewModel = vm, onBack = { navigator.back() })
-      }
+          entry<Screen.Sync> {
+            val vm = remember { SyncViewModel(scope) }
+            SyncScreen(viewModel = vm, onBack = { back() })
+          }
 
-      is Screen.PeriodicSync -> {
-        val vm = remember { PeriodicSyncViewModel(scope) }
-        DisposableEffect(vm) { onDispose { vm.cancel() } }
-        PeriodicSyncScreen(viewModel = vm, onBack = { navigator.back() })
-      }
+          entry<Screen.PeriodicSync> {
+            val vm = remember { PeriodicSyncViewModel(scope) }
+            DisposableEffect(vm) { onDispose { vm.cancel() } }
+            PeriodicSyncScreen(viewModel = vm, onBack = { back() })
+          }
 
-      is Screen.Crud -> {
-        val vm = remember { CrudViewModel(repository, scope) }
-        CrudScreen(viewModel = vm, onBack = { navigator.back() })
-      }
-    }
+          entry<Screen.Crud> {
+            val vm = remember { CrudViewModel(repository, scope) }
+            CrudScreen(viewModel = vm, onBack = { back() })
+          }
+        },
+    )
   }
 }

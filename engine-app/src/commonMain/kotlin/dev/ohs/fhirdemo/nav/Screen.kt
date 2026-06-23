@@ -16,10 +16,9 @@
 
 package dev.ohs.fhirdemo.nav
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import androidx.navigation3.runtime.NavKey
 
-sealed interface Screen {
+sealed interface Screen : NavKey {
   data object Home : Screen
 
   data object List : Screen
@@ -35,32 +34,4 @@ sealed interface Screen {
   data object PeriodicSync : Screen
 
   data object Crud : Screen
-}
-
-class Navigator {
-  private val backStack = ArrayDeque<Screen>().apply { addLast(Screen.Home) }
-
-  private val _current = MutableStateFlow<Screen>(Screen.Home)
-  val current: StateFlow<Screen> = _current
-
-  /** Navigates to [screen], pushing it onto the back stack. */
-  fun go(screen: Screen) {
-    backStack.addLast(screen)
-    _current.value = screen
-  }
-
-  /** Pops the current screen, returning to the previous one. No-op at the root. */
-  fun back() {
-    if (backStack.size > 1) {
-      backStack.removeLast()
-      _current.value = backStack.last()
-    }
-  }
-
-  /** Replaces the current screen in place (does not grow the back stack). */
-  fun replace(screen: Screen) {
-    if (backStack.isNotEmpty()) backStack.removeLast()
-    backStack.addLast(screen)
-    _current.value = screen
-  }
 }

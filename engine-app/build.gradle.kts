@@ -63,6 +63,7 @@ kotlin {
       implementation(libs.kotlin.fhir)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kotlinx.datetime)
+      implementation(libs.androidx.navigation3.ui)
       implementation(compose.runtime)
       implementation(compose.foundation)
       implementation(compose.material3)
