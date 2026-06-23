@@ -138,7 +138,7 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
         Text(text = patient.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         val sub =
           listOfNotNull(
-              patient.gender?.display,
+              patient.gender?.getDisplay(),
               patient.birthDate?.toString(),
             )
             .joinToString(" • ")
