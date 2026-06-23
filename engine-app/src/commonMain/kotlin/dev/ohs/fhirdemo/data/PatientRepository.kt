@@ -95,8 +95,8 @@ private fun PatientUiModel.toFhir(): Patient =
       else
         listOf(
           HumanName(
-            family = family.takeIf { it.isNotBlank() }?.let(::fs),
-            given = if (given.isBlank()) emptyList() else listOf(fs(given)),
+            family = family.takeIf { it.isNotBlank() }?.let { FhirString(value = it) },
+            given = if (given.isBlank()) emptyList() else listOf(FhirString(value = given)),
           ),
         ),
     gender = gender?.let { Enumeration(value = it.toFhir()) },
@@ -108,12 +108,10 @@ private fun PatientUiModel.toFhir(): Patient =
       },
   )
 
-private fun fs(s: String): FhirString = FhirString(value = s)
-
 private fun contactPoint(system: ContactPoint.ContactPointSystem, value: String): ContactPoint =
   ContactPoint(
     system = Enumeration(value = system),
-    value = fs(value),
+    value = FhirString(value = value),
   )
 
 private fun AdministrativeGender.toUi(): Gender =
