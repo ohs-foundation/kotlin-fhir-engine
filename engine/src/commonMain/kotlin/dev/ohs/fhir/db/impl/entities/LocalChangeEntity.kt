@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.entities
 
 import androidx.room.Entity
@@ -56,13 +55,7 @@ import kotlin.uuid.Uuid
  *
  * ] For resource that is fully synced with server this table should not have any rows.
  */
-@Entity(
-  indices =
-    [
-      Index(value = ["resourceType", "resourceId"]),
-      Index(value = ["resourceUuid"]),
-    ],
-)
+@Entity(indices = [Index(value = ["resourceType", "resourceId"]), Index(value = ["resourceUuid"])])
 internal data class LocalChangeEntity(
   @PrimaryKey(autoGenerate = true) val id: Long,
   val resourceType: String,

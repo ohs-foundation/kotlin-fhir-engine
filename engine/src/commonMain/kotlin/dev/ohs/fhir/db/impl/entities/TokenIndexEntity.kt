@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.entities
 
 import androidx.room.Embedded
@@ -21,9 +20,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import dev.ohs.fhir.index.entities.TokenIndex
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.uuid.Uuid
-import dev.ohs.fhir.index.entities.TokenIndex
 
 @Entity(
   indices =

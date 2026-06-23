@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.index
 
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
@@ -64,8 +63,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
     }
   }
 
-  @Serializable
-  private data class SpecBundle(val entry: List<SpecEntry>)
+  @Serializable private data class SpecBundle(val entry: List<SpecEntry>)
 
   @Serializable private data class SpecEntry(val resource: SpecSearchParameter)
 

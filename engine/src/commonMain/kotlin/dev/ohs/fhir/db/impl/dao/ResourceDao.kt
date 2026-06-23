@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.dao
 
 import androidx.room.ColumnInfo
@@ -39,22 +38,22 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndexer.Companion.createLocalLastUpdatedIndex
 import dev.ohs.fhir.index.ResourceIndices
 import dev.ohs.fhir.lastUpdated
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.Instant as FhirInstant
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.versionId
 import dev.ohs.fhir.withId
-import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import dev.ohs.fhir.model.r4.Instant as FhirInstant
 
 @Dao
 internal abstract class ResourceDao {
   /**
-   * This is ugly but there is no way to inject these right now in Room as it is the one creating the
-   * dao.
+   * This is ugly but there is no way to inject these right now in Room as it is the one creating
+   * the dao.
    *
    * TODO: https://github.com/ohs-foundation/kotlin-fhir-engine/issues/57
    */
@@ -77,10 +76,7 @@ internal abstract class ResourceDao {
         )
       updateChanges(entity, resource)
     }
-      ?: throw ResourceNotFoundException(
-        resource.resourceTypeEnum.name,
-        resource.id.orEmpty(),
-      )
+      ?: throw ResourceNotFoundException(resource.resourceTypeEnum.name, resource.id.orEmpty())
   }
 
   suspend fun updateResourceWithUuid(resourceUuid: Uuid, updatedResource: Resource) {
@@ -222,12 +218,9 @@ internal abstract class ResourceDao {
         WHERE resourceUuid = :resourceUuid
     """,
   )
-  abstract suspend fun getResourceEntity(
-    resourceUuid: Uuid,
-  ): ResourceEntity?
+  abstract suspend fun getResourceEntity(resourceUuid: Uuid): ResourceEntity?
 
-  @RawQuery
-  abstract suspend fun getResources(query: RoomRawQuery): List<SerializedResourceWithUuid>
+  @RawQuery abstract suspend fun getResources(query: RoomRawQuery): List<SerializedResourceWithUuid>
 
   @RawQuery
   abstract suspend fun getForwardReferencedResources(
@@ -258,7 +251,7 @@ internal abstract class ResourceDao {
 
     // Use the local UUID as the logical ID of the resource
     val resourceWithId =
-  if (resource.id.isNullOrEmpty()) resource.withId(resourceUuid.toString()) else resource
+      if (resource.id.isNullOrEmpty()) resource.withId(resourceUuid.toString()) else resource
 
     val entity =
       ResourceEntity(
