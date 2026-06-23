@@ -59,7 +59,9 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(project(":engine"))
+//      implementation(project(":engine"))
+        implementation("dev.ohs.fhir:engine")
+        implementation(libs.androidx.datastore.preferences)
       implementation(libs.kotlin.fhir)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kotlinx.datetime)
