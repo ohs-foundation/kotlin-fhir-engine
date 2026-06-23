@@ -22,14 +22,7 @@ import dev.ohs.fhir.get
 import dev.ohs.fhir.search.StringClientParam
 import dev.ohs.fhir.search.Search
 import dev.ohs.fhir.search.search
-import dev.ohs.fhir.model.r4.ContactPoint
-import dev.ohs.fhir.model.r4.Date
-import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirDate
-import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
-import dev.ohs.fhir.model.r4.String as FhirString
 
 class PatientRepository(private val engine: FhirEngine) {
 
@@ -68,47 +61,3 @@ class PatientRepository(private val engine: FhirEngine) {
     engine.delete<Patient>(id)
   }
 }
-
-private fun Patient.toUi(): PatientUiModel {
-  val name = name.firstOrNull()
-  val phone = telecom.firstOrNull { it.system?.value == ContactPoint.ContactPointSystem.Phone }
-  val email = telecom.firstOrNull { it.system?.value == ContactPoint.ContactPointSystem.Email }
-  return PatientUiModel(
-    id = id,
-    given = name?.given?.firstOrNull()?.value.orEmpty(),
-    family = name?.family?.value.orEmpty(),
-    gender = gender?.value,
-    birthDate = (birthDate?.value as? FhirDate.Date)?.date,
-    phone = phone?.value?.value.orEmpty(),
-    email = email?.value?.value.orEmpty(),
-    active = active?.value ?: false,
-  )
-}
-
-private fun PatientUiModel.toFhir(): Patient =
-  Patient(
-    id = id,
-    active = FhirBoolean(value = active),
-    name =
-      if (given.isBlank() && family.isBlank()) emptyList()
-      else
-        listOf(
-          HumanName(
-            family = family.takeIf { it.isNotBlank() }?.let { FhirString(value = it) },
-            given = if (given.isBlank()) emptyList() else listOf(FhirString(value = given)),
-          ),
-        ),
-    gender = gender?.let { Enumeration(value = it) },
-    birthDate = birthDate?.let { Date(value = FhirDate.Date(date = it)) },
-    telecom =
-      buildList {
-        if (phone.isNotBlank()) add(contactPoint(ContactPoint.ContactPointSystem.Phone, phone))
-        if (email.isNotBlank()) add(contactPoint(ContactPoint.ContactPointSystem.Email, email))
-      },
-  )
-
-private fun contactPoint(system: ContactPoint.ContactPointSystem, value: String): ContactPoint =
-  ContactPoint(
-    system = Enumeration(value = system),
-    value = FhirString(value = value),
-  )
