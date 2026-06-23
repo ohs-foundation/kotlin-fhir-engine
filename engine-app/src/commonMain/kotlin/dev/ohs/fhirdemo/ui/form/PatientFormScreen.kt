@@ -53,7 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.ohs.fhirdemo.data.Gender
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -107,11 +107,11 @@ fun PatientFormScreen(
 
       Text("Gender", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
       FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Gender.entries.forEach { g ->
+        AdministrativeGender.entries.forEach { g ->
           val selected = form.gender == g
           AssistChip(
             onClick = { viewModel.setGender(if (selected) null else g) },
-            label = { Text(g.display) },
+            label = { Text(g.getDisplay().orEmpty()) },
             colors =
               if (selected)
                 AssistChipDefaults.assistChipColors(

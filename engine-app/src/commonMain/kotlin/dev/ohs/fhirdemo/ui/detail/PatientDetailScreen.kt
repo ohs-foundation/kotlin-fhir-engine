@@ -85,7 +85,7 @@ fun PatientDetailScreen(
     ) {
       DetailField("Given name", p.given)
       DetailField("Family name", p.family)
-      DetailField("Gender", p.gender?.display.orEmpty())
+      DetailField("Gender", p.gender?.getDisplay().orEmpty())
       DetailField("Birthdate", p.birthDate?.toString().orEmpty())
       DetailField("Phone", p.phone)
       DetailField("Email", p.email)

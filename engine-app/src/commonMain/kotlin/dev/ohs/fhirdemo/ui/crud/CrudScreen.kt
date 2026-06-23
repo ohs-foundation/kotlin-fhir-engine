@@ -57,7 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.ohs.fhirdemo.data.Gender
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -149,9 +149,27 @@ fun CrudScreen(
 
         Text("Gender", style = MaterialTheme.typography.labelLarge)
         Row(verticalAlignment = Alignment.CenterVertically) {
-          GenderOption(Gender.MALE, "Male", form.gender, form.editable, viewModel::setGender)
-          GenderOption(Gender.FEMALE, "Female", form.gender, form.editable, viewModel::setGender)
-          GenderOption(Gender.OTHER, "Other", form.gender, form.editable, viewModel::setGender)
+          GenderOption(
+            AdministrativeGender.Male,
+            "Male",
+            form.gender,
+            form.editable,
+            viewModel::setGender,
+          )
+          GenderOption(
+            AdministrativeGender.Female,
+            "Female",
+            form.gender,
+            form.editable,
+            viewModel::setGender,
+          )
+          GenderOption(
+            AdministrativeGender.Other,
+            "Other",
+            form.gender,
+            form.editable,
+            viewModel::setGender,
+          )
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -220,11 +238,11 @@ private fun BirthDatePickerDialog(
 
 @Composable
 private fun GenderOption(
-  value: Gender,
+  value: AdministrativeGender,
   label: String,
-  selected: Gender?,
+  selected: AdministrativeGender?,
   enabled: Boolean,
-  onSelect: (Gender) -> Unit,
+  onSelect: (AdministrativeGender) -> Unit,
 ) {
   Row(
     verticalAlignment = Alignment.CenterVertically,

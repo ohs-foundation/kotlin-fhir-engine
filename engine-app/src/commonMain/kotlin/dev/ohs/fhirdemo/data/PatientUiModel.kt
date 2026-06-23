@@ -16,6 +16,7 @@
 
 package dev.ohs.fhirdemo.data
 
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import kotlinx.datetime.LocalDate
 
 /** Plain-Kotlin projection of a FHIR Patient for UI use. Hides the wrapped FHIR types. */
@@ -23,7 +24,7 @@ data class PatientUiModel(
   val id: String?,
   val given: String,
   val family: String,
-  val gender: Gender?,
+  val gender: AdministrativeGender?,
   val birthDate: LocalDate?,
   val phone: String,
   val email: String,
@@ -44,11 +45,4 @@ data class PatientUiModel(
       active = true,
     )
   }
-}
-
-enum class Gender(val display: String) {
-  MALE("Male"),
-  FEMALE("Female"),
-  OTHER("Other"),
-  UNKNOWN("Unknown"),
 }

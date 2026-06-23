@@ -16,7 +16,7 @@
 
 package dev.ohs.fhirdemo.ui.crud
 
-import dev.ohs.fhirdemo.data.Gender
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhirdemo.data.PatientRepository
 import dev.ohs.fhirdemo.data.PatientUiModel
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +41,7 @@ data class CrudFormState(
   val firstName: String = "",
   val lastName: String = "",
   val birthDate: String = "",
-  val gender: Gender? = null,
+  val gender: AdministrativeGender? = null,
   val active: Boolean = false,
   val editable: Boolean = true,
 )
@@ -72,7 +72,7 @@ class CrudViewModel(
 
   fun setBirthDate(v: String) = update { it.copy(birthDate = v) }
 
-  fun setGender(v: Gender?) = update { it.copy(gender = v) }
+  fun setGender(v: AdministrativeGender?) = update { it.copy(gender = v) }
 
   fun setActive(v: Boolean) = update { it.copy(active = v) }
 

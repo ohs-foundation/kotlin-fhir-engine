@@ -28,7 +28,6 @@ import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.Boolean as FhirBoolean
 import dev.ohs.fhir.model.r4.String as FhirString
 
@@ -78,7 +77,7 @@ private fun Patient.toUi(): PatientUiModel {
     id = id,
     given = name?.given?.firstOrNull()?.value.orEmpty(),
     family = name?.family?.value.orEmpty(),
-    gender = gender?.value?.toUi(),
+    gender = gender?.value,
     birthDate = (birthDate?.value as? FhirDate.Date)?.date,
     phone = phone?.value?.value.orEmpty(),
     email = email?.value?.value.orEmpty(),
@@ -99,7 +98,7 @@ private fun PatientUiModel.toFhir(): Patient =
             given = if (given.isBlank()) emptyList() else listOf(FhirString(value = given)),
           ),
         ),
-    gender = gender?.let { Enumeration(value = it.toFhir()) },
+    gender = gender?.let { Enumeration(value = it) },
     birthDate = birthDate?.let { Date(value = FhirDate.Date(date = it)) },
     telecom =
       buildList {
@@ -113,19 +112,3 @@ private fun contactPoint(system: ContactPoint.ContactPointSystem, value: String)
     system = Enumeration(value = system),
     value = FhirString(value = value),
   )
-
-private fun AdministrativeGender.toUi(): Gender =
-  when (this) {
-    AdministrativeGender.Male -> Gender.MALE
-    AdministrativeGender.Female -> Gender.FEMALE
-    AdministrativeGender.Other -> Gender.OTHER
-    AdministrativeGender.Unknown -> Gender.UNKNOWN
-  }
-
-private fun Gender.toFhir(): AdministrativeGender =
-  when (this) {
-    Gender.MALE -> AdministrativeGender.Male
-    Gender.FEMALE -> AdministrativeGender.Female
-    Gender.OTHER -> AdministrativeGender.Other
-    Gender.UNKNOWN -> AdministrativeGender.Unknown
-  }

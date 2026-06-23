@@ -16,7 +16,7 @@
 
 package dev.ohs.fhirdemo.ui.form
 
-import dev.ohs.fhirdemo.data.Gender
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhirdemo.data.PatientRepository
 import dev.ohs.fhirdemo.data.PatientUiModel
 import kotlinx.coroutines.CoroutineScope
@@ -49,7 +49,7 @@ class PatientFormViewModel(
 
   fun setFamily(v: String) = update { it.copy(family = v) }
 
-  fun setGender(v: Gender?) = update { it.copy(gender = v) }
+  fun setGender(v: AdministrativeGender?) = update { it.copy(gender = v) }
 
   fun setBirthDate(v: LocalDate?) = update { it.copy(birthDate = v) }
 
