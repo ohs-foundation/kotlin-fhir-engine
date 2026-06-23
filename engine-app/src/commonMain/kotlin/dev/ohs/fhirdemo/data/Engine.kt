@@ -21,22 +21,24 @@ import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamType
 
-private var initialized = false
+/**
+ * Initializes [FhirEngineProvider] exactly once. Backed by [lazy], which defaults to
+ * [LazyThreadSafetyMode.SYNCHRONIZED] and is safe across all Kotlin Multiplatform targets.
+ */
+private val engineInitializer: Unit by lazy {
+  FhirEngineProvider.init(
+    FhirEngineConfiguration(
+      customSearchParameters =
+        listOf(
+          SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
+          SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
+          SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
+        ),
+    ),
+  )
+}
 
-/** Lazily initializes [FhirEngineProvider] (once) and returns the [FhirEngine] instance. */
 fun fhirEngine(platformContext: Any = Unit): FhirEngine {
-  if (!initialized) {
-    FhirEngineProvider.init(
-      FhirEngineConfiguration(
-        customSearchParameters =
-          listOf(
-            SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
-            SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
-            SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
-          ),
-      ),
-    )
-    initialized = true
-  }
+  engineInitializer
   return FhirEngineProvider.getInstance(platformContext)
 }
