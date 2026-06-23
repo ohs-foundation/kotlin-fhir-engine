@@ -67,19 +67,16 @@ internal object JsonDiff {
     target: JsonObject,
     ops: MutableList<JsonObject>,
   ) {
-    // Removed keys
     for (key in source.keys) {
       if (key !in target) {
         ops.add(removeOp("$path/${escapeJsonPointer(key)}"))
       }
     }
-    // Added keys
     for (key in target.keys) {
       if (key !in source) {
         ops.add(addOp("$path/${escapeJsonPointer(key)}", target[key]!!))
       }
     }
-    // Changed keys
     for (key in source.keys) {
       if (key in target) {
         generateDiff("$path/${escapeJsonPointer(key)}", source[key]!!, target[key]!!, ops)
@@ -93,10 +90,17 @@ internal object JsonDiff {
     target: JsonArray,
     ops: MutableList<JsonObject>,
   ) {
-    // Simple approach: replace entire array if different rather than computing element-level diffs.
-    // This matches practical behavior for FHIR resources where array elements don't have stable
-    // IDs.
-    ops.add(replaceOp(path, target))
+    // Index-based array diff, matching fge json-patch (the library the original engine used), so
+    // generated patches stay compatible with the sync API.
+    val common = minOf(source.size, target.size)
+    for (index in 0 until common) {
+      generateDiff("$path/$index", source[index], target[index], ops)
+    }
+    // Each removal shifts the array down, so the index to remove stays `common`.
+    repeat(source.size - common) { ops.add(removeOp("$path/$common")) }
+    for (index in common until target.size) {
+      ops.add(addOp("$path/-", target[index]))
+    }
   }
 
   private fun replaceOp(path: String, value: JsonElement) = buildJsonObject {

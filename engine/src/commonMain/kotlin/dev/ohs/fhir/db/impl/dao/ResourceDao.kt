@@ -33,12 +33,12 @@ import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.db.impl.entities.StringIndexEntity
 import dev.ohs.fhir.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.db.impl.entities.UriIndexEntity
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndexer.Companion.createLocalLastUpdatedIndex
 import dev.ohs.fhir.index.ResourceIndices
 import dev.ohs.fhir.lastUpdated
 import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Instant as FhirInstant
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
@@ -46,13 +46,21 @@ import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.versionId
 import dev.ohs.fhir.withId
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Dao
 internal abstract class ResourceDao {
-  // this is ugly but there is no way to inject these right now in Room as it is the one creating
-  // the dao
+  /**
+   * This is ugly but there is no way to inject these right now in Room as it is the one creating the
+   * dao.
+   *
+   * TODO: https://github.com/ohs-foundation/kotlin-fhir-engine/issues/57
+   */
   lateinit var resourceIndexer: ResourceIndexer
 
   /**
@@ -66,7 +74,7 @@ internal abstract class ResourceDao {
     getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
-          serializedResource = FhirR4Json().encodeToString(resource),
+          serializedResource = fhirJsonParser.encodeToString(resource),
           lastUpdatedLocal = timeOfLocalChange,
           lastUpdatedRemote = resource.lastUpdated ?: it.lastUpdatedRemote,
         )
@@ -79,7 +87,7 @@ internal abstract class ResourceDao {
       val entity =
         it.copy(
           resourceId = updatedResource.id.orEmpty(),
-          serializedResource = FhirR4Json().encodeToString(updatedResource),
+          serializedResource = fhirJsonParser.encodeToString(updatedResource),
           lastUpdatedRemote = updatedResource.lastUpdated ?: it.lastUpdatedRemote,
           versionId = updatedResource.versionId ?: it.versionId,
         )
@@ -97,7 +105,7 @@ internal abstract class ResourceDao {
     getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
-          serializedResource = FhirR4Json().encodeToString(resource),
+          serializedResource = fhirJsonParser.encodeToString(resource),
           lastUpdatedRemote = resource.lastUpdated,
           versionId = resource.versionId,
         )
@@ -230,9 +238,6 @@ internal abstract class ResourceDao {
   suspend fun insertLocalResource(resource: Resource, timeOfChange: Instant) =
     insertResource(resource, timeOfChange)
 
-  // Check if the resource already exists using its logical ID, if it does, we just update the
-  // existing [ResourceEntity]
-  // Else, we insert with a new [ResourceEntity]
   private suspend fun insertRemoteResource(resource: Resource): Uuid {
     val existingResourceEntity = getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)
     if (existingResourceEntity != null) {
@@ -255,7 +260,7 @@ internal abstract class ResourceDao {
         resourceType = resourceWithId.resourceTypeEnum,
         resourceUuid = resourceUuid,
         resourceId = resourceWithId.id.orEmpty(),
-        serializedResource = FhirR4Json().encodeToString(resourceWithId),
+        serializedResource = fhirJsonParser.encodeToString(resourceWithId),
         versionId = resourceWithId.versionId,
         lastUpdatedRemote = resourceWithId.lastUpdated,
         lastUpdatedLocal = lastUpdatedLocal,
@@ -288,7 +293,7 @@ internal abstract class ResourceDao {
     lastUpdatedRemote: Instant?,
   ) {
     getResourceEntity(resourceId, resourceType)?.let { oldResourceEntity ->
-      val resource = FhirR4Json().decodeFromString(oldResourceEntity.serializedResource)
+      val resource = fhirJsonParser.decodeFromString(oldResourceEntity.serializedResource)
       val updated = resource.updateMeta(versionId, lastUpdatedRemote)
       updateResourceWithUuid(oldResourceEntity.resourceUuid, updated)
     }

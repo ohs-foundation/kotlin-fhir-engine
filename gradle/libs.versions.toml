@@ -9,7 +9,7 @@ androidx-work = "2.8.1"
 fhir-path = "1.0.0-beta03"
 junit = "4.13.2"
 kermit = "2.0.8"
-kotlin = "2.2.20"
+kotlin = "2.3.20"
 kotlin-fhir = "1.0.0-beta03"
 kotlinpoet = "2.2.0"
 kotlinx-coroutines = "1.10.2"
@@ -55,4 +55,4 @@ spotless-plugin-gradle = { module = "com.diffplug.spotless:spotless-plugin-gradl
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "android-gradle-plugin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version = "2.2.20-2.0.4" }
+ksp = { id = "com.google.devtools.ksp", version = "2.2.21-2.0.5" }

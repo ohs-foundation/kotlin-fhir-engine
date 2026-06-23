@@ -63,4 +63,6 @@ internal abstract class ResourceDatabase : RoomDatabase() {
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase>
+internal expect object ResourceDatabaseConstructor : RoomDatabaseConstructor<ResourceDatabase> {
+  override fun initialize(): ResourceDatabase
+}
