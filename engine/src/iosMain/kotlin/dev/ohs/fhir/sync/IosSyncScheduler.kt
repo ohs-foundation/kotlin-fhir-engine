@@ -219,9 +219,14 @@ class IosSyncScheduler(
     @OptIn(ExperimentalForeignApi::class)
     private fun submitRequest(request: BGProcessingTaskRequest) {
         try {
-            memScoped<Unit> {
+            memScoped {
                 val error = alloc<ObjCObjectVar<NSError?>>()
-                BGTaskScheduler.sharedScheduler.submitTaskRequest(request, error.ptr)
+                val success = BGTaskScheduler.sharedScheduler.submitTaskRequest(request, error.ptr)
+                if (!success) {
+                    val errorMessage =
+                        if (error.ptr != null) "NSError** was set" else "no error pointer"
+                    Logger.e { "IosSyncScheduler: submitTaskRequest failed ($errorMessage)" }
+                }
             }
         } catch (e: Exception) {
             Logger.e(e) { "IosSyncScheduler: failed to submit BGTask request" }

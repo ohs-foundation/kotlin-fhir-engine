@@ -20,8 +20,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import java.io.File
 
-internal fun createDataStore(): DataStore<Preferences> = createDataStore {
-  File(System.getProperty("user.home"), ".fhir-engine/$fhirDataStoreFileName").absolutePath
-}
+private var dataStoreInstance: DataStore<Preferences>? = null
+
+internal fun createDataStore(): DataStore<Preferences> =
+  dataStoreInstance ?: createDataStore {
+    File(System.getProperty("user.home"), ".fhir-engine/$fhirDataStoreFileName").absolutePath
+  }.also { dataStoreInstance = it }
 
 internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()

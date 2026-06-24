@@ -61,6 +61,9 @@ object FhirEngineProvider {
     this.fhirDataStore = FhirDataStore(getDataStore(platformContext))
   }
 
+  fun isInitialized() = configuration != null
+  fun isNotInitialized() = !isInitialized()
+
   /**
    * Returns the [FhirEngine] instance, creating it if necessary.
    *
