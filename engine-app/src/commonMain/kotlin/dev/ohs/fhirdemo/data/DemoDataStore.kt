@@ -20,7 +20,7 @@ class DemoDataStore(private val dataStorage: DataStore<Preferences>) {
        dataStorage.edit { pref -> pref[stringPreferencesKey(resourceType.name)] = timestamp }
     }
 
-    suspend fun getLasUpdateTimestamp(resourceType: ResourceType): String? {
+    suspend fun getLastUpdateTimestamp(resourceType: ResourceType): String? {
         return dataStorage.data.first()[stringPreferencesKey(resourceType.name)]
     }
 }

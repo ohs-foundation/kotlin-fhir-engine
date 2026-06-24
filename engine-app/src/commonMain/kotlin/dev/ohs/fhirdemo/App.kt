@@ -123,7 +123,8 @@ fun App(platformContext: Any = Unit) {
           }
 
           entry<Screen.PeriodicSync> {
-            val vm = remember { PeriodicSyncViewModel(scope) }
+            val controller = remember { FhirSyncController(platformContext) }
+            val vm = remember { PeriodicSyncViewModel(scope, controller) }
             DisposableEffect(vm) { onDispose { vm.cancel() } }
             PeriodicSyncScreen(viewModel = vm, onBack = { back() })
           }

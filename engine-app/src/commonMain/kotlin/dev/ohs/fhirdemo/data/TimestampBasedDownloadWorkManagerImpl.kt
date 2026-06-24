@@ -1,6 +1,5 @@
 package dev.ohs.fhirdemo.data
 
-import dev.ohs.fhir.getResourceType
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.OperationOutcome
@@ -23,7 +22,7 @@ class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore
 
         val resourceTypeToDownload =
             ResourceType.fromCode(url.findAnyOf(resourceTypeList, ignoreCase = true)!!.second)
-        dataStore.getLasUpdateTimestamp(resourceTypeToDownload)?.let {
+        dataStore.getLastUpdateTimestamp(resourceTypeToDownload)?.let {
             url = affixLastUpdatedTimestamp(url, it)
         }
         return DownloadRequest.of(url)
