@@ -1,7 +1,6 @@
 package dev.ohs.fhirdemo.data
 
 import dev.ohs.fhir.sync.CurrentSyncJobStatus
-import dev.ohs.fhir.sync.IosSyncScheduler
 import dev.ohs.fhir.sync.LastSyncJobStatus
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
 import dev.ohs.fhir.sync.SyncJobStatus

@@ -21,7 +21,7 @@ import co.touchlab.kermit.Logger as KermitLogger
  * Implement this interface to define the dependencies for a sync job. Each platform then wraps an
  * implementation in its own scheduling mechanism:
  * - **Android**: extend [FhirSyncWorker] (which implements this interface) and schedule via WorkManager
- * - **iOS**: pass a factory to [IosSyncScheduler] to run as BGTask background jobs
+ * - **iOS**: pass a factory to `IosSyncScheduler` (in engine-app) to run as BGTask background jobs
  * - **Desktop**: use [Sync] (desktop) for coroutine-based foreground scheduling
  */
 interface FhirSyncTask {
@@ -47,7 +47,7 @@ interface FhirSyncTask {
  * @param onProgress Called for every non-terminal [SyncJobStatus] emission so the caller can
  *   forward progress via its own signalling mechanism (e.g. WorkManager's `setProgress`).
  */
-internal suspend fun FhirSyncTask.runSync(
+suspend fun FhirSyncTask.runSync(
   taskName: String?,
   dataStore: DataStore<Preferences>,
   onProgress: suspend (SyncJobStatus) -> Unit,

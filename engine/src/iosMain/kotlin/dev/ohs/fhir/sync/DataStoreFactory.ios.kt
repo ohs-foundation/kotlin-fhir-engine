@@ -26,7 +26,7 @@ import platform.Foundation.NSUserDomainMask
 private var dataStoreInstance: DataStore<Preferences>? = null
 
 @OptIn(ExperimentalForeignApi::class)
-internal fun createDataStore(): DataStore<Preferences> =
+fun createDataStore(): DataStore<Preferences> =
   dataStoreInstance
     ?: run {
         val docDir =
