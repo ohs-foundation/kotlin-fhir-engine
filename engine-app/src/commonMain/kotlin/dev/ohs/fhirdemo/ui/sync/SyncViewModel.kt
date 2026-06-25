@@ -15,60 +15,57 @@
  */
 package dev.ohs.fhirdemo.ui.sync
 
-import dev.ohs.fhirdemo.util.formatTimestamp
-import dev.ohs.fhirdemo.util.now
+import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhirdemo.data.FhirSyncController
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import dev.ohs.fhirdemo.util.formatTimestamp
+import kotlin.time.Instant
 
-/**
- * UI-only stand-in for one-time sync. The engine module does not implement sync yet, so this
- * simulates the [CurrentSyncJobStatus] lifecycle (Enqueued → Running → Succeeded) to drive the
- * screen. Replace [triggerOneTimeSync] with a real `Sync.oneTimeSync` flow once sync lands.
- */
-class SyncViewModel(private val scope: CoroutineScope) {
+@OptIn(ExperimentalCoroutinesApi::class)
+class SyncViewModel(
+    private val scope: CoroutineScope,
+    private val controller: FhirSyncController,
+) {
+    private val _lastSyncTime = MutableStateFlow<String?>(null)
+    val lastSyncTime: StateFlow<String?> = _lastSyncTime.asStateFlow()
 
-  private val _status = MutableStateFlow<CurrentSyncJobStatus>(CurrentSyncJobStatus.Idle)
-  val status: StateFlow<CurrentSyncJobStatus> = _status.asStateFlow()
+    private val _oneTimeSyncTrigger =
+        MutableSharedFlow<Boolean>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
 
-  private val _lastSyncTime = MutableStateFlow<String?>(null)
-  val lastSyncTime: StateFlow<String?> = _lastSyncTime.asStateFlow()
+    val pollState: SharedFlow<CurrentSyncJobStatus> =
+        _oneTimeSyncTrigger
+            .flatMapLatest { controller.oneTimeSync() }
+            .onEach { if (it is CurrentSyncJobStatus.Succeeded) updateLastSyncTimestamp(it.timestamp) }
+            .shareIn(scope, SharingStarted.Eagerly, replay = 0)
 
-  private var job: Job? = null
+    fun triggerOneTimeSync() {
+        _oneTimeSyncTrigger.tryEmit(true)
+    }
 
-  fun triggerOneTimeSync() {
-    if (job?.isActive == true) return
-    job =
-      scope.launch {
-        _status.value = CurrentSyncJobStatus.Enqueued
-        delay(600)
-        if (!isActive) return@launch
-        _status.value = CurrentSyncJobStatus.Running
-        delay(2000)
-        if (!isActive) return@launch
-        _lastSyncTime.value = now().formatTimestamp()
-        _status.value = CurrentSyncJobStatus.Succeeded
-      }
-  }
+    fun cancelOneTimeSync() {
+        scope.launch { controller.cancelOneTimeSync() }
+    }
 
-  fun cancelOneTimeSync() {
-    job?.cancel()
-    job = null
-    _status.value = CurrentSyncJobStatus.Cancelled
-  }
-}
-
-/** Mirrors the demo's `CurrentSyncJobStatus` states used to drive the UI. */
-enum class CurrentSyncJobStatus {
-  Idle,
-  Enqueued,
-  Running,
-  Succeeded,
-  Failed,
-  Cancelled,
+    fun updateLastSyncTimestamp(lastSync: Instant? = null) {
+        _lastSyncTime.value = lastSync
+            ?.toLocalDateTime(TimeZone.currentSystemDefault())
+            ?.formatTimestamp()
+    }
 }

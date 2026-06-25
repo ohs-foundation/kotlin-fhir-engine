@@ -60,6 +60,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":engine"))
+        implementation(libs.androidx.datastore.preferences)
       implementation(libs.kotlin.fhir)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kotlinx.datetime)

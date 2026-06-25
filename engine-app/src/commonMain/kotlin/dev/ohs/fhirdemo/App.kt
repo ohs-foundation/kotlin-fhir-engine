@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import dev.ohs.fhirdemo.data.FhirSyncController
 import dev.ohs.fhirdemo.data.PatientRepository
 import dev.ohs.fhirdemo.data.fhirEngine
 import dev.ohs.fhirdemo.nav.Screen
@@ -117,12 +118,13 @@ fun App(platformContext: Any = Unit) {
           }
 
           entry<Screen.Sync> {
-            val vm = remember { SyncViewModel(scope) }
+            val vm = remember { SyncViewModel(scope, FhirSyncController(platformContext)) }
             SyncScreen(viewModel = vm, onBack = { back() })
           }
 
           entry<Screen.PeriodicSync> {
-            val vm = remember { PeriodicSyncViewModel(scope) }
+            val controller = remember { FhirSyncController(platformContext) }
+            val vm = remember { PeriodicSyncViewModel(scope, controller) }
             DisposableEffect(vm) { onDispose { vm.cancel() } }
             PeriodicSyncScreen(viewModel = vm, onBack = { back() })
           }
