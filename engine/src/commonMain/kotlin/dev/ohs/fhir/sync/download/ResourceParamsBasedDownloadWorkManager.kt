@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2026 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.download
 
 import dev.ohs.fhir.lastUpdated
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.sync.DownloadWorkManager
 import dev.ohs.fhir.sync.GREATER_THAN_PREFIX
@@ -24,10 +27,6 @@ import dev.ohs.fhir.sync.ParamMap
 import dev.ohs.fhir.sync.SyncDataParams
 import dev.ohs.fhir.sync.concatParams
 import dev.ohs.fhir.toTimeZoneString
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.OperationOutcome
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 typealias ResourceSearchParams = Map<ResourceType, ParamMap>
 

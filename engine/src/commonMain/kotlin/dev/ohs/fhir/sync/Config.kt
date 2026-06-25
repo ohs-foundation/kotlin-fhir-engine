@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2026 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync
 
 import io.ktor.http.encodeURLQueryComponent
@@ -76,8 +75,8 @@ class PeriodicSyncConfiguration(
   val retryConfiguration: RetryConfiguration? = defaultRetryConfiguration,
 
   /**
-   * Maximum duration for a single sync attempt. If exceeded, the attempt is treated as failed
-   * and subject to retry. `null` means no timeout. Defaults to `null`.
+   * Maximum duration for a single sync attempt. If exceeded, the attempt is treated as failed and
+   * subject to retry. `null` means no timeout. Defaults to `null`.
    */
   val syncTimeout: Duration? = null,
 )

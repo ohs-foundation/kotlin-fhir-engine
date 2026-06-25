@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2025-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync
 
 import androidx.datastore.core.DataStore
@@ -47,8 +46,7 @@ class FhirDataStore(private val dataStore: DataStore<Preferences>) {
         emit(emptyPreferences())
       }
       .map { prefs ->
-        prefs[stringPreferencesKey(key)]
-          ?.let { json.decodeFromString<SyncJobStatus>(it) }
+        prefs[stringPreferencesKey(key)]?.let { json.decodeFromString<SyncJobStatus>(it) }
       }
 
   /**
@@ -78,10 +76,10 @@ class FhirDataStore(private val dataStore: DataStore<Preferences>) {
     dataStore.edit { it[stringPreferencesKey("$key-name")] = value }
 
   suspend fun removeUniqueWorkName(key: String) =
-      dataStore.edit {
-        val value = it.remove(stringPreferencesKey("$key-name"))
-        Logger.d("Removed value: $value")
-      }
+    dataStore.edit {
+      val value = it.remove(stringPreferencesKey("$key-name"))
+      Logger.d("Removed value: $value")
+    }
 
   /** Fetches the stored unique-work-name from DataStore. */
   suspend fun fetchUniqueWorkName(key: String): String? =

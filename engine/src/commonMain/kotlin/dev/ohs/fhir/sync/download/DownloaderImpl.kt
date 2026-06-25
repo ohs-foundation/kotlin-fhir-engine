@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2026 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.download
 
 import co.touchlab.kermit.Logger
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.sync.DataSource
 import dev.ohs.fhir.sync.DownloadWorkManager
 import dev.ohs.fhir.sync.ResourceSyncException
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.sync.download.DownloadState
-import dev.ohs.fhir.sync.download.Downloader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * Implementation of the [dev.ohs.fhir.sync.download.Downloader]. It orchestrates the pre & post processing of resources via
- * [DownloadWorkManager] and downloading of resources via [DataSource]. [dev.ohs.fhir.sync.download.Downloader] clients should
- * call download and listen to the various states emitted by [DownloadWorkManager] as
- * [dev.ohs.fhir.sync.download.DownloadState].
+ * Implementation of the [dev.ohs.fhir.sync.download.Downloader]. It orchestrates the pre & post
+ * processing of resources via [DownloadWorkManager] and downloading of resources via [DataSource].
+ * [dev.ohs.fhir.sync.download.Downloader] clients should call download and listen to the various
+ * states emitted by [DownloadWorkManager] as [dev.ohs.fhir.sync.download.DownloadState].
  */
 internal class DownloaderImpl(
   private val dataSource: DataSource,

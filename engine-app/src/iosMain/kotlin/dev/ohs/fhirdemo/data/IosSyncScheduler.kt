@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo.data
 
 import co.touchlab.kermit.Logger
@@ -21,6 +20,8 @@ import dev.ohs.fhir.sync.FhirSyncTask
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.createDataStore
 import dev.ohs.fhir.sync.runSync
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
@@ -33,8 +34,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import platform.BackgroundTasks.BGProcessingTask
 import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
@@ -42,20 +41,17 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSError
 
 /**
- * Schedules and executes FHIR sync operations as iOS background tasks using
- * [BGTaskScheduler].
+ * Schedules and executes FHIR sync operations as iOS background tasks using [BGTaskScheduler].
  *
- * Background tasks allow long-running sync operations (up to 45 minutes) to continue
- * when the app is in the background. iOS determines the actual execution time based on
- * system conditions; the `earliestBeginDate` on a request is the earliest possible
- * start, not a guarantee.
+ * Background tasks allow long-running sync operations (up to 45 minutes) to continue when the app
+ * is in the background. iOS determines the actual execution time based on system conditions; the
+ * `earliestBeginDate` on a request is the earliest possible start, not a guarantee.
  *
  * ## Setup
- *
- * 1. Add your task identifiers to `Info.plist` under
- *    `BGTaskSchedulerPermittedIdentifiers` as an array of strings.
- * 2. During app launch (`application(_:didFinishLaunchingWithOptions:)`), call
- *    [register] and [submitPeriodicSync].
+ * 1. Add your task identifiers to `Info.plist` under `BGTaskSchedulerPermittedIdentifiers` as an
+ *    array of strings.
+ * 2. During app launch (`application(_:didFinishLaunchingWithOptions:)`), call [register] and
+ *    [submitPeriodicSync].
  *
  * ```kotlin
  * val scheduler = IosSyncScheduler(
@@ -94,7 +90,9 @@ class IosSyncScheduler(
     BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
       periodicSyncTaskIdentifier,
       usingQueue = null,
-      launchHandler = { task -> handleTask(task as BGProcessingTask, periodicSyncTaskIdentifier, ::reschedulePeriodic) },
+      launchHandler = { task ->
+        handleTask(task as BGProcessingTask, periodicSyncTaskIdentifier, ::reschedulePeriodic)
+      },
     )
 
     oneTimeSyncTaskIdentifier?.let { identifier ->
@@ -118,16 +116,14 @@ class IosSyncScheduler(
     requiresNetworkConnectivity: Boolean = true,
   ) {
     val identifier =
-      oneTimeSyncTaskIdentifier
-        ?: error("oneTimeSyncTaskIdentifier was not provided")
+      oneTimeSyncTaskIdentifier ?: error("oneTimeSyncTaskIdentifier was not provided")
 
     val request =
       BGProcessingTaskRequest(identifier).apply {
         this.requiresNetworkConnectivity = requiresNetworkConnectivity
         this.requiresExternalPower = false
         if (earliestBeginDate != Duration.ZERO) {
-          this.earliestBeginDate =
-            NSDate().plus(earliestBeginDate.inWholeSeconds.toDouble())
+          this.earliestBeginDate = NSDate().plus(earliestBeginDate.inWholeSeconds.toDouble())
         }
       }
     submitRequest(request)
@@ -136,9 +132,9 @@ class IosSyncScheduler(
   /**
    * Submits (or resubmits) a periodic background sync request.
    *
-   * After each sync cycle the scheduler automatically re-schedules the next run
-   * at [interval] from completion. Call once during app launch; subsequent calls
-   * update the interval and replace the pending request.
+   * After each sync cycle the scheduler automatically re-schedules the next run at [interval] from
+   * completion. Call once during app launch; subsequent calls update the interval and replace the
+   * pending request.
    */
   fun submitPeriodicSync(
     interval: Duration = periodicInterval,
@@ -155,8 +151,7 @@ class IosSyncScheduler(
         this.requiresNetworkConnectivity = requiresNetworkConnectivity
         this.requiresExternalPower = requiresExternalPower
         if (earliestBeginDate != Duration.ZERO) {
-          this.earliestBeginDate =
-            NSDate().plus(earliestBeginDate.inWholeSeconds.toDouble())
+          this.earliestBeginDate = NSDate().plus(earliestBeginDate.inWholeSeconds.toDouble())
         }
       }
     submitRequest(request)
@@ -207,18 +202,16 @@ class IosSyncScheduler(
         return@launch
       }
 
-      val result =
-        runCatching {
-          taskFactory().runSync(
+      val result = runCatching {
+        taskFactory()
+          .runSync(
             taskName = taskName,
             dataStore = dataStore,
             onProgress = {},
           )
-        }
-
-      result.onFailure { e ->
-        Logger.e(e) { "IosSyncScheduler: sync failed for $taskName" }
       }
+
+      result.onFailure { e -> Logger.e(e) { "IosSyncScheduler: sync failed for $taskName" } }
 
       completeOnce(result.getOrNull() is SyncJobStatus.Succeeded)
     }
@@ -231,8 +224,7 @@ class IosSyncScheduler(
         val error = alloc<ObjCObjectVar<NSError?>>()
         val success = BGTaskScheduler.sharedScheduler.submitTaskRequest(request, error.ptr)
         if (!success) {
-          val errorMessage =
-            if (error.ptr != null) "NSError** was set" else "no error pointer"
+          val errorMessage = if (error.ptr != null) "NSError** was set" else "no error pointer"
           Logger.e { "IosSyncScheduler: submitTaskRequest failed ($errorMessage)" }
         }
       }

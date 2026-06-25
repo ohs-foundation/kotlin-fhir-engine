@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import dev.ohs.fhir.db.impl.DatabaseImpl
@@ -62,6 +61,7 @@ object FhirEngineProvider {
   }
 
   fun isInitialized() = configuration != null
+
   fun isNotInitialized() = !isInitialized()
 
   /**

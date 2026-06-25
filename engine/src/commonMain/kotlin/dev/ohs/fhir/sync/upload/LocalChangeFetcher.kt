@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.db.Database
-import dev.ohs.fhir.sync.ResourceSyncException
 import kotlin.properties.Delegates
 
 /**

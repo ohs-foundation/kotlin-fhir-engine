@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2024-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.patch
 
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -41,15 +40,14 @@ class StronglyConnectedPatchesTest {
 
     val result = StronglyConnectedPatches.scc(graph)
 
-    result
-      .shouldContainExactly(
-        listOf("1", "2"),
-        listOf("0"),
-        listOf("3", "4", "5"),
-        listOf("8"),
-        listOf("7"),
-        listOf("6"),
-      )
+    result.shouldContainExactly(
+      listOf("1", "2"),
+      listOf("0"),
+      listOf("3", "4", "5"),
+      listOf("8"),
+      listOf("7"),
+      listOf("6"),
+    )
   }
 
   @Test

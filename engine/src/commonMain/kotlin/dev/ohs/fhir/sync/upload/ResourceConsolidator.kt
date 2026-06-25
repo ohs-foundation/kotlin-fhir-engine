@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.Database
 import dev.ohs.fhir.lastUpdated
-import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorMode
-import dev.ohs.fhir.versionId
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.DomainResource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorMode
+import dev.ohs.fhir.versionId
 import kotlin.time.Instant
 
 /**

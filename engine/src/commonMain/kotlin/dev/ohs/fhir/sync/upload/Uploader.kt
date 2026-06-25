@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.DomainResource
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.sync.DataSource
 import dev.ohs.fhir.sync.ResourceSyncException
@@ -27,11 +31,6 @@ import dev.ohs.fhir.sync.upload.request.BundleUploadRequestMapping
 import dev.ohs.fhir.sync.upload.request.UploadRequestGenerator
 import dev.ohs.fhir.sync.upload.request.UploadRequestMapping
 import dev.ohs.fhir.sync.upload.request.UrlUploadRequestMapping
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.DomainResource
-import dev.ohs.fhir.model.r4.OperationOutcome
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.transformWhile
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.request
 
 import dev.ohs.fhir.LocalChange
@@ -33,45 +32,47 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Clock
-
+import kotlinx.coroutines.test.runTest
 
 class TransactionBundleGeneratorTest {
 
   @Test
-  fun generate_upload_requests_should_return_empty_list_if_there_are_no_local_changes() =
-    runTest {
-      val generator = TransactionBundleGenerator.getDefault()
-      val result = generator.generateUploadRequests(listOf())
-      result.shouldBeEmpty()
-    }
+  fun generate_upload_requests_should_return_empty_list_if_there_are_no_local_changes() = runTest {
+    val generator = TransactionBundleGenerator.getDefault()
+    val result = generator.generateUploadRequests(listOf())
+    result.shouldBeEmpty()
+  }
 
   @Test
-  fun generate_upload_requests_should_return_single_transaction_bundle_with_3_entries() =
-    runTest {
-      val patches =
-        listOf(insertionLocalChange, updateLocalChange, deleteLocalChange)
-          .map { PatchMapping(listOf(it), it.toPatch()) }
-          .map { StronglyConnectedPatchMappings(listOf(it)) }
+  fun generate_upload_requests_should_return_single_transaction_bundle_with_3_entries() = runTest {
+    val patches =
+      listOf(insertionLocalChange, updateLocalChange, deleteLocalChange)
+        .map { PatchMapping(listOf(it), it.toPatch()) }
+        .map { StronglyConnectedPatchMappings(listOf(it)) }
 
-      val generator = TransactionBundleGenerator.getDefault()
-      val result = generator.generateUploadRequests(patches)
+    val generator = TransactionBundleGenerator.getDefault()
+    val result = generator.generateUploadRequests(patches)
 
-      result.shouldHaveSize(1)
-      with(result[0].generatedRequest.resource) {
-        type.value.shouldBe(Bundle.BundleType.Transaction)
-        entry.shouldHaveSize(3)
-        entry.mapNotNull { it.request?.method?.value }.shouldContainExactly(
-          Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Patch, Bundle.HTTPVerb.Delete)
-      }
-
-      result[0].splitLocalChanges.shouldHaveSize(3)
-      result[0].splitLocalChanges.all { it.size == 1 }.shouldBeTrue()
+    result.shouldHaveSize(1)
+    with(result[0].generatedRequest.resource) {
+      type.value.shouldBe(Bundle.BundleType.Transaction)
+      entry.shouldHaveSize(3)
+      entry
+        .mapNotNull { it.request?.method?.value }
+        .shouldContainExactly(
+          Bundle.HTTPVerb.Put,
+          Bundle.HTTPVerb.Patch,
+          Bundle.HTTPVerb.Delete,
+        )
     }
+
+    result[0].splitLocalChanges.shouldHaveSize(3)
+    result[0].splitLocalChanges.all { it.size == 1 }.shouldBeTrue()
+  }
 
   @Test
   fun generate_upload_requests_should_return_3_transaction_bundle_with_single_entry_each() =
@@ -109,16 +110,16 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_not_throw_exception_for_create_by_post() = runTest {
     val exception =
       runCatching {
-        TransactionBundleGenerator.getGenerator(
-          Bundle.HTTPVerb.Post,
-          Bundle.HTTPVerb.Patch,
-          generatedBundleSize = 500,
-          useETagForUpload = true,
-        )
-      }
+          TransactionBundleGenerator.getGenerator(
+            Bundle.HTTPVerb.Post,
+            Bundle.HTTPVerb.Patch,
+            generatedBundleSize = 500,
+            useETagForUpload = true,
+          )
+        }
         .exceptionOrNull()
 
-    assertTrue(exception !is IllegalArgumentException,  "IllegalArgumentException was thrown")
+    assertTrue(exception !is IllegalArgumentException, "IllegalArgumentException was thrown")
   }
 
   @Test
@@ -145,7 +146,8 @@ class TransactionBundleGeneratorTest {
       val generator = TransactionBundleGenerator.getDefault(useETagForUpload = false)
       val result = generator.generateUploadRequests(patches)
 
-      (result.first().generatedRequest.resource.entry.first().request?.ifMatch?.value).shouldBeNull()
+      (result.first().generatedRequest.resource.entry.first().request?.ifMatch?.value)
+        .shouldBeNull()
       result.first().splitLocalChanges.shouldHaveSize(1)
       result.first().splitLocalChanges[0].shouldHaveSize(1)
     }
@@ -174,8 +176,9 @@ class TransactionBundleGeneratorTest {
       val generator = TransactionBundleGenerator.getDefault(useETagForUpload = true)
       val result = generator.generateUploadRequests(patches)
 
-      (result.first().generatedRequest.resource.entry.first().request?.ifMatch?.value)
-        .shouldBe("W/\"patient-002-version-1\"")
+      (result.first().generatedRequest.resource.entry.first().request?.ifMatch?.value).shouldBe(
+        "W/\"patient-002-version-1\""
+      )
       result.first().splitLocalChanges.shouldHaveSize(1)
       result.first().splitLocalChanges[0].shouldHaveSize(1)
     }
@@ -455,12 +458,13 @@ class TransactionBundleGeneratorTest {
       )
 
     val patchGroups = listOf(firstGroup, secondGroup, thirdGroup, fourthGroup)
-    val generator =
-      TransactionBundleGenerator.getDefault(useETagForUpload = false, bundleSize = 5)
+    val generator = TransactionBundleGenerator.getDefault(useETagForUpload = false, bundleSize = 5)
     val result = generator.generateUploadRequests(patchGroups)
 
     result.shouldHaveSize(3)
-    result[0].localChanges.map { it.resourceId }
+    result[0]
+      .localChanges
+      .map { it.resourceId }
       .shouldContainExactly(
         "Patient-00-1",
         "Patient-00-2",
@@ -468,9 +472,13 @@ class TransactionBundleGeneratorTest {
         "Patient-00-4",
         "Patient-00-5",
       )
-    result[1].localChanges.map { it.resourceId }
+    result[1]
+      .localChanges
+      .map { it.resourceId }
       .shouldContainExactly("Patient-00-6", "Patient-00-7")
-    result[2].localChanges.map { it.resourceId }
+    result[2]
+      .localChanges
+      .map { it.resourceId }
       .shouldContainExactly(
         "Patient-00-9",
         "Patient-00-10",

@@ -75,7 +75,8 @@ fun SyncScreen(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
       Text(
-        text = "Current sync status: ${if (status == CurrentSyncJobStatus.Blocked) "" else status::class.simpleName}",
+        text =
+          "Current sync status: ${if (status == CurrentSyncJobStatus.Blocked) "" else status::class.simpleName}",
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

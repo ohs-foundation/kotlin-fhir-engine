@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.download
 
 import dev.ohs.fhir.model.r4.Bundle
@@ -34,9 +33,9 @@ import dev.ohs.fhir.sync.DataSource
 import dev.ohs.fhir.sync.DownloadWorkManager
 import dev.ohs.fhir.sync.upload.request.UploadRequest
 import io.kotest.matchers.collections.shouldContainInOrder
+import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
 
 class DownloaderImplTest {
 
@@ -54,35 +53,91 @@ class DownloaderImplTest {
       object : DataSource {
         private fun download(path: String): Resource {
           return when (path) {
-            "Patient" -> Bundle(type = Enumeration(value = Bundle.BundleType.Searchset), entry = listOf(
-              Bundle.Entry(resource = Patient(id = "pa-123" ))
-            ))
-            "Encounter" -> Bundle(type = Enumeration(value = Bundle.BundleType.Searchset), entry = listOf(
-              Bundle.Entry(resource = Encounter(id = "en-123", status = Enumeration(value = Encounter.EncounterStatus.Planned),
-                `class` = Coding(code = Code(value = "AMB"), display = dev.ohs.fhir.model.r4.String(value = "ambulatory")),
-                subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"))))
-            ))
-            "Medication/med-123-that-fails" -> OperationOutcome(issue = listOf(
-              OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
-                code = Enumeration(value = OperationOutcome.IssueType.Exception),
-                diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."))
-            ))
-            else -> OperationOutcome(issue = listOf(
-              OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
-                code = Enumeration(value = OperationOutcome.IssueType.Invalid),
-                diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"))
-            ))
+            "Patient" ->
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Searchset),
+                entry =
+                  listOf(
+                    Bundle.Entry(resource = Patient(id = "pa-123")),
+                  ),
+              )
+            "Encounter" ->
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Searchset),
+                entry =
+                  listOf(
+                    Bundle.Entry(
+                      resource =
+                        Encounter(
+                          id = "en-123",
+                          status = Enumeration(value = Encounter.EncounterStatus.Planned),
+                          `class` =
+                            Coding(
+                              code = Code(value = "AMB"),
+                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory")
+                            ),
+                          subject =
+                            Reference(
+                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123")
+                            ),
+                        ),
+                    ),
+                  ),
+              )
+            "Medication/med-123-that-fails" ->
+              OperationOutcome(
+                issue =
+                  listOf(
+                    OperationOutcome.Issue(
+                      severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
+                      code = Enumeration(value = OperationOutcome.IssueType.Exception),
+                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."),
+                    ),
+                  ),
+              )
+            else ->
+              OperationOutcome(
+                issue =
+                  listOf(
+                    OperationOutcome.Issue(
+                      severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
+                      code = Enumeration(value = OperationOutcome.IssueType.Invalid),
+                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"),
+                    ),
+                  ),
+              )
           }
         }
 
         private fun download(bundle: Bundle): Resource {
-          return Bundle(type = Enumeration(value = Bundle.BundleType.Batch_Response), entry = listOf(
-            Bundle.Entry(resource = Observation(id = "ob-123", status = Enumeration(value = Observation.ObservationStatus.Registered),
-              code = CodeableConcept(),
-              subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"))
-            )),
-            Bundle.Entry(resource = Condition(id = "con-123", subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"))))
-          ))
+          return Bundle(
+            type = Enumeration(value = Bundle.BundleType.Batch_Response),
+            entry =
+              listOf(
+                Bundle.Entry(
+                  resource =
+                    Observation(
+                      id = "ob-123",
+                      status = Enumeration(value = Observation.ObservationStatus.Registered),
+                      code = CodeableConcept(),
+                      subject =
+                        Reference(
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                        ),
+                    ),
+                ),
+                Bundle.Entry(
+                  resource =
+                    Condition(
+                      id = "con-123",
+                      subject =
+                        Reference(
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                        )
+                    )
+                ),
+              ),
+          )
         }
 
         override suspend fun download(downloadRequest: DownloadRequest) =
@@ -109,85 +164,150 @@ class DownloaderImplTest {
   }
 
   @Test
-  fun downloaderShouldEmitAllTheStatesForRequestsWhetherTheyPassOrFail() =
-    runTest {
-      val downloadRequests =
-        listOf(
-          DownloadRequest.of("Patient"),
-          DownloadRequest.of("Encounter"),
-          DownloadRequest.of("Medication/med-123-that-fails"),
-          DownloadRequest.of(bundleOf("Observation/ob-123", "Condition/con-123")),
-        )
+  fun downloaderShouldEmitAllTheStatesForRequestsWhetherTheyPassOrFail() = runTest {
+    val downloadRequests =
+      listOf(
+        DownloadRequest.of("Patient"),
+        DownloadRequest.of("Encounter"),
+        DownloadRequest.of("Medication/med-123-that-fails"),
+        DownloadRequest.of(bundleOf("Observation/ob-123", "Condition/con-123")),
+      )
 
-      val testDataSource: DataSource =
-        object : DataSource {
-          private fun download(path: String): Resource {
-            return when (path) {
-              "Patient" -> Bundle(type = Enumeration(value = Bundle.BundleType.Searchset), entry = listOf(
-                Bundle.Entry(resource = Patient(id = "pa-123" ))
-              ))
-              "Encounter" -> Bundle(type = Enumeration(value = Bundle.BundleType.Searchset), entry = listOf(
-                Bundle.Entry(resource = Encounter(id = "pa-123", status = Enumeration(value = Encounter.EncounterStatus.Planned),
-                  `class` = Coding(code = Code(value = "AMB"), display = dev.ohs.fhir.model.r4.String(value = "ambulatory")),
-                  subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"))))
-              ))
-              "Medication/med-123-that-fails" -> OperationOutcome(issue = listOf(
-                OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
-                  code = Enumeration(value = OperationOutcome.IssueType.Exception),
-                  diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."))
-              ))
-              else -> OperationOutcome(issue = listOf(
-                OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
-                  code = Enumeration(value = OperationOutcome.IssueType.Invalid),
-                  diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"))
-              ))
-            }
-          }
-
-          private fun download(bundle: Bundle): Resource {
-            return Bundle(type = Enumeration(value = Bundle.BundleType.Batch_Response), entry = listOf(
-              Bundle.Entry(resource = Observation(id = "ob-123", status = Enumeration(value = Observation.ObservationStatus.Registered),
-                code = CodeableConcept(),
-                subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"))
-              )),
-              Bundle.Entry(resource = Condition(id = "con-123", subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"))))
-            ))
-          }
-
-          override suspend fun download(downloadRequest: DownloadRequest) =
-            when (downloadRequest) {
-              is UrlDownloadRequest -> download(downloadRequest.url)
-              is BundleDownloadRequest -> download(downloadRequest.bundle)
-            }
-
-          override suspend fun upload(request: UploadRequest): Resource {
-            throw UnsupportedOperationException()
+    val testDataSource: DataSource =
+      object : DataSource {
+        private fun download(path: String): Resource {
+          return when (path) {
+            "Patient" ->
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Searchset),
+                entry =
+                  listOf(
+                    Bundle.Entry(resource = Patient(id = "pa-123")),
+                  ),
+              )
+            "Encounter" ->
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Searchset),
+                entry =
+                  listOf(
+                    Bundle.Entry(
+                      resource =
+                        Encounter(
+                          id = "pa-123",
+                          status = Enumeration(value = Encounter.EncounterStatus.Planned),
+                          `class` =
+                            Coding(
+                              code = Code(value = "AMB"),
+                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory")
+                            ),
+                          subject =
+                            Reference(
+                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123")
+                            ),
+                        ),
+                    ),
+                  ),
+              )
+            "Medication/med-123-that-fails" ->
+              OperationOutcome(
+                issue =
+                  listOf(
+                    OperationOutcome.Issue(
+                      severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
+                      code = Enumeration(value = OperationOutcome.IssueType.Exception),
+                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."),
+                    ),
+                  ),
+              )
+            else ->
+              OperationOutcome(
+                issue =
+                  listOf(
+                    OperationOutcome.Issue(
+                      severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
+                      code = Enumeration(value = OperationOutcome.IssueType.Invalid),
+                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"),
+                    ),
+                  ),
+              )
           }
         }
-      val downloader = DownloaderImpl(testDataSource, TestDownloadWorkManager(downloadRequests))
 
-      val result = mutableListOf<DownloadState>()
-      downloader.download().collectIndexed { _, value -> result.add(value) }
+        private fun download(bundle: Bundle): Resource {
+          return Bundle(
+            type = Enumeration(value = Bundle.BundleType.Batch_Response),
+            entry =
+              listOf(
+                Bundle.Entry(
+                  resource =
+                    Observation(
+                      id = "ob-123",
+                      status = Enumeration(value = Observation.ObservationStatus.Registered),
+                      code = CodeableConcept(),
+                      subject =
+                        Reference(
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                        ),
+                    ),
+                ),
+                Bundle.Entry(
+                  resource =
+                    Condition(
+                      id = "con-123",
+                      subject =
+                        Reference(
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                        )
+                    )
+                ),
+              ),
+          )
+        }
 
-      result.map { it::class } shouldContainInOrder listOf(
+        override suspend fun download(downloadRequest: DownloadRequest) =
+          when (downloadRequest) {
+            is UrlDownloadRequest -> download(downloadRequest.url)
+            is BundleDownloadRequest -> download(downloadRequest.bundle)
+          }
+
+        override suspend fun upload(request: UploadRequest): Resource {
+          throw UnsupportedOperationException()
+        }
+      }
+    val downloader = DownloaderImpl(testDataSource, TestDownloadWorkManager(downloadRequests))
+
+    val result = mutableListOf<DownloadState>()
+    downloader.download().collectIndexed { _, value -> result.add(value) }
+
+    result.map { it::class } shouldContainInOrder
+      listOf(
         DownloadState.Started::class,
         DownloadState.Success::class,
         DownloadState.Success::class,
         DownloadState.Failure::class,
-        DownloadState.Success::class,)
+        DownloadState.Success::class,
+      )
 
-      result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainInOrder listOf(1, 2, 4)
-    }
+    result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainInOrder
+      listOf(1, 2, 4)
+  }
 
   companion object {
 
     private fun bundleOf(vararg getRequest: String) =
-      Bundle(type = Enumeration(value = Bundle.BundleType.Batch),
-        entry = getRequest.map {
-          Bundle.Entry(
-            request = Bundle.Entry.Request(method = Enumeration(value = Bundle.HTTPVerb.Get), url = Uri(value = it))
-          )
-        })
+      Bundle(
+        type = Enumeration(value = Bundle.BundleType.Batch),
+        entry =
+          getRequest.map {
+            Bundle.Entry(
+              request =
+                Bundle.Entry.Request(
+                  method = Enumeration(value = Bundle.HTTPVerb.Get),
+                  url = Uri(value = it)
+                ),
+            )
+          },
+      )
   }
 }
 

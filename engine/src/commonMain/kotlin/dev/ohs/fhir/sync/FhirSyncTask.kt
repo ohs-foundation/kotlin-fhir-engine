@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 Open Health Stack Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dev.ohs.fhir.sync
 
 import androidx.datastore.core.DataStore
@@ -14,13 +29,12 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import co.touchlab.kermit.Logger as KermitLogger
 
 /**
- *
  * Implement this interface to define the dependencies for a sync job. Each platform then wraps an
  * implementation in its own scheduling mechanism:
- * - **Android**: extend [FhirSyncWorker] (which implements this interface) and schedule via WorkManager
+ * - **Android**: extend [FhirSyncWorker] (which implements this interface) and schedule via
+ *   WorkManager
  * - **iOS**: pass a factory to `IosSyncScheduler` (in engine-app) to run as BGTask background jobs
  * - **Desktop**: use `Sync` (in engine-app) for coroutine-based foreground scheduling
  */
@@ -32,7 +46,6 @@ interface FhirSyncTask {
   fun getConflictResolver(): ConflictResolver
 
   fun getUploadStrategy(): UploadStrategy
-
 }
 
 /**
@@ -41,8 +54,8 @@ interface FhirSyncTask {
  *
  * This is the single execution path shared by all platform schedulers.
  *
- * @param taskName Unique name used to persist the terminal status in [FhirDataStore]. Null when
- *   the sync was not scheduled via [Sync] (e.g. in tests or one-off invocations).
+ * @param taskName Unique name used to persist the terminal status in [FhirDataStore]. Null when the
+ *   sync was not scheduled via [Sync] (e.g. in tests or one-off invocations).
  * @param dataStore Persistence store for sync state and timestamps.
  * @param onProgress Called for every non-terminal [SyncJobStatus] emission so the caller can
  *   forward progress via its own signalling mechanism (e.g. WorkManager's `setProgress`).
@@ -77,7 +90,7 @@ suspend fun FhirSyncTask.runSync(
         DownloaderImpl(dataSource, getDownloadWorkManager()),
         getConflictResolver(),
       ),
-      fhirDataStore ,
+      fhirDataStore,
     )
 
   return coroutineScope {
@@ -85,7 +98,7 @@ suspend fun FhirSyncTask.runSync(
       synchronizer.syncState.collect { syncJobStatus ->
         when (syncJobStatus) {
           is SyncJobStatus.Succeeded,
-          is SyncJobStatus.Failed -> {
+          is SyncJobStatus.Failed, -> {
             if (taskName != null) {
               fhirDataStore.writeTerminalSyncJobStatus(taskName, syncJobStatus)
             }

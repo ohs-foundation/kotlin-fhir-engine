@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2024-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.patch
-
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
@@ -36,13 +34,10 @@ import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.sync.upload.patch.PatchOrdering.createAdjacencyListForCreateReferences
 import dev.ohs.fhir.versionId
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldContainInOrder
 import io.kotest.matchers.equals.shouldBeEqual
-import io.ktor.util.valuesOf
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.time.Clock
-import kotlin.time.Instant
+import kotlinx.coroutines.test.runTest
 
 class PatchOrderingTest {
 
@@ -76,22 +71,20 @@ class PatchOrderingTest {
             helper.localChangeResourceReferences.groupBy { it.localChangeId },
           )
 
-      result
-        .shouldBeEqual(
-          mapOf(
-            "Group/group-1" to
-              listOf("Patient/patient-1", "Patient/patient-2", "Patient/patient-3"),
-            "Patient/patient-1" to emptyList(),
-            "Patient/patient-2" to emptyList(),
-            "Patient/patient-3" to emptyList(),
-            "Encounter/encounter-1" to listOf("Patient/patient-1"),
-            "Encounter/encounter-2" to listOf("Patient/patient-2"),
-            "Encounter/encounter-3" to listOf("Patient/patient-3"),
-            "Observation/observation-1" to listOf("Patient/patient-1", "Encounter/encounter-1"),
-            "Observation/observation-2" to listOf("Patient/patient-2", "Encounter/encounter-2"),
-            "Observation/observation-3" to listOf("Patient/patient-3", "Encounter/encounter-3"),
-          ),
-        )
+      result.shouldBeEqual(
+        mapOf(
+          "Group/group-1" to listOf("Patient/patient-1", "Patient/patient-2", "Patient/patient-3"),
+          "Patient/patient-1" to emptyList(),
+          "Patient/patient-2" to emptyList(),
+          "Patient/patient-3" to emptyList(),
+          "Encounter/encounter-1" to listOf("Patient/patient-1"),
+          "Encounter/encounter-2" to listOf("Patient/patient-2"),
+          "Encounter/encounter-3" to listOf("Patient/patient-3"),
+          "Observation/observation-1" to listOf("Patient/patient-1", "Encounter/encounter-1"),
+          "Observation/observation-2" to listOf("Patient/patient-2", "Encounter/encounter-2"),
+          "Observation/observation-3" to listOf("Patient/patient-3", "Encounter/encounter-3"),
+        ),
+      )
     }
 
   @Test
@@ -127,21 +120,20 @@ class PatchOrderingTest {
             helper.localChangeResourceReferences.groupBy { it.localChangeId },
           )
 
-      result
-        .shouldBeEqual(
-          mapOf(
-            "Group/group-1" to emptyList(),
-            "Patient/patient-1" to emptyList(),
-            "Patient/patient-2" to emptyList(),
-            "Patient/patient-3" to emptyList(),
-            "Encounter/encounter-1" to emptyList(),
-            "Encounter/encounter-2" to emptyList(),
-            "Encounter/encounter-3" to emptyList(),
-            "Observation/observation-1" to listOf("Encounter/encounter-1"),
-            "Observation/observation-2" to listOf("Encounter/encounter-2"),
-            "Observation/observation-3" to listOf("Encounter/encounter-3"),
-          ),
-        )
+      result.shouldBeEqual(
+        mapOf(
+          "Group/group-1" to emptyList(),
+          "Patient/patient-1" to emptyList(),
+          "Patient/patient-2" to emptyList(),
+          "Patient/patient-3" to emptyList(),
+          "Encounter/encounter-1" to emptyList(),
+          "Encounter/encounter-2" to emptyList(),
+          "Encounter/encounter-3" to emptyList(),
+          "Observation/observation-1" to listOf("Encounter/encounter-1"),
+          "Observation/observation-2" to listOf("Encounter/encounter-2"),
+          "Observation/observation-3" to listOf("Encounter/encounter-3"),
+        ),
+      )
     }
 
   @Test
@@ -169,7 +161,8 @@ class PatchOrderingTest {
     // This order is based on the current implementation of the topological sort in [PatchOrdering],
     // it's entirely possible to generate different order here which is acceptable/correct, should
     // we have a different implementation of the topological sort.
-    result.map { it.patchMappings.single().generatedPatch.resourceId }
+    result
+      .map { it.patchMappings.single().generatedPatch.resourceId }
       .shouldContainExactly(
         "patient-1",
         "patient-2",
@@ -209,7 +202,8 @@ class PatchOrderingTest {
       val result =
         patchGenerator.generate(helper.localChanges, helper.localChangeResourceReferences)
 
-          result.map { it.patchMappings.map { it.generatedPatch.resourceId } }
+      result
+        .map { it.patchMappings.map { it.generatedPatch.resourceId } }
         .shouldContainExactly(
           listOf("patient-1", "related-1"),
           listOf("patient-2", "related-2"),
@@ -223,17 +217,18 @@ class PatchOrderingTest {
 
   companion object {
     private val jsonParser = FhirR4Json()
+
     private fun createUpdateLocalChange(
       oldEntity: Resource,
       updatedResource: Resource,
       currentChangeId: Long,
     ): LocalChange {
-//      val jsonDiff = diff(jsonParser, oldEntity, updatedResource)
+      //      val jsonDiff = diff(jsonParser, oldEntity, updatedResource)
       return LocalChange(
         resourceId = oldEntity.id!!,
         resourceType = oldEntity.resourceType,
         type = LocalChange.Type.UPDATE,
-//        payload = jsonDiff.toString(),
+        //        payload = jsonDiff.toString(),
         payload = jsonParser.encodeToString(updatedResource),
         versionId = oldEntity.versionId,
         token = LocalChangeToken(listOf(currentChangeId)),
@@ -261,7 +256,12 @@ class PatchOrderingTest {
     fun createGroup(
       id: String,
       changeId: Long,
-    ) = Group(id = id, type = Enumeration(value = Group.GroupType.Person), actual = dev.ohs.fhir.model.r4.Boolean(value = true))
+    ) =
+      Group(
+          id = id,
+          type = Enumeration(value = Group.GroupType.Person),
+          actual = dev.ohs.fhir.model.r4.Boolean(value = true)
+        )
         .also { localChanges.add(createInsertLocalChange(it, changeId)) }
 
     fun updateGroup(
@@ -270,7 +270,13 @@ class PatchOrderingTest {
       member: String,
     ) =
       group
-        .copy(member = group.member + Group.Member(entity = Reference(reference = dev.ohs.fhir.model.r4.String(value = member))))
+        .copy(
+          member =
+            group.member +
+              Group.Member(
+                entity = Reference(reference = dev.ohs.fhir.model.r4.String(value = member))
+              )
+        )
         .also {
           localChanges.add(createUpdateLocalChange(group, it, changeId))
           localChangeResourceReferences.add(
@@ -287,14 +293,20 @@ class PatchOrderingTest {
       changeId: Long,
       relatedPersonId: String? = null,
     ) =
-      Patient(id = id).toBuilder()
+      Patient(id = id)
+        .toBuilder()
         .apply {
           relatedPersonId?.let {
             link.add(
               Patient.Link(
-                other = Reference(reference = dev.ohs.fhir.model.r4.String(value = "RelatedPerson/$it")),
-                type = Enumeration(value = Patient.LinkType.Seealso)
-              ).toBuilder())
+                  other =
+                    Reference(
+                      reference = dev.ohs.fhir.model.r4.String(value = "RelatedPerson/$it")
+                    ),
+                  type = Enumeration(value = Patient.LinkType.Seealso),
+                )
+                .toBuilder(),
+            )
           }
         }
         .build()
@@ -315,17 +327,21 @@ class PatchOrderingTest {
       patient: Patient,
       changeId: Long,
     ) =
-      patient
-        .copy(active = dev.ohs.fhir.model.r4.Boolean(value = true))
-        .also { localChanges.add(createUpdateLocalChange(patient, it, changeId)) }
+      patient.copy(active = dev.ohs.fhir.model.r4.Boolean(value = true)).also {
+        localChanges.add(createUpdateLocalChange(patient, it, changeId))
+      }
 
     fun createEncounter(
       id: String,
       changeId: Long,
       subject: String,
     ) =
-      Encounter(id = id, subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = subject)), status = Enumeration(value = Encounter.EncounterStatus.Planned),
-        `class` = Coding(code = Code(value = "AMB")))
+      Encounter(
+          id = id,
+          subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = subject)),
+          status = Enumeration(value = Encounter.EncounterStatus.Planned),
+          `class` = Coding(code = Code(value = "AMB")),
+        )
         .also {
           localChanges.add(createInsertLocalChange(it, changeId))
           localChangeResourceReferences.add(
@@ -343,10 +359,12 @@ class PatchOrderingTest {
       subject: String,
       encounter: String,
     ) =
-      Observation(id = id, subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = subject)),
-        encounter = Reference(reference = dev.ohs.fhir.model.r4.String(value = encounter)),
-        status = Enumeration(value = Observation.ObservationStatus.Registered),
-        code = CodeableConcept(),
+      Observation(
+          id = id,
+          subject = Reference(reference = dev.ohs.fhir.model.r4.String(value = subject)),
+          encounter = Reference(reference = dev.ohs.fhir.model.r4.String(value = encounter)),
+          status = Enumeration(value = Observation.ObservationStatus.Registered),
+          code = CodeableConcept(),
         )
         .also {
           localChanges.add(createInsertLocalChange(it, changeId))
@@ -371,7 +389,10 @@ class PatchOrderingTest {
       changeId: Long,
       patient: String,
     ) =
-      RelatedPerson(id = id, patient = Reference(reference = dev.ohs.fhir.model.r4.String(value = patient)))
+      RelatedPerson(
+          id = id,
+          patient = Reference(reference = dev.ohs.fhir.model.r4.String(value = patient))
+        )
         .also {
           localChanges.add(createInsertLocalChange(it, changeId))
           localChangeResourceReferences.add(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.patch
 
-
-import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
-import dev.ohs.fhir.model.r4.FhirR4Json
-import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import kotlin.test.assertFailsWith
-import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
-import kotlin.time.Clock
-
-//class PerResourcePatchGeneratorTest {
+// class PerResourcePatchGeneratorTest {
 //
 //  private val jsonParser = FhirR4Json()
 //  private val patchGenerator = PerResourcePatchGenerator
@@ -340,7 +329,8 @@ import kotlin.time.Clock
 //        )
 //
 //      val patches =
-//        patchGenerator.generate(listOf(updatedLocalChange1, updatedLocalChange2), emptyList()).map {
+//        patchGenerator.generate(listOf(updatedLocalChange1, updatedLocalChange2), emptyList()).map
+// {
 //          it.patchMappings.single()
 //        }
 //
@@ -388,7 +378,8 @@ import kotlin.time.Clock
 //
 //      with(localChanges) {
 //        assertThat(size).isEqualTo(3)
-//        assertThat(this).containsExactly(updateLocalChange1, updateLocalChange2, deleteLocalChange)
+//        assertThat(this).containsExactly(updateLocalChange1, updateLocalChange2,
+// deleteLocalChange)
 //      }
 //    }
 //  }
@@ -515,4 +506,4 @@ import kotlin.time.Clock
 //      timestamp = Clock.System.now(),
 //    )
 //  }
-//}
+// }

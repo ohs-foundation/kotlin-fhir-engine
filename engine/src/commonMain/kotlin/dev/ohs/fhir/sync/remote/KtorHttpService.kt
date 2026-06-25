@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.remote
 
 import co.touchlab.kermit.Logger as KermitLogger
 import dev.ohs.fhir.NetworkConfiguration
-import dev.ohs.fhir.sync.HttpAuthenticator
 import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.sync.HttpAuthenticator
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
@@ -60,9 +59,10 @@ internal class KtorHttpService(
    * 2. Strips "text" (Narrative) fields that cause NPE when status/div is missing
    */
   private fun sanitizeJson(json: String): String {
-    val sanitized = json.replace(dateFieldWithTimeRegex) { match ->
-      "\"${match.groupValues[1]}\" : \"${match.groupValues[2]}\""
-    }
+    val sanitized =
+      json.replace(dateFieldWithTimeRegex) { match ->
+        "\"${match.groupValues[1]}\" : \"${match.groupValues[2]}\""
+      }
     return try {
       val element = lenientJson.parseToJsonElement(sanitized)
       lenientJson.encodeToString(JsonElement.serializer(), stripNarrativeText(element))
@@ -73,14 +73,16 @@ internal class KtorHttpService(
 
   private fun stripNarrativeText(element: JsonElement): JsonElement =
     when (element) {
-      is JsonObject -> JsonObject(
-        element.jsonObject
-          .filterKeys { it != "text" || !looksLikeNarrative(element[it]) }
-          .mapValues { (_, v) -> stripNarrativeText(v) }
-      )
-      is kotlinx.serialization.json.JsonArray -> kotlinx.serialization.json.JsonArray(
-        element.jsonArray.map { stripNarrativeText(it) }
-      )
+      is JsonObject ->
+        JsonObject(
+          element.jsonObject
+            .filterKeys { it != "text" || !looksLikeNarrative(element[it]) }
+            .mapValues { (_, v) -> stripNarrativeText(v) },
+        )
+      is kotlinx.serialization.json.JsonArray ->
+        kotlinx.serialization.json.JsonArray(
+          element.jsonArray.map { stripNarrativeText(it) },
+        )
       else -> element
     }
 
@@ -148,7 +150,10 @@ internal class KtorHttpService(
   }
 
   companion object {
-    private val lenientJson = Json { ignoreUnknownKeys = true; isLenient = true }
+    private val lenientJson = Json {
+      ignoreUnknownKeys = true
+      isLenient = true
+    }
 
     /** Matches FHIR date-only fields that incorrectly contain DateTime values. */
     private val dateFieldWithTimeRegex =
@@ -217,16 +222,12 @@ internal class KtorHttpService(
     fun setHttpLogger(httpLogger: HttpLogger) = apply { this.httpLogger = httpLogger }
 
     internal fun build(engine: HttpClientEngine): KtorHttpService {
-      val client = HttpClient(engine) {
-        configureClient()
-      }
+      val client = HttpClient(engine) { configureClient() }
       return KtorHttpService(client)
     }
 
     fun build(): KtorHttpService {
-      val client = HttpClient {
-        configureClient()
-      }
+      val client = HttpClient { configureClient() }
       return KtorHttpService(client)
     }
   }

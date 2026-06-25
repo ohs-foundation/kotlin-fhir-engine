@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 Open Health Stack Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dev.ohs.fhir.sync.remote
 
 import dev.ohs.fhir.ContentTypes
@@ -13,18 +28,16 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.sync.upload.request.UrlUploadRequest
 import io.kotest.matchers.equals.shouldBeEqual
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
 import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.OutgoingContent
-import io.ktor.http.fullPath
 import io.ktor.util.encodeBase64
-import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlinx.coroutines.test.runTest
 
 internal class FhirHttpDataSourceTest {
   private val baseUrl = "/baseR4/"
@@ -32,10 +45,21 @@ internal class FhirHttpDataSourceTest {
   private var requestData: HttpRequestData? = null
   private val fhirHttpService by lazy {
     KtorHttpService.Builder(baseUrl, NetworkConfiguration())
-      .build(engine = MockEngine { request ->
-        requestData = request
-        respondOk(content = parser.encodeToString(Bundle(id = "transaction-response-1", type = Enumeration(value = Bundle.BundleType.Transaction_Response))))
-      })
+      .build(
+        engine =
+          MockEngine { request ->
+            requestData = request
+            respondOk(
+              content =
+                parser.encodeToString(
+                  Bundle(
+                    id = "transaction-response-1",
+                    type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+                  ),
+                ),
+            )
+          },
+      )
   }
 
   private lateinit var dataSource: FhirHttpDataSource
@@ -48,7 +72,16 @@ internal class FhirHttpDataSourceTest {
   @Test
   fun test_upload_with_UrlUploadRequest_POST() = runTest {
     val patient =
-      Patient(id = "Patient-001", name = listOf(HumanName(given = listOf(FhirR4String(value = "John")), family = FhirR4String(value = "Doe"))))
+      Patient(
+        id = "Patient-001",
+        name =
+          listOf(
+            HumanName(
+              given = listOf(FhirR4String(value = "John")),
+              family = FhirR4String(value = "Doe"),
+            ),
+          ),
+      )
     val request = UrlUploadRequest(Bundle.HTTPVerb.Post, "Patient", patient, emptyMap())
     dataSource.upload(request)
 
@@ -60,7 +93,16 @@ internal class FhirHttpDataSourceTest {
   @Test
   fun test_upload_with_UrlUploadRequest_PUT() = runTest {
     val patient =
-      Patient(id = "Patient-001", name = listOf(HumanName(given = listOf(FhirR4String(value = "John")), family = FhirR4String(value = "Doe"))))
+      Patient(
+        id = "Patient-001",
+        name =
+          listOf(
+            HumanName(
+              given = listOf(FhirR4String(value = "John")),
+              family = FhirR4String(value = "Doe"),
+            ),
+          ),
+      )
     val request =
       UrlUploadRequest(
         Bundle.HTTPVerb.Put,
@@ -78,8 +120,15 @@ internal class FhirHttpDataSourceTest {
   @Test
   fun test_upload_with_UrlUploadRequest_PATCH() = runTest {
     val patchToApply =
-      Binary(data = Base64Binary(value = "[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]".encodeBase64()),
-        contentType = Code(value = ContentTypes.APPLICATION_JSON_PATCH))
+      Binary(
+        data =
+          Base64Binary(
+            value =
+              "[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]"
+                .encodeBase64(),
+          ),
+        contentType = Code(value = ContentTypes.APPLICATION_JSON_PATCH),
+      )
 
     val request =
       UrlUploadRequest(
@@ -92,14 +141,19 @@ internal class FhirHttpDataSourceTest {
 
     requestData!!.url.encodedPath.shouldBeEqual("${baseUrl}${request.url}")
     requestData!!.method.shouldBeEqual(HttpMethod.Patch)
-//    requestData!!.headers["Content-Type"].shouldBe(ContentTypes.APPLICATION_JSON_PATCH)
-    requestData!!.body.readBytearrayContentAsString().shouldBe("[{\"op\":\"replace\",\"path\":\"/name/0/given/0\",\"value\":\"Janet\"}]")
+    //    requestData!!.headers["Content-Type"].shouldBe(ContentTypes.APPLICATION_JSON_PATCH)
+    requestData!!
+      .body
+      .readBytearrayContentAsString()
+      .shouldBe("[{\"op\":\"replace\",\"path\":\"/name/0/given/0\",\"value\":\"Janet\"}]")
   }
 
   private fun OutgoingContent.readBytearrayContentAsString(): String? {
     return if (this is OutgoingContent.ByteArrayContent) {
       val bytes = this.bytes()
       bytes.decodeToString()
-    } else null
+    } else {
+      null
+    }
   }
 }

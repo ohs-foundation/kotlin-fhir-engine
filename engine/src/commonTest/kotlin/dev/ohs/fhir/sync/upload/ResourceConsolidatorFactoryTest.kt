@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Google LLC
+ * Copyright 2024-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
-
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
@@ -33,7 +31,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
 
 class ResourceConsolidatorFactoryTest {
   @Test
@@ -69,138 +66,145 @@ class ResourceConsolidatorFactoryTest {
 }
 
 @OptIn(ExperimentalUuidApi::class)
-private val fakeDatabase = object : Database {
+private val fakeDatabase =
+  object : Database {
     override suspend fun <R : Resource> insert(vararg resource: R): List<String> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun <R : Resource> insertRemote(vararg resource: R) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun update(vararg resources: Resource) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun updateVersionIdAndLastUpdated(
-        resourceId: String,
-        resourceType: ResourceType,
-        versionId: String?,
-        lastUpdated: Instant?
+      resourceId: String,
+      resourceType: ResourceType,
+      versionId: String?,
+      lastUpdated: Instant?,
     ) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun updateResourcePostSync(
-        oldResourceId: String,
-        newResourceId: String,
-        resourceType: ResourceType,
-        versionId: String?,
-        lastUpdated: Instant?
+      oldResourceId: String,
+      newResourceId: String,
+      resourceType: ResourceType,
+      versionId: String?,
+      lastUpdated: Instant?,
     ) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun select(
-        type: ResourceType,
-        id: String
+      type: ResourceType,
+      id: String,
     ): Resource {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun selectEntity(
-        type: ResourceType,
-        id: String
+      type: ResourceType,
+      id: String,
     ): ResourceEntity {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun insertSyncedResources(resources: List<Resource>) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun delete(
-        type: ResourceType,
-        id: String
+      type: ResourceType,
+      id: String,
     ) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun <R : Resource> search(query: SearchQuery): List<ResourceWithUUID<R>> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun count(query: SearchQuery): Long {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
-    override suspend fun searchForwardReferencedResources(query: SearchQuery): List<ForwardIncludeSearchResult> {
-        TODO("Not yet implemented")
+    override suspend fun searchForwardReferencedResources(
+      query: SearchQuery
+    ): List<ForwardIncludeSearchResult> {
+      TODO("Not yet implemented")
     }
 
-    override suspend fun searchReverseReferencedResources(query: SearchQuery): List<ReverseIncludeSearchResult> {
-        TODO("Not yet implemented")
+    override suspend fun searchReverseReferencedResources(
+      query: SearchQuery
+    ): List<ReverseIncludeSearchResult> {
+      TODO("Not yet implemented")
     }
 
     override suspend fun getAllLocalChanges(): List<LocalChange> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun getAllChangesForEarliestChangedResource(): List<LocalChange> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun getLocalChangesCount(): Int {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun deleteUpdates(token: LocalChangeToken) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun deleteUpdates(resources: List<Resource>) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun updateResourceAndReferences(
-        currentResourceId: String,
-        updatedResource: Resource
+      currentResourceId: String,
+      updatedResource: Resource,
     ) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun withTransaction(block: suspend () -> Unit) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun clearDatabase() {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun getLocalChanges(
-        type: ResourceType,
-        id: String
+      type: ResourceType,
+      id: String,
     ): List<LocalChange> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun getLocalChanges(resourceUuid: Uuid): List<LocalChange> {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
     override suspend fun purge(
-        type: ResourceType,
-        ids: Set<String>,
-        forcePurge: Boolean
+      type: ResourceType,
+      ids: Set<String>,
+      forcePurge: Boolean,
     ) {
-        TODO("Not yet implemented")
+      TODO("Not yet implemented")
     }
 
-    override suspend fun getLocalChangeResourceReferences(localChangeIds: List<Long>): List<LocalChangeResourceReference> {
-        TODO("Not yet implemented")
+    override suspend fun getLocalChangeResourceReferences(
+      localChangeIds: List<Long>
+    ): List<LocalChangeResourceReference> {
+      TODO("Not yet implemented")
     }
-}
+  }

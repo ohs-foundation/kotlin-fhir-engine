@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.request
 
 import dev.ohs.fhir.LocalChange
@@ -24,7 +23,6 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.sync.upload.patch.Patch
 import kotlin.time.Clock
-
 
 internal object RequestGeneratorTestUtils {
 
@@ -46,8 +44,16 @@ internal object RequestGeneratorTestUtils {
       type = LocalChange.Type.INSERT,
       payload =
         jsonParser.encodeToString(
-          Patient(id = "Patient-001", name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-            family = dev.ohs.fhir.model.r4.String(value = "Doe"))))
+          Patient(
+            id = "Patient-001",
+            name =
+              listOf(
+                HumanName(
+                  given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                  family = dev.ohs.fhir.model.r4.String(value = "Doe"),
+                ),
+              ),
+          ),
         ),
       timestamp = Clock.System.now(),
       token = LocalChangeToken(listOf(1L)),
@@ -69,8 +75,16 @@ internal object RequestGeneratorTestUtils {
       type = LocalChange.Type.DELETE,
       payload =
         jsonParser.encodeToString(
-          Patient(id = "Patient-001", name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-            family = dev.ohs.fhir.model.r4.String(value = "Doe"))))
+          Patient(
+            id = "Patient-001",
+            name =
+              listOf(
+                HumanName(
+                  given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                  family = dev.ohs.fhir.model.r4.String(value = "Doe"),
+                ),
+              ),
+          ),
         ),
       timestamp = Clock.System.now(),
       token = LocalChangeToken(listOf(2L)),

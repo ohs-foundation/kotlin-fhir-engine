@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Google LLC
+ * Copyright 2022-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
-
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
@@ -45,20 +43,17 @@ import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorMode
 import dev.ohs.fhir.toLocalChange
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.ktor.client.network.sockets.SocketTimeoutException
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.test.runTest
-import kotlinx.io.IOException
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import kotlinx.io.IOException
 
 class UploaderTest {
   private lateinit var perResourcePatchGenerator: PatchGenerator
@@ -74,17 +69,27 @@ class UploaderTest {
   fun bundle_upload_for_per_resource_patch_should_output_responses_mapped_correctly_to_the_local_changes() =
     runTest {
       val updatedPatient1 =
-        patient1.copy(name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-          family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))))
+        patient1.copy(
+          name =
+            listOf(
+              HumanName(
+                given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                family = dev.ohs.fhir.model.r4.String(value = "Nucleus"),
+              ),
+            ),
+        )
       val result =
         Uploader(
-          BundleDataSource {
-            Bundle(type = Enumeration(value = Bundle.BundleType.Transaction_Response),
-              entry = listOf(
-                Bundle.Entry(resource = updatedPatient1),
-                Bundle.Entry(resource = patient2),
-              ))
-          },
+            BundleDataSource {
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+                entry =
+                  listOf(
+                    Bundle.Entry(resource = updatedPatient1),
+                    Bundle.Entry(resource = patient2),
+                  ),
+              )
+            },
             perResourcePatchGenerator,
             bundleUploadRequestGenerator,
           )
@@ -118,18 +123,28 @@ class UploaderTest {
   fun bundle_upload_for_per_change_patch_should_output_responses_mapped_correctly_to_the_local_changes() =
     runTest {
       val updatedPatient1 =
-        patient1.copy(name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-          family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))))
+        patient1.copy(
+          name =
+            listOf(
+              HumanName(
+                given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                family = dev.ohs.fhir.model.r4.String(value = "Nucleus"),
+              ),
+            ),
+        )
 
       val result =
         Uploader(
             BundleDataSource {
-              Bundle(type = Enumeration(value = Bundle.BundleType.Transaction_Response),
-                entry = listOf(
-                  Bundle.Entry(resource = patient1),
-                  Bundle.Entry(resource = patient2),
-                  Bundle.Entry(resource = updatedPatient1),
-                ))
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+                entry =
+                  listOf(
+                    Bundle.Entry(resource = patient1),
+                    Bundle.Entry(resource = patient2),
+                    Bundle.Entry(resource = updatedPatient1),
+                  ),
+              )
             },
             perChangePatchGenerator,
             bundleUploadRequestGenerator,
@@ -170,9 +185,11 @@ class UploaderTest {
   fun bundle_upload_should_fail_if_bundle_response_has_incorrect_size() = runTest {
     val result =
       Uploader(
-          BundleDataSource { Bundle(
-            type = Enumeration(value = Bundle.BundleType.Transaction_Response)
-          )},
+          BundleDataSource {
+            Bundle(
+              type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+            )
+          },
           perResourcePatchGenerator,
           bundleUploadRequestGenerator,
         )
@@ -189,11 +206,17 @@ class UploaderTest {
       Uploader(
           BundleDataSource {
             OperationOutcome(
-              issue = listOf(
-                OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Warning),
-                  code = Enumeration(value = OperationOutcome.IssueType.Conflict),
-                  diagnostics = dev.ohs.fhir.model.r4.String(value = "The resource has already been updated."))
-              )
+              issue =
+                listOf(
+                  OperationOutcome.Issue(
+                    severity = Enumeration(value = OperationOutcome.IssueSeverity.Warning),
+                    code = Enumeration(value = OperationOutcome.IssueType.Conflict),
+                    diagnostics =
+                      dev.ohs.fhir.model.r4.String(
+                        value = "The resource has already been updated.",
+                      ),
+                  ),
+                ),
             )
           },
           perResourcePatchGenerator,
@@ -226,9 +249,11 @@ class UploaderTest {
     runTest {
       val result =
         Uploader(
-            BundleDataSource { Bundle(
-              type = Enumeration(value = Bundle.BundleType.Searchset)
-            )},
+            BundleDataSource {
+              Bundle(
+                type = Enumeration(value = Bundle.BundleType.Searchset),
+              )
+            },
             perResourcePatchGenerator,
             bundleUploadRequestGenerator,
           )
@@ -243,9 +268,7 @@ class UploaderTest {
   fun bundle_upload_should_fail_if_there_is_io_exception() = runTest {
     val result =
       Uploader(
-          BundleDataSource {
-            throw IOException("Failed to connect to server.")
-                           },
+          BundleDataSource { throw IOException("Failed to connect to server.") },
           perResourcePatchGenerator,
           bundleUploadRequestGenerator,
         )
@@ -260,18 +283,25 @@ class UploaderTest {
   fun url_upload_for_per_resource_patch_should_output_responses_mapped_correctly_to_the_local_changes() =
     runTest {
       val updatedPatient1 =
-        patient1.copy(name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-          family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))))
+        patient1.copy(
+          name =
+            listOf(
+              HumanName(
+                given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                family = dev.ohs.fhir.model.r4.String(value = "Nucleus"),
+              ),
+            ),
+        )
 
       val result =
         Uploader(
-          UrlRequestDataSource {
-            when (it.resource.id) {
-              patient1Id -> updatedPatient1
-              patient2Id -> patient2
-              else -> throw IllegalArgumentException("Unknown patient ID")
-            }
-          },
+            UrlRequestDataSource {
+              when (it.resource.id) {
+                patient1Id -> updatedPatient1
+                patient2Id -> patient2
+                else -> throw IllegalArgumentException("Unknown patient ID")
+              }
+            },
             perResourcePatchGenerator,
             urlUploadRequestGenerator,
           )
@@ -308,8 +338,15 @@ class UploaderTest {
   fun url_upload_for_per_change_patch_should_output_responses_mapped_correctly_to_the_local_changes() =
     runTest {
       val updatedPatient1 =
-        patient1.copy(name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-          family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))))
+        patient1.copy(
+          name =
+            listOf(
+              HumanName(
+                given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                family = dev.ohs.fhir.model.r4.String(value = "Nucleus"),
+              ),
+            ),
+        )
 
       val result =
         Uploader(
@@ -371,9 +408,11 @@ class UploaderTest {
   fun url_upload_should_fail_if_response_has_incorrect_resource_type() = runTest {
     val result =
       Uploader(
-          UrlRequestDataSource { Bundle(
-            type = Enumeration(value = Bundle.BundleType.Searchset )
-          )},
+          UrlRequestDataSource {
+            Bundle(
+              type = Enumeration(value = Bundle.BundleType.Searchset),
+            )
+          },
           perResourcePatchGenerator,
           urlUploadRequestGenerator,
         )
@@ -390,11 +429,17 @@ class UploaderTest {
       Uploader(
           UrlRequestDataSource {
             OperationOutcome(
-              issue = listOf(
-                OperationOutcome.Issue(severity = Enumeration(value = OperationOutcome.IssueSeverity.Warning),
-                  code = Enumeration(value = OperationOutcome.IssueType.Conflict),
-                  diagnostics = dev.ohs.fhir.model.r4.String(value = "The resource has already been updated."))
-              )
+              issue =
+                listOf(
+                  OperationOutcome.Issue(
+                    severity = Enumeration(value = OperationOutcome.IssueSeverity.Warning),
+                    code = Enumeration(value = OperationOutcome.IssueType.Conflict),
+                    diagnostics =
+                      dev.ohs.fhir.model.r4.String(
+                        value = "The resource has already been updated.",
+                      ),
+                  ),
+                ),
             )
           },
           perResourcePatchGenerator,
@@ -441,19 +486,30 @@ class UploaderTest {
   fun bundle_upload_for_per_resource_patch_with_bundle_size_1_should_output_responses_mapped_correctly_to_the_local_changes() =
     runTest {
       val updatedPatient1 =
-        patient1.copy(name = listOf(HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
-          family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))))
+        patient1.copy(
+          name =
+            listOf(
+              HumanName(
+                given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+                family = dev.ohs.fhir.model.r4.String(value = "Nucleus"),
+              ),
+            ),
+        )
 
       val result =
         Uploader(
             BundleDataSource {
               when (it.resource.entry[0].resource?.id) {
                 patient1Id ->
-                  Bundle(type = Enumeration(value = Bundle.BundleType.Transaction_Response),
-                    entry = listOf(Bundle.Entry(resource = patient1)))
+                  Bundle(
+                    type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+                    entry = listOf(Bundle.Entry(resource = patient1)),
+                  )
                 patient2Id ->
-                  Bundle(type = Enumeration(value = Bundle.BundleType.Transaction_Response),
-                    entry = listOf(Bundle.Entry(resource = patient2)))
+                  Bundle(
+                    type = Enumeration(value = Bundle.BundleType.Transaction_Response),
+                    entry = listOf(Bundle.Entry(resource = patient2)),
+                  )
                 else -> throw IllegalArgumentException("Unknown patient ID")
               }
             },
@@ -507,25 +563,32 @@ class UploaderTest {
 
     const val patient1Id = "Patient-001"
     const val patient2Id = "Patient-002"
-    val patient1 = Patient(id = patient1Id, name = listOf(
-      HumanName(given = listOf(dev.ohs.fhir.model.r4.String(value = "John")), family = dev.ohs.fhir.model.r4.String(value = "Doe"))
-    ))
+    val patient1 =
+      Patient(
+        id = patient1Id,
+        name =
+          listOf(
+            HumanName(
+              given = listOf(dev.ohs.fhir.model.r4.String(value = "John")),
+              family = dev.ohs.fhir.model.r4.String(value = "Doe"),
+            ),
+          ),
+      )
 
     val patient2 = Patient(id = patient2Id)
+
     @OptIn(ExperimentalUuidApi::class)
     val localChangesToTestFail =
       listOf(
         LocalChangeEntity(
-          id = 1,
-          resourceType = ResourceType.Patient.name,
-          resourceUuid = Uuid.random(),
-          resourceId = patient1Id,
-          type = LocalChangeEntity.Type.INSERT.value,
-          payload =
-            fhirR4Json
-              .encodeToString(patient1),
-          timestamp = Clock.System.now(),
-        )
+            id = 1,
+            resourceType = ResourceType.Patient.name,
+            resourceUuid = Uuid.random(),
+            resourceId = patient1Id,
+            type = LocalChangeEntity.Type.INSERT.value,
+            payload = fhirR4Json.encodeToString(patient1),
+            timestamp = Clock.System.now(),
+          )
           .toLocalChange()
           .apply { LocalChangeToken(listOf(1)) },
       )
@@ -536,9 +599,7 @@ class UploaderTest {
           resourceType = ResourceType.Patient.name,
           resourceId = patient1Id,
           type = LocalChange.Type.INSERT,
-          payload =
-            fhirR4Json
-              .encodeToString(patient1),
+          payload = fhirR4Json.encodeToString(patient1),
           timestamp = Clock.System.now(),
           versionId = null,
           token = LocalChangeToken(listOf(1)),
@@ -547,9 +608,7 @@ class UploaderTest {
           resourceType = ResourceType.Patient.name,
           resourceId = patient2Id,
           type = LocalChange.Type.INSERT,
-          payload =
-            fhirR4Json
-              .encodeToString(patient2),
+          payload = fhirR4Json.encodeToString(patient2),
           timestamp = Clock.System.now(),
           versionId = null,
           token = LocalChangeToken(listOf(2)),
@@ -567,126 +626,133 @@ class UploaderTest {
   }
 
   @OptIn(ExperimentalUuidApi::class)
-  private val database: Database = object : Database {
-    override suspend fun getLocalChangeResourceReferences(localChangeIds: List<Long>): List<LocalChangeResourceReference> {
-      return emptyList()
-    }
+  private val database: Database =
+    object : Database {
+      override suspend fun getLocalChangeResourceReferences(
+        localChangeIds: List<Long>,
+      ): List<LocalChangeResourceReference> {
+        return emptyList()
+      }
 
-    override suspend fun <R : Resource> insert(vararg resource: R): List<String> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun <R : Resource> insert(vararg resource: R): List<String> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun <R : Resource> insertRemote(vararg resource: R) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun <R : Resource> insertRemote(vararg resource: R) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun update(vararg resources: Resource) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun update(vararg resources: Resource) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun updateVersionIdAndLastUpdated(
-      resourceId: String,
-      resourceType: ResourceType,
-      versionId: String?,
-      lastUpdated: Instant?
-    ) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun updateVersionIdAndLastUpdated(
+        resourceId: String,
+        resourceType: ResourceType,
+        versionId: String?,
+        lastUpdated: Instant?,
+      ) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun updateResourcePostSync(
-      oldResourceId: String,
-      newResourceId: String,
-      resourceType: ResourceType,
-      versionId: String?,
-      lastUpdated: Instant?
-    ) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun updateResourcePostSync(
+        oldResourceId: String,
+        newResourceId: String,
+        resourceType: ResourceType,
+        versionId: String?,
+        lastUpdated: Instant?,
+      ) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun select(type: ResourceType, id: String): Resource {
-      TODO("Not yet implemented")
-    }
+      override suspend fun select(type: ResourceType, id: String): Resource {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun selectEntity(
-      type: ResourceType,
-      id: String
-    ): ResourceEntity {
-      TODO("Not yet implemented")
-    }
+      override suspend fun selectEntity(
+        type: ResourceType,
+        id: String,
+      ): ResourceEntity {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun insertSyncedResources(resources: List<Resource>) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun insertSyncedResources(resources: List<Resource>) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun delete(type: ResourceType, id: String) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun delete(type: ResourceType, id: String) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun <R : Resource> search(query: SearchQuery): List<ResourceWithUUID<R>> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun <R : Resource> search(query: SearchQuery): List<ResourceWithUUID<R>> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun count(query: SearchQuery): Long {
-      TODO("Not yet implemented")
-    }
+      override suspend fun count(query: SearchQuery): Long {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun searchForwardReferencedResources(query: SearchQuery): List<ForwardIncludeSearchResult> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun searchForwardReferencedResources(
+        query: SearchQuery,
+      ): List<ForwardIncludeSearchResult> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun searchReverseReferencedResources(query: SearchQuery): List<ReverseIncludeSearchResult> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun searchReverseReferencedResources(
+        query: SearchQuery,
+      ): List<ReverseIncludeSearchResult> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun getAllLocalChanges(): List<LocalChange> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun getAllLocalChanges(): List<LocalChange> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun getAllChangesForEarliestChangedResource(): List<LocalChange> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun getAllChangesForEarliestChangedResource(): List<LocalChange> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun getLocalChangesCount(): Int {
-      TODO("Not yet implemented")
-    }
+      override suspend fun getLocalChangesCount(): Int {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun deleteUpdates(token: LocalChangeToken) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun deleteUpdates(token: LocalChangeToken) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun deleteUpdates(resources: List<Resource>) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun deleteUpdates(resources: List<Resource>) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun updateResourceAndReferences(
-      currentResourceId: String,
-      updatedResource: Resource
-    ) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun updateResourceAndReferences(
+        currentResourceId: String,
+        updatedResource: Resource,
+      ) {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun withTransaction(block: suspend () -> Unit) {
-      TODO("Not yet implemented")
-    }
+      override suspend fun withTransaction(block: suspend () -> Unit) {
+        TODO("Not yet implemented")
+      }
 
-    override fun close() {
-      TODO("Not yet implemented")
-    }
+      override fun close() {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun clearDatabase() {
-      TODO("Not yet implemented")
-    }
+      override suspend fun clearDatabase() {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun getLocalChanges(type: ResourceType, id: String): List<LocalChange> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun getLocalChanges(type: ResourceType, id: String): List<LocalChange> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun getLocalChanges(resourceUuid: Uuid): List<LocalChange> {
-      TODO("Not yet implemented")
-    }
+      override suspend fun getLocalChanges(resourceUuid: Uuid): List<LocalChange> {
+        TODO("Not yet implemented")
+      }
 
-    override suspend fun purge(type: ResourceType, ids: Set<String>, forcePurge: Boolean) {
-      TODO("Not yet implemented")
+      override suspend fun purge(type: ResourceType, ids: Set<String>, forcePurge: Boolean) {
+        TODO("Not yet implemented")
+      }
     }
-  }
 }

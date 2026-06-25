@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.remote
 
+import dev.ohs.fhir.model.r4.Binary
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.sync.DataSource
 import dev.ohs.fhir.sync.download.BundleDownloadRequest
 import dev.ohs.fhir.sync.download.DownloadRequest
@@ -23,9 +25,6 @@ import dev.ohs.fhir.sync.download.UrlDownloadRequest
 import dev.ohs.fhir.sync.upload.request.BundleUploadRequest
 import dev.ohs.fhir.sync.upload.request.UploadRequest
 import dev.ohs.fhir.sync.upload.request.UrlUploadRequest
-import dev.ohs.fhir.model.r4.Binary
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.Resource
 import io.ktor.util.decodeBase64String
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

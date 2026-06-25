@@ -24,23 +24,23 @@ import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamType
 import dev.ohs.fhir.sync.remote.HttpLogger
 
-/**
- * Initializes [FhirEngineProvider] once and returns the [FhirEngine] instance.
- */
+/** Initializes [FhirEngineProvider] once and returns the [FhirEngine] instance. */
 fun fhirEngine(platformContext: Any = Unit): FhirEngine {
-  if (FhirEngineProvider.isNotInitialized()){
+  if (FhirEngineProvider.isNotInitialized()) {
     FhirEngineProvider.init(
       FhirEngineConfiguration(
-        serverConfiguration = ServerConfiguration(
-          baseUrl = "https://hapi.fhir.org/baseR4/",
-          networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
-          httpLogger = HttpLogger(level = HttpLogger.Level.BODY),
-        ),
-        customSearchParameters = listOf(
-          SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
-          SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
-          SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
-        ),
+        serverConfiguration =
+          ServerConfiguration(
+            baseUrl = "https://hapi.fhir.org/baseR4/",
+            networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
+            httpLogger = HttpLogger(level = HttpLogger.Level.BODY),
+          ),
+        customSearchParameters =
+          listOf(
+            SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
+            SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
+            SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
+          ),
       ),
       platformContext,
     )

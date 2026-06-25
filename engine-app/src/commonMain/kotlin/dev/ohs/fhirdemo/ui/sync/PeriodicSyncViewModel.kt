@@ -29,56 +29,64 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 class PeriodicSyncViewModel(
-    private val scope: CoroutineScope,
-    private val controller: FhirSyncController,
+  private val scope: CoroutineScope,
+  private val controller: FhirSyncController,
 ) {
-    private val _uiState = MutableStateFlow(PeriodicSyncUiState())
-    val uiState: StateFlow<PeriodicSyncUiState> = _uiState.asStateFlow()
+  private val _uiState = MutableStateFlow(PeriodicSyncUiState())
+  val uiState: StateFlow<PeriodicSyncUiState> = _uiState.asStateFlow()
 
-    private var job: Job? = null
+  private var job: Job? = null
 
-    fun start() {
-        if (job?.isActive == true) return
-        job = scope.launch {
-            controller.periodicSync().collect { status ->
-                _uiState.value = PeriodicSyncUiState(
-                    lastSyncStatus = status.lastSyncJobStatus?.let { it::class.simpleName },
-                    lastSyncTime = status.lastSyncJobStatus?.timestamp
-                        ?.toLocalDateTime(TimeZone.currentSystemDefault())
-                        ?.formatTimestamp(),
-                    currentStatus = when (status.currentSyncJobStatus) {
-                        is CurrentSyncJobStatus.Enqueued -> "Enqueued"
-                        is CurrentSyncJobStatus.Running -> "Running"
-                        is CurrentSyncJobStatus.Succeeded -> "Succeeded"
-                        is CurrentSyncJobStatus.Failed -> "Failed"
-                        is CurrentSyncJobStatus.Cancelled -> "Cancelled"
-                        is CurrentSyncJobStatus.Blocked -> "Blocked"
-                    },
-                    progress = when (val s = status.currentSyncJobStatus) {
-                        is CurrentSyncJobStatus.Running -> {
-                            val jobStatus = s.inProgressSyncJob
-                            if (jobStatus is SyncJobStatus.InProgress && jobStatus.total > 0) {
-                                jobStatus.completed * 100 / jobStatus.total
-                            } else null
-                        }
-                        else -> null
-                    },
-                )
-            }
+  fun start() {
+    if (job?.isActive == true) return
+    job =
+      scope.launch {
+        controller.periodicSync().collect { status ->
+          _uiState.value =
+            PeriodicSyncUiState(
+              lastSyncStatus = status.lastSyncJobStatus?.let { it::class.simpleName },
+              lastSyncTime =
+                status.lastSyncJobStatus
+                  ?.timestamp
+                  ?.toLocalDateTime(TimeZone.currentSystemDefault())
+                  ?.formatTimestamp(),
+              currentStatus =
+                when (status.currentSyncJobStatus) {
+                  is CurrentSyncJobStatus.Enqueued -> "Enqueued"
+                  is CurrentSyncJobStatus.Running -> "Running"
+                  is CurrentSyncJobStatus.Succeeded -> "Succeeded"
+                  is CurrentSyncJobStatus.Failed -> "Failed"
+                  is CurrentSyncJobStatus.Cancelled -> "Cancelled"
+                  is CurrentSyncJobStatus.Blocked -> "Blocked"
+                },
+              progress =
+                when (val s = status.currentSyncJobStatus) {
+                  is CurrentSyncJobStatus.Running -> {
+                    val jobStatus = s.inProgressSyncJob
+                    if (jobStatus is SyncJobStatus.InProgress && jobStatus.total > 0) {
+                      jobStatus.completed * 100 / jobStatus.total
+                    } else {
+                      null
+                    }
+                  }
+                  else -> null
+                },
+            )
         }
-    }
+      }
+  }
 
-    fun cancel() {
-        job?.cancel()
-        job = null
-        scope.launch { controller.cancelPeriodicSync() }
-        _uiState.value = _uiState.value.copy(currentStatus = "Cancelled", progress = null)
-    }
+  fun cancel() {
+    job?.cancel()
+    job = null
+    scope.launch { controller.cancelPeriodicSync() }
+    _uiState.value = _uiState.value.copy(currentStatus = "Cancelled", progress = null)
+  }
 }
 
 data class PeriodicSyncUiState(
-    val lastSyncStatus: String? = null,
-    val lastSyncTime: String? = null,
-    val currentStatus: String? = null,
-    val progress: Int? = null,
+  val lastSyncStatus: String? = null,
+  val lastSyncTime: String? = null,
+  val currentStatus: String? = null,
+  val progress: Int? = null,
 )

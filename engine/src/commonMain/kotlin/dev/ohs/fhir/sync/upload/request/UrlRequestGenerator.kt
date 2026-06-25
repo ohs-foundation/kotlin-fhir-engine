@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2026 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.request
 
 import dev.ohs.fhir.ContentTypes
-import dev.ohs.fhir.sync.upload.patch.Patch
-import dev.ohs.fhir.sync.upload.patch.PatchMapping
-import dev.ohs.fhir.sync.upload.patch.StronglyConnectedPatchMappings
 import dev.ohs.fhir.model.r4.Base64Binary
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.sync.upload.patch.Patch
+import dev.ohs.fhir.sync.upload.patch.PatchMapping
+import dev.ohs.fhir.sync.upload.patch.StronglyConnectedPatchMappings
 import kotlin.io.encoding.Base64
 
 /** Generates list of [UrlUploadRequest]s for a list of [Patch]es. */

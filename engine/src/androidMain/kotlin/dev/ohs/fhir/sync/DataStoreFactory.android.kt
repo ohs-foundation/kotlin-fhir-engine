@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2025-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync
 
 import android.content.Context
@@ -24,8 +23,9 @@ private var dataStoreInstance: DataStore<Preferences>? = null
 
 @PublishedApi
 internal fun createDataStore(context: Context): DataStore<Preferences> =
-  dataStoreInstance ?: createDataStore {
-    context.filesDir.resolve(fhirDataStoreFileName).absolutePath
-  }.also { dataStoreInstance = it }
+  dataStoreInstance
+    ?: createDataStore { context.filesDir.resolve(fhirDataStoreFileName).absolutePath }
+      .also { dataStoreInstance = it }
 
-internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore(platformContext as Context)
+internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> =
+  createDataStore(platformContext as Context)

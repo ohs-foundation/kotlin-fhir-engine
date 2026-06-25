@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 Google LLC
+ * Copyright 2023-2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload.request
-
 
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
@@ -31,11 +29,8 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.ktor.util.decodeBase64String
-import io.ktor.utils.io.charsets.Charsets
-import kotlinx.coroutines.test.runTest
-import okio.ByteString.Companion.decodeBase64
 import kotlin.test.Test
-
+import kotlinx.coroutines.test.runTest
 
 class IndividualGeneratorTest {
 
@@ -107,7 +102,13 @@ class IndividualGeneratorTest {
         requests.shouldHaveSize(1)
         httpVerb.shouldBe(Bundle.HTTPVerb.Patch)
         url.shouldBe("Patient/Patient-001")
-        (resource as Binary).data?.value?.decodeBase64String().shouldBe("[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]")
+        (resource as Binary)
+          .data
+          ?.value
+          ?.decodeBase64String()
+          .shouldBe(
+            "[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]"
+          )
       }
       localChanges.shouldBeEqual(patchOutput.localChanges)
     }
@@ -146,6 +147,8 @@ class IndividualGeneratorTest {
         patchOutputList.map { StronglyConnectedPatchMappings(listOf(it)) },
       )
     result.shouldHaveSize(3)
-    result.map { it.generatedRequest.httpVerb }.shouldContainExactly(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Patch, Bundle.HTTPVerb.Delete)
+    result
+      .map { it.generatedRequest.httpVerb }
+      .shouldContainExactly(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Patch, Bundle.HTTPVerb.Delete)
   }
 }

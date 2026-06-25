@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync
 
-import dev.ohs.fhir.sync.download.DownloadRequest
-import dev.ohs.fhir.sync.upload.request.UploadRequest
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.sync.download.DownloadRequest
+import dev.ohs.fhir.sync.upload.request.UploadRequest
 
 /** Interface for an abstraction of retrieving FHIR data from a network source. */
 internal interface DataSource {
