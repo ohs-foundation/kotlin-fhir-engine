@@ -1,5 +1,5 @@
 /*
- * Copyright 2025-2026 Google LLC
+ * Copyright 2026 Open Health Stack Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,28 @@
  * limitations under the License.
  */
 
-package dev.ohs.fhir.sync
+package dev.ohs.fhirdemo.data
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import co.touchlab.kermit.Logger
-import dev.ohs.fhir.FhirEngineProvider.getFhirDataStore
+import dev.ohs.fhir.sync.BackoffPolicy
+import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.sync.FhirDataStore
+import dev.ohs.fhir.sync.FhirSyncTask
+import dev.ohs.fhir.sync.LastSyncJobStatus
+import dev.ohs.fhir.sync.PeriodicSyncJobStatus
+import dev.ohs.fhir.sync.PeriodicSyncConfiguration
+import dev.ohs.fhir.sync.RetryConfiguration
+import dev.ohs.fhir.sync.SyncJobStatus
+import dev.ohs.fhir.sync.defaultRetryConfiguration
+import dev.ohs.fhir.sync.runSync
+import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -31,10 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Instant
+import okio.Path.Companion.toPath
 
 /**
  * Provides desktop (foreground-only) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
@@ -71,7 +86,14 @@ object Sync {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val mutex = Mutex()
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
-  private val dataStore = createDataStore()
+  private val dataStore: DataStore<Preferences> =
+    PreferenceDataStoreFactory.createWithPath(
+      produceFile = {
+        File(System.getProperty("user.home"), ".fhir-engine/fhir.engine.preferences_pb")
+          .absolutePath
+          .toPath()
+      }
+    )
 
   /**
    * Executes a one-time sync using [FhirSyncTask] instances created by [taskFactory].
@@ -127,10 +149,10 @@ object Sync {
   }
 
   /** Returns the timestamp of the last successful sync, or null if none has occurred. */
-  suspend fun getLastSyncTimestamp(): Instant? = getFhirDataStore().readLastSyncTimestamp()
+  suspend fun getLastSyncTimestamp(): Instant? =
+    FhirDataStore(dataStore).readLastSyncTimestamp()
 
-  @PublishedApi
-  internal suspend fun runOneTimeSync(
+  suspend fun runOneTimeSync(
     uniqueWorkName: String,
     taskFactory: () -> FhirSyncTask,
     retryConfiguration: RetryConfiguration?,
@@ -206,8 +228,7 @@ object Sync {
     }
   }
 
-  @PublishedApi
-  internal suspend fun runPeriodicSync(
+  suspend fun runPeriodicSync(
     uniqueWorkName: String,
     config: PeriodicSyncConfiguration,
     taskFactory: () -> FhirSyncTask,
@@ -287,12 +308,7 @@ object Sync {
     }
   }
 
-  @PublishedApi
-  internal inline fun <reified T : FhirSyncTask> createSyncUniqueName(syncType: String): String =
-    "${T::class.qualifiedName ?: T::class.simpleName}-$syncType"
-
-  @PublishedApi
-  internal suspend fun cancelSync(uniqueWorkName: String) {
+  suspend fun cancelSync(uniqueWorkName: String) {
     val handle = mutex.withLock { activeSyncs[uniqueWorkName] }
     if (handle == null || !handle.job.isActive) {
       Logger.w { "No active sync found for: $uniqueWorkName" }
@@ -301,11 +317,14 @@ object Sync {
     handle.progressChannel.emit(CurrentSyncJobStatus.Cancelled)
     handle.job.cancel()
     mutex.withLock { activeSyncs.remove(uniqueWorkName) }
-    val fhirDataStore = getFhirDataStore()
+    val fhirDataStore = FhirDataStore(dataStore)
     if (fhirDataStore.fetchUniqueWorkName(uniqueWorkName) != null) {
       fhirDataStore.removeUniqueWorkName(uniqueWorkName)
     }
   }
+
+  inline fun <reified T : FhirSyncTask> createSyncUniqueName(syncType: String): String =
+    "${T::class.qualifiedName ?: T::class.simpleName}-$syncType"
 
   private fun mapSyncJobStatusToLastSync(status: SyncJobStatus?): LastSyncJobStatus? =
     status?.let {
@@ -347,26 +366,3 @@ private data class SyncHandle(
   val job: Job,
   val progressChannel: MutableSharedFlow<CurrentSyncJobStatus>,
 )
-
-/**
- *
- * // Implement FhirSyncTask
- * class MyFhirSyncTask : FhirSyncTask {
- *     override fun getFhirEngine() = FhirEngineProvider.getInstance()
- *     override fun getDownloadWorkManager() = MyDownloadWorkManager()
- *     override fun getConflictResolver() = AcceptRemoteConflictResolver
- *     override fun getUploadStrategy() = UploadStrategy.forBundleRequest(...)
- * }
- *
- * // One-time sync
- * val flow = Sync.oneTimeSync { MyFhirSyncTask() }
- *
- * // Periodic sync (every 15 minutes)
- * val flow = Sync.periodicSync(
- *     PeriodicSyncConfiguration(repeat = RepeatInterval(15.minutes))
- * ) { MyFhirSyncTask() }
- *
- * // Cancel
- * Sync.cancelPeriodicSync<MyFhirSyncTask>()
- */
-

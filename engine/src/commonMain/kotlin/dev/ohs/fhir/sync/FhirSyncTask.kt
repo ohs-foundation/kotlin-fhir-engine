@@ -22,7 +22,7 @@ import co.touchlab.kermit.Logger as KermitLogger
  * implementation in its own scheduling mechanism:
  * - **Android**: extend [FhirSyncWorker] (which implements this interface) and schedule via WorkManager
  * - **iOS**: pass a factory to `IosSyncScheduler` (in engine-app) to run as BGTask background jobs
- * - **Desktop**: use [Sync] (desktop) for coroutine-based foreground scheduling
+ * - **Desktop**: use `Sync` (in engine-app) for coroutine-based foreground scheduling
  */
 interface FhirSyncTask {
   fun getFhirEngine(): FhirEngine

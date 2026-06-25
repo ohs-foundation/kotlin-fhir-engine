@@ -29,8 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
-@PublishedApi
-internal class FhirDataStore(private val dataStore: DataStore<Preferences>) {
+class FhirDataStore(private val dataStore: DataStore<Preferences>) {
 
   private val json = Json { ignoreUnknownKeys = true }
 
@@ -41,7 +40,7 @@ internal class FhirDataStore(private val dataStore: DataStore<Preferences>) {
    * @return A Flow of [LastSyncJobStatus] representing the terminal state of the sync job, or null
    *   if the state is not allowed.
    */
-  internal fun observeTerminalSyncJobStatus(key: String): Flow<SyncJobStatus?> =
+  fun observeTerminalSyncJobStatus(key: String): Flow<SyncJobStatus?> =
     dataStore.data
       .catch { e ->
         Logger.e(e) { "Error reading FhirDataStore" }
@@ -60,7 +59,7 @@ internal class FhirDataStore(private val dataStore: DataStore<Preferences>) {
    * @param key The key associated with the data to edit.
    * @param syncJobStatus The synchronization job status to be stored.
    */
-  internal suspend fun writeTerminalSyncJobStatus(key: String, syncJobStatus: SyncJobStatus) {
+  suspend fun writeTerminalSyncJobStatus(key: String, syncJobStatus: SyncJobStatus) {
     when (syncJobStatus) {
       is SyncJobStatus.Succeeded,
       is SyncJobStatus.Failed, -> writeStatus(key, syncJobStatus)
@@ -68,27 +67,24 @@ internal class FhirDataStore(private val dataStore: DataStore<Preferences>) {
     }
   }
 
-  internal suspend fun readLastSyncTimestamp(): Instant? =
+  suspend fun readLastSyncTimestamp(): Instant? =
     dataStore.data.first()[stringPreferencesKey(LAST_SYNC_TIMESTAMP_KEY)]?.let { Instant.parse(it) }
 
-  internal suspend fun writeLastSyncTimestamp(timestamp: Instant) =
+  suspend fun writeLastSyncTimestamp(timestamp: Instant) =
     dataStore.edit { it[stringPreferencesKey(LAST_SYNC_TIMESTAMP_KEY)] = timestamp.toString() }
 
   /** Stores the given unique-work-name in DataStore. */
-  @PublishedApi
-  internal suspend fun storeUniqueWorkName(key: String, value: String) =
+  suspend fun storeUniqueWorkName(key: String, value: String) =
     dataStore.edit { it[stringPreferencesKey("$key-name")] = value }
 
-  @PublishedApi
-  internal suspend fun removeUniqueWorkName(key: String) =
+  suspend fun removeUniqueWorkName(key: String) =
       dataStore.edit {
         val value = it.remove(stringPreferencesKey("$key-name"))
         Logger.d("Removed value: $value")
       }
 
   /** Fetches the stored unique-work-name from DataStore. */
-  @PublishedApi
-  internal suspend fun fetchUniqueWorkName(key: String): String? =
+  suspend fun fetchUniqueWorkName(key: String): String? =
     dataStore.data.first()[stringPreferencesKey("$key-name")]
 
   private suspend fun writeStatus(key: String, syncJobStatus: SyncJobStatus) {

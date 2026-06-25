@@ -4,7 +4,6 @@ import dev.ohs.fhir.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.sync.PeriodicSyncConfiguration
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
 import dev.ohs.fhir.sync.RepeatInterval
-import dev.ohs.fhir.sync.Sync
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Duration.Companion.minutes
 
