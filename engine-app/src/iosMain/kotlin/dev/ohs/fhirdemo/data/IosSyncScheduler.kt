@@ -18,7 +18,6 @@ package dev.ohs.fhirdemo.data
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.sync.FhirSyncTask
 import dev.ohs.fhir.sync.SyncJobStatus
-import dev.ohs.fhir.sync.createDataStore
 import dev.ohs.fhir.sync.runSync
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -69,7 +68,7 @@ import platform.Foundation.NSError
  *
  * The scheduler automatically re-schedules each periodic sync cycle on completion.
  */
-class IosSyncScheduler(
+internal class IosSyncScheduler(
   private val periodicSyncTaskIdentifier: String,
   private val oneTimeSyncTaskIdentifier: String? = null,
   private val taskFactory: () -> FhirSyncTask,
@@ -195,18 +194,10 @@ class IosSyncScheduler(
     }
 
     scope.launch {
-      val dataStore = runCatching { createDataStore() }.getOrNull()
-      if (dataStore == null) {
-        Logger.e { "IosSyncScheduler: failed to create DataStore for $taskName" }
-        completeOnce(false)
-        return@launch
-      }
-
       val result = runCatching {
         taskFactory()
           .runSync(
             taskName = taskName,
-            dataStore = dataStore,
             onProgress = {},
           )
       }

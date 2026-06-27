@@ -171,6 +171,7 @@ internal class KtorHttpService(
     private var httpLogger: HttpLogger? = null
 
     private fun HttpClientConfig<*>.configureClient() {
+      expectSuccess = true
       install(HttpTimeout) {
         connectTimeoutMillis = networkConfiguration.connectionTimeOut * 1000
         requestTimeoutMillis = networkConfiguration.readTimeOut * 1000

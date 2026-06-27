@@ -19,6 +19,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import co.touchlab.kermit.Logger
+import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.BackoffPolicy
 import dev.ohs.fhir.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.sync.FhirDataStore
@@ -37,7 +38,6 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -49,6 +49,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import okio.Path.Companion.toPath
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Provides desktop (foreground-only) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
@@ -81,18 +82,13 @@ import okio.Path.Companion.toPath
  * Sync.cancelPeriodicSync<MyFhirSyncTask>()
  * ```
  */
-object Sync {
+internal object Sync {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val mutex = Mutex()
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
-  private val dataStore: DataStore<Preferences> =
-    PreferenceDataStoreFactory.createWithPath(
-      produceFile = {
-        File(System.getProperty("user.home"), ".fhir-engine/fhir.engine.preferences_pb")
-          .absolutePath
-          .toPath()
-      },
-    )
+  private val fhirDataStore: FhirDataStore by lazy {
+    FhirEngineProvider.getFhirDataStore()
+  }
 
   /**
    * Executes a one-time sync using [FhirSyncTask] instances created by [taskFactory].
@@ -148,7 +144,7 @@ object Sync {
   }
 
   /** Returns the timestamp of the last successful sync, or null if none has occurred. */
-  suspend fun getLastSyncTimestamp(): Instant? = FhirDataStore(dataStore).readLastSyncTimestamp()
+  suspend fun getLastSyncTimestamp(): Instant? = fhirDataStore.readLastSyncTimestamp()
 
   suspend fun runOneTimeSync(
     uniqueWorkName: String,
@@ -164,7 +160,6 @@ object Sync {
       }
 
     val statusFlow = MutableSharedFlow<CurrentSyncJobStatus>(replay = 1)
-    val fhirDataStore = FhirDataStore(dataStore)
     storeUniqueWorkNameInDataStore(fhirDataStore, uniqueWorkName)
 
     statusFlow.emit(CurrentSyncJobStatus.Enqueued)
@@ -177,7 +172,7 @@ object Sync {
 
         while (attempt <= maxRetries) {
           if (attempt > 0) {
-            delay(computeBackoffDelayMillis(retryConfiguration!!, attempt - 1))
+            delay(computeBackoffDelayMillis(retryConfiguration!!, attempt - 1).milliseconds)
           }
           statusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
           lastResult =
@@ -220,7 +215,7 @@ object Sync {
     onProgress: suspend (SyncJobStatus) -> Unit,
   ): SyncJobStatus {
     val call = suspend {
-      task.runSync(taskName = taskName, dataStore = dataStore, onProgress = onProgress)
+      task.runSync(taskName = taskName, onProgress = onProgress)
     }
     return if (syncTimeout != null) {
       withTimeoutOrNull(syncTimeout) { call() }
@@ -238,7 +233,6 @@ object Sync {
     config: PeriodicSyncConfiguration,
     taskFactory: () -> FhirSyncTask,
   ): Flow<PeriodicSyncJobStatus> {
-    val fhirDataStore = FhirDataStore(dataStore)
 
     mutex
       .withLock { activeSyncs[uniqueWorkName] }
@@ -328,7 +322,6 @@ object Sync {
     handle.progressChannel.emit(CurrentSyncJobStatus.Cancelled)
     handle.job.cancel()
     mutex.withLock { activeSyncs.remove(uniqueWorkName) }
-    val fhirDataStore = FhirDataStore(dataStore)
     if (fhirDataStore.fetchUniqueWorkName(uniqueWorkName) != null) {
       fhirDataStore.removeUniqueWorkName(uniqueWorkName)
     }

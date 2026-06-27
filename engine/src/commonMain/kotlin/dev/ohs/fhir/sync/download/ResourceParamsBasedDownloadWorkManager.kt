@@ -101,7 +101,7 @@ class ResourceParamsBasedDownloadWorkManager(
 
   override suspend fun processResponse(response: Resource): Collection<Resource> {
     if (response is OperationOutcome) {
-      throw Exception(response.issue.firstOrNull()?.diagnostics?.value)
+      throw IllegalStateException(response.issue.firstOrNull()?.diagnostics?.value)
     }
 
     if ((response !is Bundle || response.type.value != Bundle.BundleType.Searchset)) {

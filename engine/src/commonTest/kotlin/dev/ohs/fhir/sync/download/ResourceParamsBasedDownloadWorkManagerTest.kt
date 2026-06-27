@@ -218,7 +218,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
         )
 
       val exception =
-        assertFailsWith<RuntimeException> { downloadManager.processResponse(response) }
+        assertFailsWith<IllegalStateException> { downloadManager.processResponse(response) }
       exception.message shouldBe "Server couldn't fulfil the request."
     }
 

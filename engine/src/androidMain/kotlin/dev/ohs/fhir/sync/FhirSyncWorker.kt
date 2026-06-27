@@ -50,7 +50,6 @@ abstract class FhirSyncWorker(appContext: Context, workerParams: WorkerParameter
       try {
         runSync(
           taskName = inputData.getString(UNIQUE_WORK_NAME),
-          dataStore = createDataStore(applicationContext),
           onProgress = { setProgress(buildWorkData(it)) },
         )
       } catch (e: IllegalStateException) {

@@ -15,8 +15,6 @@
  */
 package dev.ohs.fhir.sync
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.download.DownloaderImpl
@@ -56,16 +54,14 @@ interface FhirSyncTask {
  *
  * @param taskName Unique name used to persist the terminal status in [FhirDataStore]. Null when the
  *   sync was not scheduled via [Sync] (e.g. in tests or one-off invocations).
- * @param dataStore Persistence store for sync state and timestamps.
  * @param onProgress Called for every non-terminal [SyncJobStatus] emission so the caller can
  *   forward progress via its own signalling mechanism (e.g. WorkManager's `setProgress`).
  */
 suspend fun FhirSyncTask.runSync(
   taskName: String?,
-  dataStore: DataStore<Preferences>,
   onProgress: suspend (SyncJobStatus) -> Unit,
 ): SyncJobStatus {
-  val fhirDataStore = FhirDataStore(dataStore)
+  val fhirDataStore = FhirEngineProvider.getFhirDataStore()
   val dataSource =
     FhirEngineProvider.getDataSource()
       ?: throw IllegalStateException(

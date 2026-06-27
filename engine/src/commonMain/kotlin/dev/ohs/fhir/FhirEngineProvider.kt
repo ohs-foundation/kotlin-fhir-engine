@@ -95,8 +95,7 @@ object FhirEngineProvider {
     return dataSource
   }
 
-  @PublishedApi
-  internal fun getFhirDataStore(): FhirDataStore {
+  fun getFhirDataStore(): FhirDataStore {
     checkNotNull(fhirDataStore) {
       "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
     }
