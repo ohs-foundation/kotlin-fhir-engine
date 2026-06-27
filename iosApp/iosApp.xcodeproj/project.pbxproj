@@ -19,6 +19,8 @@
 		1A0000000000000000000004 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A0000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A0000000000000000000006 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		1A0000000000000000000007 /* Local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig; sourceTree = "<group>"; };
+		1A0000000000000000000008 /* Local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig.example; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +49,8 @@
 				1A0000000000000000000002 /* ContentView.swift */,
 				1A0000000000000000000005 /* Info.plist */,
 				1A0000000000000000000006 /* Config.xcconfig */,
+				1A0000000000000000000007 /* Local.xcconfig */,
+				1A0000000000000000000008 /* Local.xcconfig.example */,
 				1A0000000000000000000003 /* Assets.xcassets */,
 			);
 			path = iosApp;
