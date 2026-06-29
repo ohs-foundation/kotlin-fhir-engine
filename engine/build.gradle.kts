@@ -5,7 +5,12 @@ plugins {
   id("com.android.kotlin.multiplatform.library")
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.maven.publish)
 }
+
+val mavenGroupId: String by project
+val mavenArtifactId: String by project
+val mavenVersion: String by project
 
 val generateSearchParamsTask =
   tasks.register("generateSearchParamsTask", GenerateSearchParamsTask::class) {
@@ -94,5 +99,40 @@ kotlin {
 dependencies {
   listOf("kspAndroid", "kspDesktop", "kspIosX64", "kspIosArm64", "kspIosSimulatorArm64").forEach {
     add(it, libs.androidx.room.compiler)
+  }
+}
+
+
+mavenPublishing {
+  publishToMavenCentral()
+  signAllPublications()
+  coordinates(mavenGroupId, mavenArtifactId, mavenVersion)
+
+  pom {
+    name = "Kotlin FHIR Engine"
+    description =
+      "A Kotlin Multiplatform library for on-device FHIR R4 persistence, search, and " +
+        "synchronization with remote FHIR servers"
+    inceptionYear = "2026"
+    url = "https://github.com/ohs-foundation/kotlin-fhir-engine"
+    licenses {
+      license {
+        name = "The Apache License, Version 2.0"
+        url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+      }
+    }
+    developers {
+      developer {
+        id = "ohs-foundation"
+        name = "Open Health Stack Foundation"
+        url = "https://ohs.dev/"
+      }
+    }
+    scm {
+      url = "https://github.com/ohs-foundation/kotlin-fhir-engine/"
+      connection = "scm:git:git://github.com/ohs-foundation/kotlin-fhir-engine.git"
+      developerConnection = "scm:git:ssh://git@github.com/ohs-foundation/kotlin-fhir-engine.git"
+    }
   }
 }
