@@ -23,15 +23,6 @@ import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-private val syncScheduler: IosSyncScheduler by lazy {
-  IosSyncScheduler(
-      periodicSyncTaskIdentifier = "dev.ohs.fhirdemo.sync.periodic",
-      oneTimeSyncTaskIdentifier = "dev.ohs.fhirdemo.sync.onetime",
-      taskFactory = { DemoFhirSyncTask() },
-    )
-    .also { it.register() }
-}
-
 actual class FhirSyncController actual constructor(context: Any) {
   actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> = flow {
     emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))

@@ -19,6 +19,7 @@ import co.touchlab.kermit.Logger
 import dev.ohs.fhir.sync.FhirSyncTask
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.runSync
+import kotlinx.cinterop.BetaInteropApi
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -26,6 +27,7 @@ import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -202,20 +204,21 @@ internal class IosSyncScheduler(
           )
       }
 
+      result.onSuccess { status -> Logger.d { "IosSyncScheduler: sync completed for $taskName with status $status" } }
       result.onFailure { e -> Logger.e(e) { "IosSyncScheduler: sync failed for $taskName" } }
 
       completeOnce(result.getOrNull() is SyncJobStatus.Succeeded)
     }
   }
 
-  @OptIn(ExperimentalForeignApi::class)
+  @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
   private fun submitRequest(request: BGProcessingTaskRequest) {
     try {
       memScoped {
         val error = alloc<ObjCObjectVar<NSError?>>()
         val success = BGTaskScheduler.sharedScheduler.submitTaskRequest(request, error.ptr)
         if (!success) {
-          val errorMessage = if (error.ptr != null) "NSError** was set" else "no error pointer"
+          val errorMessage = error.value?.localizedDescription ?: "no error details"
           Logger.e { "IosSyncScheduler: submitTaskRequest failed ($errorMessage)" }
         }
       }
