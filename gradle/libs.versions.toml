@@ -20,6 +20,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-datetime = "0.6.2"
 kotlinx-serialization-json = "1.9.0"
 ktor = "3.1.1"
+maven-publish = "0.36.0"
 robolectric = "4.10.3"
 spotless-plugin-gradle = "6.22.0"
 
@@ -69,3 +70,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version = "2.2.21-2.0.5" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
