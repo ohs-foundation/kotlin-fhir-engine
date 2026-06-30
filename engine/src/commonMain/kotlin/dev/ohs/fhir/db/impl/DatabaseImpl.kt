@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.PooledConnection
@@ -43,14 +42,14 @@ import dev.ohs.fhir.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.db.impl.entities.UriIndexEntity
 import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndices
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.toLocalChange
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.withId
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

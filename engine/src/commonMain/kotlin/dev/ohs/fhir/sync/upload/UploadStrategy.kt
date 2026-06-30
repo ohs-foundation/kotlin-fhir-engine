@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 /**
- * Defines strategies for uploading FHIR resource
- * [local changes][dev.ohs.fhir.LocalChange] to a server during synchronization. It is used by the
+ * Defines strategies for uploading FHIR resource [local changes][dev.ohs.fhir.LocalChange] to a
+ * server during synchronization. It is used by the
  * [FhirSyncWorker][dev.ohs.fhir.sync.FhirSyncWorker] to determine the specific upload behavior.
  *
  * To specify an upload strategy, override

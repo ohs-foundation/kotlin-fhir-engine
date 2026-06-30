@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.LocalChange
@@ -46,6 +45,5 @@ internal interface LocalChangeFetcher {
 }
 
 internal object LocalChangeFetcherFactory {
-  fun byMode(mode: Any, database: Database): LocalChangeFetcher =
-    TODO()
+  fun byMode(mode: Any, database: Database): LocalChangeFetcher = TODO()
 }

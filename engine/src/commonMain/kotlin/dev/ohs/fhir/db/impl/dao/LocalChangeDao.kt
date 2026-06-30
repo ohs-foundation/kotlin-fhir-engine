@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.dao
 
 import androidx.room.Dao
@@ -31,10 +30,10 @@ import dev.ohs.fhir.db.impl.entities.LocalChangeResourceReferenceEntity
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.db.impl.replaceJsonValue
-import dev.ohs.fhir.resourceTypeEnum
-import dev.ohs.fhir.versionId
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.resourceTypeEnum
+import dev.ohs.fhir.versionId
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

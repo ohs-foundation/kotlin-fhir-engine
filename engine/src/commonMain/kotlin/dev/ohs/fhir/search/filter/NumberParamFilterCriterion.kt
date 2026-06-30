@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search.filter
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.ConditionParam
 import dev.ohs.fhir.search.NumberClientParam
 import dev.ohs.fhir.search.Operation
-import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.getConditionParamPair
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 /**
  * Represents a criterion for filtering [NumberClientParam]. e.g.
