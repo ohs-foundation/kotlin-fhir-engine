@@ -259,7 +259,7 @@ internal class DatabaseImpl(
       resourceDao.getResourceEntity(oldResourceId, resourceType)?.let { oldResourceEntity ->
         val updatedResource =
           fhirJsonParser
-            .decodeFromString(oldResourceEntity.serializedResource)
+            .decodeFromString<Resource>(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
         updateResourceAndReferences(oldResourceId, updatedResource)
@@ -372,7 +372,8 @@ internal class DatabaseImpl(
   ) {
     withTransaction {
       val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource = fhirJsonParser.decodeFromString(currentResourceEntity.serializedResource)
+      val oldResource =
+        fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
       val resourceUuid = currentResourceEntity.resourceUuid
       updateResourceEntity(resourceUuid, updatedResource)
 
@@ -417,7 +418,7 @@ internal class DatabaseImpl(
       "${updatedResource.resourceTypeEnum.name}/${updatedResource.id.orEmpty()}"
     referringResourcesUuids.forEach { resourceUuid ->
       resourceDao.getResourceEntity(resourceUuid)?.let {
-        val referringResource = fhirJsonParser.decodeFromString(it.serializedResource)
+        val referringResource = fhirJsonParser.decodeFromString<Resource>(it.serializedResource)
         val updatedReferringResource =
           addUpdatedReferenceToResource(
             referringResource,

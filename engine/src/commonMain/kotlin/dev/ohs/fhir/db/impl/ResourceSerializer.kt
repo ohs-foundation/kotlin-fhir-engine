@@ -15,14 +15,17 @@
  */
 package dev.ohs.fhir.db.impl
 
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Resource
+import kotlinx.serialization.json.Json
 
 /**
  * Singleton FHIR JSON parser for serializing/deserializing resources. Replaces HAPI's
  * `FhirContext.forR4Cached().newJsonParser()`. Thread-safe and reusable.
  */
-internal val fhirJsonParser = FhirR4Json()
+internal val fhirJsonParser = Json {
+  explicitNulls = false
+  encodeDefaults = false
+}
 
 /** Serializes a FHIR [Resource] to a JSON string for database storage. */
 internal fun serializeResource(resource: Resource): String = fhirJsonParser.encodeToString(resource)

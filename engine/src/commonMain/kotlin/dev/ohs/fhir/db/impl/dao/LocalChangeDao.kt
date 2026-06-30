@@ -143,7 +143,7 @@ internal abstract class LocalChangeDao {
         versionId = oldEntity.versionId,
       )
 
-    val oldResource = fhirJsonParser.decodeFromString(oldEntity.serializedResource)
+    val oldResource = fhirJsonParser.decodeFromString<Resource>(oldEntity.serializedResource)
     val localChangeReferences =
       extractReferencesDiff(oldResource, updatedResource).map { resourceReferenceInfo ->
         LocalChangeResourceReferenceEntity(
@@ -495,7 +495,7 @@ internal abstract class LocalChangeDao {
   ): LocalChangeEntity {
     return when (localChange.type) {
       Type.INSERT.value -> {
-        val insertResourcePayload = fhirJsonParser.decodeFromString(localChange.payload)
+        val insertResourcePayload = fhirJsonParser.decodeFromString<Resource>(localChange.payload)
         val updatedResourcePayload =
           addUpdatedReferenceToResource(
             insertResourcePayload,
