@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

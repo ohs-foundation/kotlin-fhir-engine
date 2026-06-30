@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search
 
 import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.SearchResult
 import dev.ohs.fhir.getResourceType
-import dev.ohs.fhir.search.query.XFhirQueryTranslator
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.search.query.XFhirQueryTranslator
 
 /**
  * Searches the database and returns a list of resources matching the given [Search] criteria.

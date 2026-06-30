@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import kotlin.test.Test
@@ -191,9 +190,15 @@ class JsonDiffTest {
     val rest = segments.drop(1)
     return when (element) {
       is JsonObject ->
-        JsonObject(element.toMutableMap().apply { this[head] = replaceAtPath(getValue(head), rest, value) })
+        JsonObject(
+          element.toMutableMap().apply { this[head] = replaceAtPath(getValue(head), rest, value) },
+        )
       is JsonArray ->
-        JsonArray(element.toMutableList().apply { this[head.toInt()] = replaceAtPath(this[head.toInt()], rest, value) })
+        JsonArray(
+          element.toMutableList().apply {
+            this[head.toInt()] = replaceAtPath(this[head.toInt()], rest, value)
+          },
+        )
       else -> error("cannot descend into $element at $head")
     }
   }
@@ -215,10 +220,17 @@ class JsonDiffTest {
         )
       is JsonArray ->
         if (rest.isEmpty()) {
-          if (head == "-") JsonArray(element + value)
-          else JsonArray(element.toMutableList().apply { add(head.toInt(), value) })
+          if (head == "-") {
+            JsonArray(element + value)
+          } else {
+            JsonArray(element.toMutableList().apply { add(head.toInt(), value) })
+          }
         } else {
-          JsonArray(element.toMutableList().apply { this[head.toInt()] = addAtPath(this[head.toInt()], rest, value) })
+          JsonArray(
+            element.toMutableList().apply {
+              this[head.toInt()] = addAtPath(this[head.toInt()], rest, value)
+            },
+          )
         }
       else -> error("cannot descend into $element at $head")
     }
@@ -229,11 +241,23 @@ class JsonDiffTest {
     val rest = segments.drop(1)
     return when (element) {
       is JsonObject ->
-        if (rest.isEmpty()) JsonObject(element.toMutableMap().apply { remove(head) })
-        else JsonObject(element.toMutableMap().apply { this[head] = removeAtPath(getValue(head), rest) })
+        if (rest.isEmpty()) {
+          JsonObject(element.toMutableMap().apply { remove(head) })
+        } else {
+          JsonObject(
+            element.toMutableMap().apply { this[head] = removeAtPath(getValue(head), rest) },
+          )
+        }
       is JsonArray ->
-        if (rest.isEmpty()) JsonArray(element.toMutableList().apply { removeAt(head.toInt()) })
-        else JsonArray(element.toMutableList().apply { this[head.toInt()] = removeAtPath(this[head.toInt()], rest) })
+        if (rest.isEmpty()) {
+          JsonArray(element.toMutableList().apply { removeAt(head.toInt()) })
+        } else {
+          JsonArray(
+            element.toMutableList().apply {
+              this[head.toInt()] = removeAtPath(this[head.toInt()], rest)
+            },
+          )
+        }
       else -> error("cannot descend into $element at $head")
     }
   }
