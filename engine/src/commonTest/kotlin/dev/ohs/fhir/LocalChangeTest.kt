@@ -16,7 +16,7 @@
 package dev.ohs.fhir
 
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
-import dev.ohs.fhir.model.r4.FhirR4Json
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirString
@@ -39,19 +39,18 @@ class LocalChangeTest {
         resourceId = "Patient-001",
         type = LocalChangeEntity.Type.INSERT.value,
         payload =
-          FhirR4Json()
-            .encodeToString(
-              Patient(
-                id = "Patient-001",
-                name =
-                  listOf(
-                    HumanName(
-                      given = listOf(FhirString(value = "John")),
-                      family = FhirString(value = "Doe"),
-                    ),
+          fhirJsonParser.encodeToString(
+            Patient(
+              id = "Patient-001",
+              name =
+                listOf(
+                  HumanName(
+                    given = listOf(FhirString(value = "John")),
+                    family = FhirString(value = "Doe"),
                   ),
-              ),
+                ),
             ),
+          ),
         timestamp = Clock.System.now(),
       )
 

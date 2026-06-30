@@ -21,7 +21,6 @@ import dev.ohs.fhir.db.ResourceNotFoundException
 import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
@@ -122,7 +121,7 @@ class DatabaseImplTest {
       assertEquals(LocalChange.Type.INSERT, type)
       assertEquals(TEST_PATIENT_2_ID, resourceId)
       assertEquals(ResourceType.Patient.name, resourceType)
-      assertEquals(FhirR4Json().encodeToString(TEST_PATIENT_2), payload)
+      assertEquals(fhirJsonParser.encodeToString(TEST_PATIENT_2), payload)
     }
   }
 
