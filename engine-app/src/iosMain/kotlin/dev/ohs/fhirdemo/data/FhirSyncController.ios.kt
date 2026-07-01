@@ -15,42 +15,124 @@
  */
 package dev.ohs.fhirdemo.data
 
+import co.touchlab.kermit.Logger
+import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.sync.LastSyncJobStatus
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
 import dev.ohs.fhir.sync.SyncJobStatus
+import dev.ohs.fhir.sync.runSync
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import platform.Foundation.NSNotificationCenter
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
+import platform.UIKit.UIApplicationWillEnterForegroundNotification
 
 actual class FhirSyncController actual constructor(context: Any) {
-  actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> = flow {
-    emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
-    syncScheduler.submitOneTimeSync()
-    emit(CurrentSyncJobStatus.Succeeded(Clock.System.now()))
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+  private var currentJob: Job? = null
+  private var currentStatusFlow: MutableSharedFlow<CurrentSyncJobStatus>? = null
+  private var syncWasRunning = false
+
+  init {
+    NSNotificationCenter.defaultCenter.addObserverForName(
+      UIApplicationDidEnterBackgroundNotification,
+      null,
+      null,
+    ) { _ ->
+      if (currentJob?.isActive == true) {
+        syncWasRunning = true
+        currentJob?.cancel()
+        Logger.d { "FhirSyncController: sync suspended on background" }
+      }
+    }
+
+    NSNotificationCenter.defaultCenter.addObserverForName(
+      UIApplicationWillEnterForegroundNotification,
+      null,
+      null,
+    ) { _ ->
+      if (syncWasRunning) {
+        syncWasRunning = false
+        currentStatusFlow?.let { launchSyncJob(it) }
+        Logger.d { "FhirSyncController: sync restarted on foreground" }
+      }
+    }
+  }
+
+  actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> {
+    val statusFlow = MutableSharedFlow<CurrentSyncJobStatus>(replay = 1)
+    currentStatusFlow = statusFlow
+    launchSyncJob(statusFlow)
+    return statusFlow
   }
 
   actual suspend fun cancelOneTimeSync() {
-    syncScheduler.cancelAllPendingRequests()
+    syncWasRunning = false
+    currentStatusFlow = null
+    currentJob?.cancel()
+    currentJob = null
   }
 
-  actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> = flow {
-    emit(
-      PeriodicSyncJobStatus(
-        lastSyncJobStatus = null,
-        currentSyncJobStatus = CurrentSyncJobStatus.Running(SyncJobStatus.Started()),
-      ),
-    )
-    syncScheduler.submitPeriodicSync()
-    emit(
-      PeriodicSyncJobStatus(
-        lastSyncJobStatus = LastSyncJobStatus.Succeeded(Clock.System.now()),
-        currentSyncJobStatus = CurrentSyncJobStatus.Succeeded(Clock.System.now()),
-      ),
-    )
+  actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> {
+    bgSyncScheduler.schedule()
+    return FhirEngineProvider.getFhirDataStore()
+      .observeTerminalSyncJobStatus(PERIODIC_SYNC_TASK_ID)
+      .map { lastStatus ->
+        PeriodicSyncJobStatus(
+          lastSyncJobStatus = lastStatus.toLastSyncJobStatus(),
+          currentSyncJobStatus = CurrentSyncJobStatus.Enqueued,
+        )
+      }
   }
 
   actual suspend fun cancelPeriodicSync() {
-    syncScheduler.cancelAllPendingRequests()
+    bgSyncScheduler.cancel()
+  }
+
+  private fun launchSyncJob(statusFlow: MutableSharedFlow<CurrentSyncJobStatus>) {
+    currentJob?.cancel()
+    currentJob =
+      scope.launch {
+        statusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
+        val finalStatus: CurrentSyncJobStatus =
+          try {
+            val syncStatus =
+              DemoFhirSyncTask()
+                .runSync(
+                  taskName = null,
+                  onProgress = { syncJobStatus ->
+                    statusFlow.emit(CurrentSyncJobStatus.Running(syncJobStatus))
+                  },
+                )
+            when (syncStatus) {
+              is SyncJobStatus.Succeeded -> CurrentSyncJobStatus.Succeeded(syncStatus.timestamp)
+              else -> CurrentSyncJobStatus.Failed(Clock.System.now())
+            }
+          } catch (e: CancellationException) {
+            throw e
+          } catch (e: Exception) {
+            Logger.e(e) { "FhirSyncController: one-time sync failed" }
+            CurrentSyncJobStatus.Failed(Clock.System.now())
+          }
+        statusFlow.emit(finalStatus)
+      }
   }
 }
+
+private fun SyncJobStatus?.toLastSyncJobStatus(): LastSyncJobStatus? =
+  when (this) {
+    is SyncJobStatus.Succeeded -> LastSyncJobStatus.Succeeded(timestamp)
+    is SyncJobStatus.Failed -> LastSyncJobStatus.Failed(timestamp)
+    else -> null
+  }
