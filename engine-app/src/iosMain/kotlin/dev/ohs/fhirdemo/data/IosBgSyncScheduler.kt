@@ -19,7 +19,7 @@ import co.touchlab.kermit.Logger
 import dev.ohs.fhir.sync.FhirSyncTask
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.runSync
-import kotlin.concurrent.Volatile
+import kotlin.concurrent.AtomicInt
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -46,11 +46,10 @@ internal class IosBgSyncScheduler(
 ) {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-  @Volatile private var registered = false
+  private val registered = AtomicInt(0)
 
   fun register() {
-    if (registered) return
-    registered = true
+    if (!registered.compareAndSet(0, 1)) return
     BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
       taskIdentifier,
       usingQueue = null,

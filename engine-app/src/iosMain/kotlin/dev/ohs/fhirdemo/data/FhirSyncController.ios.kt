@@ -67,7 +67,7 @@ actual class FhirSyncController actual constructor(context: Any) {
     ) { _ ->
       if (syncWasRunning) {
         syncWasRunning = false
-        currentStatusFlow?.let { launchSyncJob(it) }
+        launchSyncJob()
         Logger.d { "FhirSyncController: sync restarted on foreground" }
       }
     }
@@ -76,15 +76,15 @@ actual class FhirSyncController actual constructor(context: Any) {
   actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> {
     val statusFlow = MutableSharedFlow<CurrentSyncJobStatus>(replay = 1)
     currentStatusFlow = statusFlow
-    launchSyncJob(statusFlow)
+    launchSyncJob()
     return statusFlow
   }
 
   actual suspend fun cancelOneTimeSync() {
     syncWasRunning = false
-    currentStatusFlow = null
     currentJob?.cancel()
     currentJob = null
+    currentStatusFlow = null
   }
 
   actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> {
@@ -103,7 +103,8 @@ actual class FhirSyncController actual constructor(context: Any) {
     bgSyncScheduler.cancel()
   }
 
-  private fun launchSyncJob(statusFlow: MutableSharedFlow<CurrentSyncJobStatus>) {
+  private fun launchSyncJob() {
+    val statusFlow = currentStatusFlow ?: return
     currentJob?.cancel()
     currentJob =
       scope.launch {
