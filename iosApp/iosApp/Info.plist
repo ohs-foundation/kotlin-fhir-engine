@@ -17,7 +17,6 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
         <string>dev.ohs.fhirdemo.sync.periodic</string>
-        <string>dev.ohs.fhirdemo.sync.onetime</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

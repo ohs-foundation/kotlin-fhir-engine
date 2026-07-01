@@ -17,15 +17,6 @@ package dev.ohs.fhirdemo.data
 
 internal const val PERIODIC_SYNC_TASK_ID = "dev.ohs.fhirdemo.sync.periodic"
 
-// Kept until FhirSyncController.ios.kt is rewritten in the next task.
-internal val syncScheduler: IosSyncScheduler by lazy {
-  IosSyncScheduler(
-    periodicSyncTaskIdentifier = PERIODIC_SYNC_TASK_ID,
-    oneTimeSyncTaskIdentifier = "dev.ohs.fhirdemo.sync.onetime",
-    taskFactory = { DemoFhirSyncTask() },
-  )
-}
-
 internal val bgSyncScheduler: IosBgSyncScheduler by lazy {
   IosBgSyncScheduler(
     taskIdentifier = PERIODIC_SYNC_TASK_ID,
