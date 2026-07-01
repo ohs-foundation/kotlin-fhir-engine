@@ -22,6 +22,7 @@ import dev.ohs.fhir.sync.LastSyncJobStatus
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.runSync
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
@@ -40,9 +41,11 @@ import platform.UIKit.UIApplicationWillEnterForegroundNotification
 actual class FhirSyncController actual constructor(context: Any) {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-  private var currentJob: Job? = null
-  private var currentStatusFlow: MutableSharedFlow<CurrentSyncJobStatus>? = null
-  private var syncWasRunning = false
+  @Volatile private var currentJob: Job? = null
+
+  @Volatile private var currentStatusFlow: MutableSharedFlow<CurrentSyncJobStatus>? = null
+
+  @Volatile private var syncWasRunning = false
 
   init {
     NSNotificationCenter.defaultCenter.addObserverForName(
