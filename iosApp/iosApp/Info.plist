@@ -18,6 +18,10 @@
 	<array>
         <string>dev.ohs.fhirdemo.sync.periodic</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
