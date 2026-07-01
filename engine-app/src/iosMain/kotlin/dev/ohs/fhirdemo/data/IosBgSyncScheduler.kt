@@ -19,6 +19,8 @@ import co.touchlab.kermit.Logger
 import dev.ohs.fhir.sync.FhirSyncTask
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.runSync
+import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -43,7 +45,8 @@ internal class IosBgSyncScheduler(
   private val taskFactory: () -> FhirSyncTask,
 ) {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-  private var registered = false
+
+  @Volatile private var registered = false
 
   fun register() {
     if (registered) return
@@ -92,10 +95,16 @@ internal class IosBgSyncScheduler(
     }
 
     scope.launch {
-      val result = runCatching { taskFactory().runSync(taskName = taskIdentifier, onProgress = {}) }
-      result.onSuccess { status -> Logger.d { "IosBgSyncScheduler: sync completed with $status" } }
-      result.onFailure { e -> Logger.e(e) { "IosBgSyncScheduler: sync failed" } }
-      completeOnce(result.getOrNull() is SyncJobStatus.Succeeded)
+      try {
+        val status = taskFactory().runSync(taskName = taskIdentifier, onProgress = {})
+        Logger.d { "IosBgSyncScheduler: sync completed with $status" }
+        completeOnce(status is SyncJobStatus.Succeeded)
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Exception) {
+        Logger.e(e) { "IosBgSyncScheduler: sync failed" }
+        completeOnce(false)
+      }
     }
   }
 
