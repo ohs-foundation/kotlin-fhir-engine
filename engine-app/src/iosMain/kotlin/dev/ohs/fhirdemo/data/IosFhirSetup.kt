@@ -15,10 +15,20 @@
  */
 package dev.ohs.fhirdemo.data
 
+internal const val PERIODIC_SYNC_TASK_ID = "dev.ohs.fhirdemo.sync.periodic"
+
+// Kept until FhirSyncController.ios.kt is rewritten in the next task.
 internal val syncScheduler: IosSyncScheduler by lazy {
   IosSyncScheduler(
-    periodicSyncTaskIdentifier = "dev.ohs.fhirdemo.sync.periodic",
+    periodicSyncTaskIdentifier = PERIODIC_SYNC_TASK_ID,
     oneTimeSyncTaskIdentifier = "dev.ohs.fhirdemo.sync.onetime",
+    taskFactory = { DemoFhirSyncTask() },
+  )
+}
+
+internal val bgSyncScheduler: IosBgSyncScheduler by lazy {
+  IosBgSyncScheduler(
+    taskIdentifier = PERIODIC_SYNC_TASK_ID,
     taskFactory = { DemoFhirSyncTask() },
   )
 }
@@ -26,10 +36,8 @@ internal val syncScheduler: IosSyncScheduler by lazy {
 /**
  * Registers BGTask handlers with [BGTaskScheduler].
  *
- * Must be called during app launch (before `applicationDidFinishLaunching` returns) so that iOS
- * knows about the task handlers before it attempts to launch the app in the background.
+ * Must be called during app launch (before `applicationDidFinishLaunching` returns).
  */
 fun initializeFhirSync() {
-  syncScheduler.register()
-  syncScheduler.submitPeriodicSync()
+  bgSyncScheduler.register()
 }
