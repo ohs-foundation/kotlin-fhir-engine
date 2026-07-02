@@ -1,0 +1,4 @@
+// Configuration settings for iosApp target.
+// To sign for a device, copy Local.xcconfig.example → Local.xcconfig and set your TEAM_ID there.
+#include? "Local.xcconfig"
+PRODUCT_BUNDLE_IDENTIFIER = dev.ohs.fhirdemo

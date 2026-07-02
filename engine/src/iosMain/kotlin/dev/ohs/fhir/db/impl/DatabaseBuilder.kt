@@ -17,12 +17,30 @@ package dev.ohs.fhir.db.impl
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import platform.Foundation.NSHomeDirectory
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSApplicationSupportDirectory
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSUserDomainMask
 
+@ExperimentalForeignApi
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val dbPath = NSHomeDirectory() + "/$DATABASE_NAME"
+  val appSupportDir =
+    NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory,
+        NSUserDomainMask,
+        true,
+      )
+      .first() as String
+  NSFileManager.defaultManager.createDirectoryAtPath(
+    appSupportDir,
+    withIntermediateDirectories = true,
+    attributes = null,
+    error = null,
+  )
+  val dbPath = "$appSupportDir/$DATABASE_NAME"
   return Room.databaseBuilder<ResourceDatabase>(dbPath)
 }
 

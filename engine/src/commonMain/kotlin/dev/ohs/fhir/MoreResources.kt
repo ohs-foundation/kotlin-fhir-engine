@@ -63,7 +63,7 @@ fun <R : Resource> getResourceClass(resourceTypeName: String): KClass<R> {
     ?: throw IllegalArgumentException("Unknown FHIR R4 resource type: $resourceTypeName")
 }
 
-internal val Resource.resourceType: String
+val Resource.resourceType: String
   get() = this::class.simpleName ?: error("Cannot determine resource type for $this")
 
 internal val Resource.resourceTypeEnum: ResourceType

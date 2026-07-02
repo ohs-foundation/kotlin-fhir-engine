@@ -54,7 +54,7 @@ kotlin {
         implementation(libs.kermit)
         implementation(libs.androidx.room.runtime)
         implementation(libs.androidx.sqlite.bundled)
-        implementation(libs.androidx.datastore.preferences)
+        api(libs.androidx.datastore.preferences)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.client.logging)
@@ -65,13 +65,15 @@ kotlin {
     }
     commonTest {
       dependencies {
+        implementation(libs.kotest.assertions.core)
         implementation(libs.kotlin.test)
         implementation(libs.kotlinx.coroutines.test)
+        implementation(libs.ktor.client.mock.engine)
       }
     }
     val androidMain by getting {
       dependencies {
-        implementation(libs.androidx.work.runtime)
+        api(libs.androidx.work.runtime)
         implementation(libs.androidx.lifecycle.livedata)
         implementation(libs.ktor.client.okhttp)
       }
@@ -101,7 +103,6 @@ dependencies {
     add(it, libs.androidx.room.compiler)
   }
 }
-
 
 mavenPublishing {
   publishToMavenCentral()

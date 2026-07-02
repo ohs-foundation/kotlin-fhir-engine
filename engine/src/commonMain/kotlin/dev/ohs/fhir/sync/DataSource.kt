@@ -13,8 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync
 
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.sync.download.DownloadRequest
+import dev.ohs.fhir.sync.upload.request.UploadRequest
+
 /** Interface for an abstraction of retrieving FHIR data from a network source. */
-interface DataSource
+internal interface DataSource {
+  /** @return [Bundle] on a successful operation, [OperationOutcome] otherwise. */
+  suspend fun download(downloadRequest: DownloadRequest): Resource
+
+  /**
+   * @return [Bundle] of type [Bundle.BundleType.Transaction_Response] for a successful operation,
+   *   [OperationOutcome] otherwise. Call this api with the [Bundle] that needs to be uploaded to
+   *   the server.
+   */
+  suspend fun upload(request: UploadRequest): Resource
+}

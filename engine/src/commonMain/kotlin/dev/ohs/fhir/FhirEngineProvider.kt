@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import dev.ohs.fhir.db.impl.DatabaseImpl
@@ -22,6 +21,8 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.sync.DataSource
+import dev.ohs.fhir.sync.FhirDataStore
+import dev.ohs.fhir.sync.getDataStore
 import dev.ohs.fhir.sync.remote.FhirHttpDataSource
 import dev.ohs.fhir.sync.remote.KtorHttpService
 
@@ -42,6 +43,7 @@ object FhirEngineProvider {
   private var configuration: FhirEngineConfiguration? = null
   private var fhirEngine: FhirEngine? = null
   private var dataSource: DataSource? = null
+  private var fhirDataStore: FhirDataStore? = null
   private var platformContext: Any = Unit
   private var searchParamProvider: SearchParamDefinitionsProviderImpl? = null
 
@@ -55,7 +57,12 @@ object FhirEngineProvider {
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
+    this.fhirDataStore = FhirDataStore(getDataStore(platformContext))
   }
+
+  fun isInitialized() = configuration != null
+
+  fun isNotInitialized() = !isInitialized()
 
   /**
    * Returns the [FhirEngine] instance, creating it if necessary.
@@ -86,6 +93,13 @@ object FhirEngineProvider {
       "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
     }
     return dataSource
+  }
+
+  fun getFhirDataStore(): FhirDataStore {
+    checkNotNull(fhirDataStore) {
+      "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
+    }
+    return fhirDataStore!!
   }
 
   /**

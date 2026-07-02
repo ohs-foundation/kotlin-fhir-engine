@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
+
+import dev.ohs.fhir.sync.ResourceSyncException
 
 data class SyncUploadProgress(
   val remaining: Int,
   val initialTotal: Int,
-  val uploadError: Throwable? = null,
+  val uploadError: ResourceSyncException? = null,
 )

@@ -18,27 +18,33 @@ package dev.ohs.fhirdemo.data
 import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.FhirEngineConfiguration
 import dev.ohs.fhir.FhirEngineProvider
+import dev.ohs.fhir.NetworkConfiguration
+import dev.ohs.fhir.ServerConfiguration
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamType
+import dev.ohs.fhir.sync.remote.HttpLogger
 
-/**
- * Initializes [FhirEngineProvider] exactly once. Backed by [lazy], which defaults to
- * [LazyThreadSafetyMode.SYNCHRONIZED] and is safe across all Kotlin Multiplatform targets.
- */
-private val engineInitializer: Unit by lazy {
-  FhirEngineProvider.init(
-    FhirEngineConfiguration(
-      customSearchParameters =
-        listOf(
-          SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
-          SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
-          SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
-        ),
-    ),
-  )
-}
-
+/** Initializes [FhirEngineProvider] once and returns the [FhirEngine] instance. */
 fun fhirEngine(platformContext: Any = Unit): FhirEngine {
-  engineInitializer
+  if (FhirEngineProvider.isNotInitialized()) {
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(
+        serverConfiguration =
+          ServerConfiguration(
+            baseUrl = "https://hapi.fhir.org/baseR4/",
+            networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
+            httpLogger = HttpLogger(level = HttpLogger.Level.BODY),
+          ),
+        customSearchParameters =
+          listOf(
+            SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
+            SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
+            SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
+          ),
+      ),
+      platformContext,
+    )
+  }
+
   return FhirEngineProvider.getInstance(platformContext)
 }
