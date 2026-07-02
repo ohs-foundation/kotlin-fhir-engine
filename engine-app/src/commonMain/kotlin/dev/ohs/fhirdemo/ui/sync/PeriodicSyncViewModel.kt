@@ -36,9 +36,28 @@ class PeriodicSyncViewModel(
   val uiState: StateFlow<PeriodicSyncUiState> = _uiState.asStateFlow()
 
   private var job: Job? = null
+  private var loadJob: Job? = null
+
+  init {
+    loadJob =
+      scope.launch {
+        controller.lastPeriodicSyncStatus().collect { status ->
+          _uiState.value =
+            PeriodicSyncUiState(
+              lastSyncStatus = status.lastSyncJobStatus?.let { it::class.simpleName },
+              lastSyncTime =
+                status.lastSyncJobStatus
+                  ?.timestamp
+                  ?.toLocalDateTime(TimeZone.currentSystemDefault())
+                  ?.formatTimestamp(),
+            )
+        }
+      }
+  }
 
   fun start() {
     if (job?.isActive == true) return
+    loadJob?.cancel()
     job =
       scope.launch {
         controller.periodicSync().collect { status ->
@@ -79,6 +98,8 @@ class PeriodicSyncViewModel(
   fun cancel() {
     job?.cancel()
     job = null
+    loadJob?.cancel()
+    loadJob = null
     scope.launch { controller.cancelPeriodicSync() }
     _uiState.value = _uiState.value.copy(currentStatus = "Cancelled", progress = null)
   }

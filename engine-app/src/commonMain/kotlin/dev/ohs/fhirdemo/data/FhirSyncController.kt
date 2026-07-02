@@ -27,4 +27,6 @@ expect class FhirSyncController(context: Any) {
   suspend fun periodicSync(): Flow<PeriodicSyncJobStatus>
 
   suspend fun cancelPeriodicSync()
+
+  suspend fun lastPeriodicSyncStatus(): Flow<PeriodicSyncJobStatus>
 }

@@ -15,9 +15,6 @@
  */
 package dev.ohs.fhirdemo.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.BackoffPolicy
@@ -31,10 +28,10 @@ import dev.ohs.fhir.sync.RetryConfiguration
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.defaultRetryConfiguration
 import dev.ohs.fhir.sync.runSync
-import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,8 +45,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
-import okio.Path.Companion.toPath
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Provides desktop (foreground-only) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
@@ -86,9 +81,7 @@ internal object Sync {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val mutex = Mutex()
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
-  private val fhirDataStore: FhirDataStore by lazy {
-    FhirEngineProvider.getFhirDataStore()
-  }
+  private val fhirDataStore: FhirDataStore by lazy { FhirEngineProvider.getFhirDataStore() }
 
   /**
    * Executes a one-time sync using [FhirSyncTask] instances created by [taskFactory].
@@ -214,9 +207,7 @@ internal object Sync {
     syncTimeout: Duration?,
     onProgress: suspend (SyncJobStatus) -> Unit,
   ): SyncJobStatus {
-    val call = suspend {
-      task.runSync(taskName = taskName, onProgress = onProgress)
-    }
+    val call = suspend { task.runSync(taskName = taskName, onProgress = onProgress) }
     return if (syncTimeout != null) {
       withTimeoutOrNull(syncTimeout) { call() }
         ?: run {
@@ -233,14 +224,13 @@ internal object Sync {
     config: PeriodicSyncConfiguration,
     taskFactory: () -> FhirSyncTask,
   ): Flow<PeriodicSyncJobStatus> {
-
     mutex
       .withLock { activeSyncs[uniqueWorkName] }
       ?.takeIf { it.job.isActive }
       ?.let { handle ->
         return combine(
           handle.progressChannel,
-          fhirDataStore.observeTerminalSyncJobStatus(uniqueWorkName)
+          fhirDataStore.observeTerminalSyncJobStatus(uniqueWorkName),
         ) { current, last ->
           PeriodicSyncJobStatus(
             lastSyncJobStatus = mapSyncJobStatusToLastSync(last),

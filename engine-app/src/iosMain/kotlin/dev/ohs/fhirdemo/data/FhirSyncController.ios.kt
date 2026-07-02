@@ -103,6 +103,15 @@ actual class FhirSyncController actual constructor(context: Any) {
     bgSyncScheduler.cancel()
   }
 
+  actual suspend fun lastPeriodicSyncStatus(): Flow<PeriodicSyncJobStatus> =
+    FhirEngineProvider.getFhirDataStore().observeTerminalSyncJobStatus(PERIODIC_SYNC_TASK_ID).map {
+      lastStatus ->
+      PeriodicSyncJobStatus(
+        lastSyncJobStatus = lastStatus.toLastSyncJobStatus(),
+        currentSyncJobStatus = CurrentSyncJobStatus.Enqueued,
+      )
+    }
+
   private fun launchSyncJob() {
     val statusFlow = currentStatusFlow ?: return
     currentJob?.cancel()

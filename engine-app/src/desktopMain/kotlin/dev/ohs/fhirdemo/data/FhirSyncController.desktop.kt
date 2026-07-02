@@ -15,12 +15,16 @@
  */
 package dev.ohs.fhirdemo.data
 
+import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.sync.LastSyncJobStatus
 import dev.ohs.fhir.sync.PeriodicSyncConfiguration
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
 import dev.ohs.fhir.sync.RepeatInterval
+import dev.ohs.fhir.sync.SyncJobStatus
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 actual class FhirSyncController actual constructor(context: Any) {
   actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> =
@@ -42,4 +46,19 @@ actual class FhirSyncController actual constructor(context: Any) {
   actual suspend fun cancelPeriodicSync() {
     Sync.cancelPeriodicSync<DemoFhirSyncTask>()
   }
+
+  actual suspend fun lastPeriodicSyncStatus(): Flow<PeriodicSyncJobStatus> =
+    FhirEngineProvider.getFhirDataStore()
+      .observeTerminalSyncJobStatus(Sync.createSyncUniqueName<DemoFhirSyncTask>("periodicSync"))
+      .map { status ->
+        PeriodicSyncJobStatus(
+          lastSyncJobStatus =
+            when (status) {
+              is SyncJobStatus.Succeeded -> LastSyncJobStatus.Succeeded(status.timestamp)
+              is SyncJobStatus.Failed -> LastSyncJobStatus.Failed(status.timestamp)
+              else -> null
+            },
+          currentSyncJobStatus = CurrentSyncJobStatus.Enqueued,
+        )
+      }
 }
