@@ -177,7 +177,7 @@ class TransactionBundleGeneratorTest {
       val result = generator.generateUploadRequests(patches)
 
       (result.first().generatedRequest.resource.entry.first().request?.ifMatch?.value).shouldBe(
-        "W/\"patient-002-version-1\""
+        "W/\"patient-002-version-1\"",
       )
       result.first().splitLocalChanges.shouldHaveSize(1)
       result.first().splitLocalChanges[0].shouldHaveSize(1)

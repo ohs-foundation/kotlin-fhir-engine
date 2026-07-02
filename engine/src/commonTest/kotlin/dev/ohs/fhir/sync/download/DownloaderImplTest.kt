@@ -74,11 +74,11 @@ class DownloaderImplTest {
                           `class` =
                             Coding(
                               code = Code(value = "AMB"),
-                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory")
+                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory"),
                             ),
                           subject =
                             Reference(
-                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123")
+                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"),
                             ),
                         ),
                     ),
@@ -122,7 +122,7 @@ class DownloaderImplTest {
                       code = CodeableConcept(),
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),
@@ -132,9 +132,9 @@ class DownloaderImplTest {
                       id = "con-123",
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
-                        )
-                    )
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                        ),
+                    ),
                 ),
               ),
           )
@@ -198,11 +198,11 @@ class DownloaderImplTest {
                           `class` =
                             Coding(
                               code = Code(value = "AMB"),
-                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory")
+                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory"),
                             ),
                           subject =
                             Reference(
-                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123")
+                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"),
                             ),
                         ),
                     ),
@@ -246,7 +246,7 @@ class DownloaderImplTest {
                       code = CodeableConcept(),
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),
@@ -256,9 +256,9 @@ class DownloaderImplTest {
                       id = "con-123",
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123")
-                        )
-                    )
+                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                        ),
+                    ),
                 ),
               ),
           )
@@ -303,7 +303,7 @@ class DownloaderImplTest {
               request =
                 Bundle.Entry.Request(
                   method = Enumeration(value = Bundle.HTTPVerb.Get),
-                  url = Uri(value = it)
+                  url = Uri(value = it),
                 ),
             )
           },

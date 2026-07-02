@@ -105,7 +105,7 @@ internal object PerResourcePatchGenerator : PatchGenerator {
       timestamp = localChanges.last().timestamp,
     )
 
-  /** Update a JSON object with a JSON patch (RFC 6902). */
+  /** Update a JSON object with a JSON patch string (RFC 6902) from [LocalChange.payload]. */
   private fun applyPatch(resourceString: String, patchString: String): String {
     val resourceJson = Json.parseToJsonElement(resourceString)
     val patchJson = Json.parseToJsonElement(patchString).jsonArray

@@ -260,7 +260,7 @@ class PatchOrderingTest {
       Group(
           id = id,
           type = Enumeration(value = Group.GroupType.Person),
-          actual = dev.ohs.fhir.model.r4.Boolean(value = true)
+          actual = dev.ohs.fhir.model.r4.Boolean(value = true),
         )
         .also { localChanges.add(createInsertLocalChange(it, changeId)) }
 
@@ -274,8 +274,8 @@ class PatchOrderingTest {
           member =
             group.member +
               Group.Member(
-                entity = Reference(reference = dev.ohs.fhir.model.r4.String(value = member))
-              )
+                entity = Reference(reference = dev.ohs.fhir.model.r4.String(value = member)),
+              ),
         )
         .also {
           localChanges.add(createUpdateLocalChange(group, it, changeId))
@@ -301,7 +301,7 @@ class PatchOrderingTest {
               Patient.Link(
                   other =
                     Reference(
-                      reference = dev.ohs.fhir.model.r4.String(value = "RelatedPerson/$it")
+                      reference = dev.ohs.fhir.model.r4.String(value = "RelatedPerson/$it"),
                     ),
                   type = Enumeration(value = Patient.LinkType.Seealso),
                 )
@@ -391,7 +391,7 @@ class PatchOrderingTest {
     ) =
       RelatedPerson(
           id = id,
-          patient = Reference(reference = dev.ohs.fhir.model.r4.String(value = patient))
+          patient = Reference(reference = dev.ohs.fhir.model.r4.String(value = patient)),
         )
         .also {
           localChanges.add(createInsertLocalChange(it, changeId))

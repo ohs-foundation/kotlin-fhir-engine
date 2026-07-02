@@ -20,6 +20,7 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import kotlin.test.Test
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 
 class AcceptRemoteConflictResolverTest {
 
@@ -51,5 +52,6 @@ class AcceptRemoteConflictResolverTest {
 
     val result = AcceptRemoteConflictResolver.resolve(localResource, remoteResource)
     assertIs<Resolved>(result)
+    assertSame(remoteResource, result.resolved)
   }
 }

@@ -16,6 +16,7 @@
 package dev.ohs.fhir.sync
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException as DataStoreIOException
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -42,6 +43,9 @@ class FhirDataStore(private val dataStore: DataStore<Preferences>) {
   fun observeTerminalSyncJobStatus(key: String): Flow<SyncJobStatus?> =
     dataStore.data
       .catch { e ->
+        if (e !is DataStoreIOException) {
+          throw e // rethrow all but androidx.datastore.core.IOException
+        }
         Logger.e(e) { "Error reading FhirDataStore" }
         emit(emptyPreferences())
       }
@@ -89,20 +93,6 @@ class FhirDataStore(private val dataStore: DataStore<Preferences>) {
     dataStore.edit { prefs ->
       prefs[stringPreferencesKey(key)] = json.encodeToString(syncJobStatus)
     }
-  }
-
-  private fun readLastStatus(prefs: Preferences, key: String): LastSyncJobStatus? {
-    // This method is now replaced by logic in observeLastSyncJobStatus map.
-    // Keeping it for internal use if needed, but updated to use json.
-    return prefs[stringPreferencesKey(key)]
-      ?.let { json.decodeFromString<SyncJobStatus>(it) }
-      ?.let {
-        when (it) {
-          is SyncJobStatus.Succeeded -> LastSyncJobStatus.Succeeded(it.timestamp)
-          is SyncJobStatus.Failed -> LastSyncJobStatus.Failed(it.timestamp)
-          else -> null
-        }
-      }
   }
 
   companion object {
