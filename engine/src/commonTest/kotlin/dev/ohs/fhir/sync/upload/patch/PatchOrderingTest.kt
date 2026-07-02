@@ -18,6 +18,7 @@ package dev.ohs.fhir.sync.upload.patch
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.db.impl.JsonDiff
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
@@ -223,13 +224,16 @@ class PatchOrderingTest {
       updatedResource: Resource,
       currentChangeId: Long,
     ): LocalChange {
-      //      val jsonDiff = diff(jsonParser, oldEntity, updatedResource)
+      val jsonDiff =
+        JsonDiff.diff(
+          jsonParser.encodeToString(oldEntity),
+          jsonParser.encodeToString(updatedResource),
+        )
       return LocalChange(
         resourceId = oldEntity.id!!,
         resourceType = oldEntity.resourceType,
         type = LocalChange.Type.UPDATE,
-        //        payload = jsonDiff.toString(),
-        payload = jsonParser.encodeToString(updatedResource),
+        payload = jsonDiff,
         versionId = oldEntity.versionId,
         token = LocalChangeToken(listOf(currentChangeId)),
         timestamp = Clock.System.now(),
