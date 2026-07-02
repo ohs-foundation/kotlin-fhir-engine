@@ -18,8 +18,9 @@ package dev.ohs.fhir.sync
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 
 private var dataStoreInstance: DataStore<Preferences>? = null
@@ -28,16 +29,16 @@ private var dataStoreInstance: DataStore<Preferences>? = null
 fun createDataStore(): DataStore<Preferences> =
   dataStoreInstance
     ?: run {
-      val docDir =
-        NSFileManager.defaultManager.URLForDirectory(
-          directory = NSDocumentDirectory,
-          inDomain = NSUserDomainMask,
-          appropriateForURL = null,
-          create = false,
-          error = null,
-        )
-      createDataStore { requireNotNull(docDir).path + "/$fhirDataStoreFileName" }
-        .also { dataStoreInstance = it }
+      val appSupportDir =
+        NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, true)
+          .first() as String
+      NSFileManager.defaultManager.createDirectoryAtPath(
+        appSupportDir,
+        withIntermediateDirectories = true,
+        attributes = null,
+        error = null,
+      )
+      createDataStore { "$appSupportDir/$fhirDataStoreFileName" }.also { dataStoreInstance = it }
     }
 
 internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()

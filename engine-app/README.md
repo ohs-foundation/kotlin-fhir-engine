@@ -78,9 +78,7 @@ A 420×800 window will open.
    ```
    ./gradlew :engine-app:linkDebugFrameworkIosSimulatorArm64
    ```
-
 2. Create an Xcode project under `iosApp/` that links the framework at `engine-app/build/bin/iosSimulatorArm64/debugFramework/EngineDemoKit.framework`.
-
 3. Mount the shared `App` in a SwiftUI view:
 
    ```swift
@@ -131,7 +129,6 @@ iOS uses two mechanisms:
      <string>dev.ohs.fhirdemo.sync.periodic</string>
    </array>
    ```
-
 2. **Background modes** — enable `processing` under `UIBackgroundModes` (or in Xcode: _Signing & Capabilities → Background Modes → Background processing_):
 
    ```xml
@@ -140,7 +137,6 @@ iOS uses two mechanisms:
      <string>processing</string>
    </array>
    ```
-
 3. **App launch** — call `initializeFhirSync()` before `applicationDidFinishLaunching` returns so the BGTask handler is registered in time:
 
    ```swift
@@ -164,7 +160,6 @@ The OS does not fire `BGProcessingTask` spontaneously in the Simulator. To trigg
    ```
    e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"dev.ohs.fhirdemo.sync.periodic"]
    ```
-
 3. Resume execution. The task handler fires immediately — sync runs and re-schedules itself on completion.
 
 You can also trigger it from a breakpoint set right after the `bgSyncScheduler.schedule()` call in `FhirSyncController.ios.kt`.
@@ -183,6 +178,6 @@ The task will run and produce a log line from `IosBgSyncScheduler` confirming co
 
 - **Android**: app's internal storage, managed by Room KMP (`androidx.sqlite.bundled` driver).
 - **Desktop**: current working directory (a `.db` file).
-- **iOS**: `NSApplicationSupportDirectory` (database and DataStore files). This directory is private to the app and is removed when the app is uninstalled.
+- **iOS**: `NSApplicationSupportDirectory` (database and DataStore files)
 
 Clearing the data: the engine exposes `clearDatabase()`. Add a button on the list screen if you want a quick way to wipe everything.
