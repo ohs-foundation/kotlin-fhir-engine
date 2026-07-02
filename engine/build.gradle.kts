@@ -104,7 +104,6 @@ dependencies {
   }
 }
 
-
 mavenPublishing {
   publishToMavenCentral()
   signAllPublications()

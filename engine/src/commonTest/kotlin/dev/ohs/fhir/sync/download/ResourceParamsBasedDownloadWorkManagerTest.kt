@@ -88,7 +88,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
                 listOf(
                   Bundle.Link(
                     url = Uri(value = "http://url-to-next-page?token=pageToken"),
-                    relation = dev.ohs.fhir.model.r4.String(value = "next")
+                    relation = dev.ohs.fhir.model.r4.String(value = "next"),
                   ),
                 ),
             ),
@@ -212,7 +212,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
                 diagnostics =
                   dev.ohs.fhir.model.r4.String(value = "Server couldn't fulfil the request."),
                 code = Enumeration(value = OperationOutcome.IssueType.Exception),
-                severity = Enumeration(value = OperationOutcome.IssueSeverity.Error)
+                severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
               ),
             ),
         )
@@ -289,7 +289,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
           listOf(
             Bundle.Link(
               url = Uri(value = "next_url"),
-              relation = dev.ohs.fhir.model.r4.String(value = "next")
+              relation = dev.ohs.fhir.model.r4.String(value = "next"),
             ),
           ),
       )

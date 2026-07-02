@@ -27,11 +27,13 @@ import platform.Foundation.NSUserDomainMask
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val appSupportDir = NSSearchPathForDirectoriesInDomains(
-    NSApplicationSupportDirectory,
-    NSUserDomainMask,
-    true,
-  ).first() as String
+  val appSupportDir =
+    NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory,
+        NSUserDomainMask,
+        true,
+      )
+      .first() as String
   NSFileManager.defaultManager.createDirectoryAtPath(
     appSupportDir,
     withIntermediateDirectories = true,

@@ -133,13 +133,13 @@ private val fakeDatabase =
     }
 
     override suspend fun searchForwardReferencedResources(
-      query: SearchQuery
+      query: SearchQuery,
     ): List<ForwardIncludeSearchResult> {
       TODO("Not yet implemented")
     }
 
     override suspend fun searchReverseReferencedResources(
-      query: SearchQuery
+      query: SearchQuery,
     ): List<ReverseIncludeSearchResult> {
       TODO("Not yet implemented")
     }
@@ -203,7 +203,7 @@ private val fakeDatabase =
     }
 
     override suspend fun getLocalChangeResourceReferences(
-      localChangeIds: List<Long>
+      localChangeIds: List<Long>,
     ): List<LocalChangeResourceReference> {
       TODO("Not yet implemented")
     }

@@ -107,7 +107,7 @@ class IndividualGeneratorTest {
           ?.value
           ?.decodeBase64String()
           .shouldBe(
-            "[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]"
+            "[{\"op\":\"replace\",\"path\":\"\\/name\\/0\\/given\\/0\",\"value\":\"Janet\"}]",
           )
       }
       localChanges.shouldBeEqual(patchOutput.localChanges)

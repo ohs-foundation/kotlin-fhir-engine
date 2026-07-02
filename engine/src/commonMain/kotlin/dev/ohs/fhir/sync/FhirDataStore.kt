@@ -16,6 +16,7 @@
 package dev.ohs.fhir.sync
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException as DataStoreIOException
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -42,6 +43,8 @@ class FhirDataStore(private val dataStore: DataStore<Preferences>) {
   fun observeTerminalSyncJobStatus(key: String): Flow<SyncJobStatus?> =
     dataStore.data
       .catch { e ->
+        if (e !is DataStoreIOException)
+          throw e // rethrow all but androidx.datastore.core.IOException
         Logger.e(e) { "Error reading FhirDataStore" }
         emit(emptyPreferences())
       }
