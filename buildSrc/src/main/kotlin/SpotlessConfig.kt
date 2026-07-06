@@ -22,7 +22,10 @@ fun Project.configureSpotless() {
   val ktlintOptions = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
   apply(plugin = "com.diffplug.spotless")
   configure<com.diffplug.gradle.spotless.SpotlessExtension> {
-    ratchetFrom = "origin/main"
+    // JGit (used by Spotless) cannot follow .git gitlink files in worktrees; skip ratchet there.
+    if (rootProject.rootDir.resolve(".git").isDirectory) {
+      ratchetFrom = "origin/main"
+    }
     kotlin {
       target("**/*.kt")
       targetExclude("**/build/")

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room.PooledConnection
@@ -43,14 +42,14 @@ import dev.ohs.fhir.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.db.impl.entities.UriIndexEntity
 import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndices
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.toLocalChange
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.withId
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -259,7 +258,7 @@ internal class DatabaseImpl(
       resourceDao.getResourceEntity(oldResourceId, resourceType)?.let { oldResourceEntity ->
         val updatedResource =
           fhirJsonParser
-            .decodeFromString(oldResourceEntity.serializedResource)
+            .decodeFromString<Resource>(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
         updateResourceAndReferences(oldResourceId, updatedResource)
@@ -372,7 +371,8 @@ internal class DatabaseImpl(
   ) {
     withTransaction {
       val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource = fhirJsonParser.decodeFromString(currentResourceEntity.serializedResource)
+      val oldResource =
+        fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
       val resourceUuid = currentResourceEntity.resourceUuid
       updateResourceEntity(resourceUuid, updatedResource)
 
@@ -417,7 +417,7 @@ internal class DatabaseImpl(
       "${updatedResource.resourceTypeEnum.name}/${updatedResource.id.orEmpty()}"
     referringResourcesUuids.forEach { resourceUuid ->
       resourceDao.getResourceEntity(resourceUuid)?.let {
-        val referringResource = fhirJsonParser.decodeFromString(it.serializedResource)
+        val referringResource = fhirJsonParser.decodeFromString<Resource>(it.serializedResource)
         val updatedReferringResource =
           addUpdatedReferenceToResource(
             referringResource,

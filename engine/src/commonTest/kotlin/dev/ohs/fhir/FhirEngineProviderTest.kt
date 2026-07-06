@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import kotlin.test.AfterTest
@@ -86,7 +85,7 @@ class FhirEngineProviderTest {
               httpCache =
                 CacheConfiguration(
                   cacheDir = "sample-dir/http_cache",
-                  maxSize = 50L * 1024L * 1024L
+                  maxSize = 50L * 1024L * 1024L,
                 ),
             ),
           ),

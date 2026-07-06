@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search.filter
 
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.ClientParam
 import dev.ohs.fhir.search.ConditionParam
 import dev.ohs.fhir.search.Operation
 import dev.ohs.fhir.search.SearchQuery
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /** Represents filter for a [ClientParam]. */
 internal interface FilterCriterion {

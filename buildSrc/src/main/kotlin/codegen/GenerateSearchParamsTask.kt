@@ -16,7 +16,7 @@
 package codegen
 
 import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.FhirR4Json
+import kotlinx.serialization.json.Json
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
@@ -25,6 +25,10 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 abstract class GenerateSearchParamsTask : DefaultTask() {
   @OutputDirectory val srcOutputDir = project.objects.directoryProperty()
+  private val jsonParser = Json {
+    explicitNulls = false
+    encodeDefaults = false
+  }
 
   @TaskAction
   fun generateCode() {
@@ -33,7 +37,7 @@ abstract class GenerateSearchParamsTask : DefaultTask() {
         checkNotNull(it) { "Failed to get search-parameters.json" }
         it.bufferedReader().readText()
       }
-    val bundle = FhirR4Json().decodeFromString(json) as Bundle
+    val bundle = jsonParser.decodeFromString<Bundle>(json)
     val srcOut = srcOutputDir.asFile.get()
     srcOut.deleteRecursively()
     srcOut.mkdirs()

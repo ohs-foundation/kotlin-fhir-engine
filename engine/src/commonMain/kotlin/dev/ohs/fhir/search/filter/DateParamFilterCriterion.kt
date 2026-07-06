@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search.filter
 
+import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.ConditionParam
 import dev.ohs.fhir.search.DateClientParam
 import dev.ohs.fhir.search.Operation
-import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.search.SearchDslMarker
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.search.getConditionParamPairForDate
 import dev.ohs.fhir.search.getConditionParamPairForDateTime
-import dev.ohs.fhir.model.r4.FhirDate
-import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /**
  * Represents a criterion for filtering [DateClientParam]. e.g. filter(Patient.BIRTHDATE, { value

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.db.Database
@@ -35,6 +34,5 @@ internal interface ResourceConsolidator {
 }
 
 internal object ResourceConsolidatorFactory {
-  fun byHttpVerb(mode: Any, database: Database): ResourceConsolidator =
-    TODO()
+  fun byHttpVerb(mode: Any, database: Database): ResourceConsolidator = TODO()
 }
