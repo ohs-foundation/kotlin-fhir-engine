@@ -54,7 +54,8 @@ internal class KtorHttpService(
 
   /**
    * Sanitizes JSON to work around bugs in the kotlin-fhir library (fhir-model beta):
-   * 1. Truncates DateTime values in date-only fields (FhirDate.fromString() crash)
+   * 1. Truncates DateTime values in date-only fields, e.g. birthDate, deceasedDate
+   *    (FhirDate.fromString() crash)
    * 2. Strips "text" (Narrative) fields that cause NPE when status/div is missing
    */
   private fun sanitizeJson(json: String): String {
@@ -154,9 +155,10 @@ internal class KtorHttpService(
       isLenient = true
     }
 
-    /** Matches FHIR date-only fields that incorrectly contain DateTime values. */
+    /** Matches FHIR date-only fields (any field name ending in "Date") that incorrectly contain
+     * DateTime values. */
     private val dateFieldWithTimeRegex =
-      Regex(""""(birthDate|deceasedDate)"\s*:\s*"(\d{4}-\d{2}-\d{2})T[^"]*"""")
+      Regex(""""(\w*Date)"\s*:\s*"(\d{4}-\d{2}-\d{2})T[^"]*"""")
 
     fun builder(baseUrl: String, networkConfiguration: NetworkConfiguration) =
       Builder(baseUrl, networkConfiguration)
