@@ -35,8 +35,7 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
-  @OptIn(ExperimentalWasmDsl::class)
-  wasmJs { browser() }
+  @OptIn(ExperimentalWasmDsl::class) wasmJs { browser() }
 
   targets.configureEach {
     compilations.configureEach {
@@ -84,22 +83,22 @@ kotlin {
     }
     val desktopMain by getting {
       dependencies {
-          implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.androidx.sqlite.bundled)
         implementation(libs.ktor.client.java)
       }
     }
     iosMain {
       dependencies {
-          implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.androidx.sqlite.bundled)
         implementation(libs.ktor.client.darwin)
       }
     }
-      val wasmJsMain by getting {
-          dependencies {
-              // Provides the web SQLite driver (WebWorkerSQLiteDriver) + the SQLite-WASM worker.
-              implementation(project(":sqlite-wasm-worker"))
-          }
+    val wasmJsMain by getting {
+      dependencies {
+        // Provides the web SQLite driver (WebWorkerSQLiteDriver) + the SQLite-WASM worker.
+        implementation(project(":sqlite-wasm-worker"))
       }
+    }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.
@@ -120,14 +119,13 @@ kotlin {
 
 dependencies {
   listOf(
-    "kspAndroid",
-    "kspDesktop",
-    "kspIosArm64",
-    "kspIosSimulatorArm64",
+      "kspAndroid",
+      "kspDesktop",
+      "kspIosArm64",
+      "kspIosSimulatorArm64",
       "kspWasmJs",
-  ).forEach {
-      add(it, libs.androidx.room3.compiler)
-  }
+    )
+    .forEach { add(it, libs.androidx.room3.compiler) }
 }
 
 mavenPublishing {

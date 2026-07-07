@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl
 
 import androidx.room3.Room
@@ -25,8 +24,7 @@ internal actual fun getDatabaseBuilder(
 ): RoomDatabase.Builder<ResourceDatabase> {
   // The web driver persists to the Origin Private File System (OPFS) under this name, via a
   // SQLite-WASM Web Worker. Query coroutine context is left to Room's default (web is async).
-  return Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME)
-    .setDriver(createSqliteWasmDriver())
+  return Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME).setDriver(createSqliteWasmDriver())
 }
 
 private const val DATABASE_NAME = "resources.db"

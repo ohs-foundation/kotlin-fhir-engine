@@ -7,9 +7,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
  * plus the [androidx.sqlite.driver.web.WebWorkerSQLiteDriver] that talks to it. Modeled on the
  * official room-web-demo (github.com/danysantiago/room-web-demo).
  */
-plugins {
-  alias(libs.plugins.kotlin.multiplatform)
-}
+plugins { alias(libs.plugins.kotlin.multiplatform) }
 
 kotlin {
   jvmToolchain(21)
@@ -26,8 +24,6 @@ kotlin {
       // Local npm module: worker.js + @sqlite.org/sqlite-wasm (see ./worker).
       implementation(npm("sqlite-wasm-worker", layout.projectDirectory.dir("worker").asFile))
     }
-    val wasmJsMain by getting {
-      dependencies { implementation(libs.kotlinx.browser) }
-    }
+    val wasmJsMain by getting { dependencies { implementation(libs.kotlinx.browser) } }
   }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhirdemo
 
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -21,7 +20,5 @@ import androidx.compose.ui.window.ComposeViewport
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
-  ComposeViewport {
-    App()
-  }
+  ComposeViewport { App() }
 }

@@ -17,6 +17,7 @@ allprojects { configureSpotless() }
 // Set it per-machine, e.g. in ~/.gradle/gradle.properties:
 //   nodeHome=/path/to/node/v22.20.0
 val nodeHome: String? = (findProperty("nodeHome") as String?)?.takeIf { it.isNotBlank() }
+
 if (nodeHome != null) {
   val nodeDir = file(nodeHome)
   plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
