@@ -24,6 +24,7 @@ import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.runSync
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.resume
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLSession
+import platform.Foundation.dataTaskWithRequest
+import platform.Foundation.setHTTPMethod
 import platform.UIKit.UIApplicationDidEnterBackgroundNotification
 import platform.UIKit.UIApplicationWillEnterForegroundNotification
 
@@ -88,6 +95,7 @@ actual class FhirSyncController actual constructor(context: Any) {
   }
 
   actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> {
+    probeNetworkPermission()
     bgSyncScheduler.schedule()
     return FhirEngineProvider.getFhirDataStore()
       .observeTerminalSyncJobStatus(PERIODIC_SYNC_TASK_ID)
@@ -111,6 +119,19 @@ actual class FhirSyncController actual constructor(context: Any) {
         currentSyncJobStatus = CurrentSyncJobStatus.Enqueued,
       )
     }
+
+  // Fires a HEAD request in the foreground so iOS shows the wireless-data permission dialog
+  // before the BGProcessingTask is scheduled (background tasks can't trigger the dialog).
+  private suspend fun probeNetworkPermission() {
+    val url = NSURL.URLWithString(SERVER_BASE_URL) ?: return
+    val request = NSMutableURLRequest.requestWithURL(url).apply { setHTTPMethod("HEAD") }
+    suspendCancellableCoroutine { cont ->
+      val task =
+        NSURLSession.sharedSession.dataTaskWithRequest(request) { _, _, _ -> cont.resume(Unit) }
+      task.resume()
+      cont.invokeOnCancellation { task.cancel() }
+    }
+  }
 
   private fun launchSyncJob() {
     val statusFlow = currentStatusFlow ?: return
