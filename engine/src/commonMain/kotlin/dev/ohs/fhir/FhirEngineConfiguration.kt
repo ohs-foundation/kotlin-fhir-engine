@@ -34,6 +34,12 @@ import dev.ohs.fhir.sync.remote.HttpLogger
  *   engine with the Search API. These are in addition to the default search parameters defined in
  *   the FHIR specification. Custom search parameters must be unique and not change existing or
  *   default search parameters.
+ * @property storageDirectory Directory used to store the database and preferences files. Only
+ *   honored on Desktop: Android and iOS already have an OS-provided, app-scoped storage location
+ *   (the application's `filesDir` / Application Support directory) and ignore this property.
+ *   Desktop has no such per-application directory, so without an explicit value every application
+ *   embedding this library on the same machine would default to sharing the same `~/.fhir-engine`
+ *   directory, and could read or corrupt each other's data. Defaults to `~/.fhir-engine` when null.
  */
 data class FhirEngineConfiguration(
   val enableEncryptionIfSupported: Boolean = false,
@@ -41,6 +47,7 @@ data class FhirEngineConfiguration(
   val serverConfiguration: ServerConfiguration? = null,
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
+  val storageDirectory: String? = null,
 )
 
 /** How database errors should be handled. */

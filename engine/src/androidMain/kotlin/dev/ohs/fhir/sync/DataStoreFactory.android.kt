@@ -27,5 +27,7 @@ internal fun createDataStore(context: Context): DataStore<Preferences> =
     ?: createDataStore { context.filesDir.resolve(fhirDataStoreFileName).absolutePath }
       .also { dataStoreInstance = it }
 
-internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> =
-  createDataStore(platformContext as Context)
+internal actual fun getDataStore(
+  platformContext: Any,
+  storageDirectory: String?,
+): DataStore<Preferences> = createDataStore(platformContext as Context)

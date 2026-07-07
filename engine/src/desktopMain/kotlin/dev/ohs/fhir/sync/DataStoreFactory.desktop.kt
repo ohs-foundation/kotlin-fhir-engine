@@ -21,11 +21,21 @@ import java.io.File
 
 private var dataStoreInstance: DataStore<Preferences>? = null
 
-internal fun createDataStore(): DataStore<Preferences> =
+/**
+ * Default storage directory used when [dev.ohs.fhir.FhirEngineConfiguration.storageDirectory] is
+ * unset.
+ */
+internal val defaultDesktopStorageDirectory: String
+  get() = File(System.getProperty("user.home"), ".fhir-engine").absolutePath
+
+internal fun createDataStore(storageDirectory: String?): DataStore<Preferences> =
   dataStoreInstance
     ?: createDataStore {
-        File(System.getProperty("user.home"), ".fhir-engine/$fhirDataStoreFileName").absolutePath
+        File(storageDirectory ?: defaultDesktopStorageDirectory, fhirDataStoreFileName).absolutePath
       }
       .also { dataStoreInstance = it }
 
-internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()
+internal actual fun getDataStore(
+  platformContext: Any,
+  storageDirectory: String?,
+): DataStore<Preferences> = createDataStore(storageDirectory)

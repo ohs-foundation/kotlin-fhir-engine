@@ -41,4 +41,7 @@ fun createDataStore(): DataStore<Preferences> =
       createDataStore { "$appSupportDir/$fhirDataStoreFileName" }.also { dataStoreInstance = it }
     }
 
-internal actual fun getDataStore(platformContext: Any): DataStore<Preferences> = createDataStore()
+internal actual fun getDataStore(
+  platformContext: Any,
+  storageDirectory: String?,
+): DataStore<Preferences> = createDataStore()

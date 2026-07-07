@@ -25,4 +25,12 @@ internal const val fhirDataStoreFileName = "fhir.engine.preferences_pb"
 fun createDataStore(producePath: () -> String): DataStore<Preferences> =
   PreferenceDataStoreFactory.createWithPath(produceFile = { producePath().toPath() })
 
-internal expect fun getDataStore(platformContext: Any): DataStore<Preferences>
+/**
+ * @param storageDirectory Directory for the preferences file. Only honored on Desktop; ignored on
+ *   Android/iOS which have an OS-provided app-scoped storage location. See
+ *   [dev.ohs.fhir.FhirEngineConfiguration.storageDirectory].
+ */
+internal expect fun getDataStore(
+  platformContext: Any,
+  storageDirectory: String?,
+): DataStore<Preferences>

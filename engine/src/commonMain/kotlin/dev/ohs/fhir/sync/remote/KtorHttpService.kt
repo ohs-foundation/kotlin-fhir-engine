@@ -155,10 +155,11 @@ internal class KtorHttpService(
       isLenient = true
     }
 
-    /** Matches FHIR date-only fields (any field name ending in "Date") that incorrectly contain
-     * DateTime values. */
-    private val dateFieldWithTimeRegex =
-      Regex(""""(\w*Date)"\s*:\s*"(\d{4}-\d{2}-\d{2})T[^"]*"""")
+    /**
+     * Matches FHIR date-only fields (any field name ending in "Date") that incorrectly contain
+     * DateTime values.
+     */
+    private val dateFieldWithTimeRegex = Regex(""""(\w*Date)"\s*:\s*"(\d{4}-\d{2}-\d{2})T[^"]*"""")
 
     fun builder(baseUrl: String, networkConfiguration: NetworkConfiguration) =
       Builder(baseUrl, networkConfiguration)

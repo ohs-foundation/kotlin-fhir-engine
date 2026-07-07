@@ -17,12 +17,14 @@ package dev.ohs.fhir.db.impl
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import dev.ohs.fhir.sync.defaultDesktopStorageDirectory
 import java.io.File
 
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
+  storageDirectory: String?,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val dbDir = File(System.getProperty("user.home"), ".fhir-engine")
+  val dbDir = File(storageDirectory ?: defaultDesktopStorageDirectory)
   dbDir.mkdirs()
   val dbFile = File(dbDir, DATABASE_NAME)
   return Room.databaseBuilder<ResourceDatabase>(dbFile.absolutePath)

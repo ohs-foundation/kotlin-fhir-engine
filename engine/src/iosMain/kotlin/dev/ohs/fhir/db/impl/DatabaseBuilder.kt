@@ -26,6 +26,7 @@ import platform.Foundation.NSUserDomainMask
 @ExperimentalForeignApi
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
+  storageDirectory: String?,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val appSupportDir =
     NSSearchPathForDirectoriesInDomains(

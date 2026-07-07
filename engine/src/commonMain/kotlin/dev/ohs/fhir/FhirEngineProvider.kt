@@ -57,7 +57,8 @@ object FhirEngineProvider {
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
-    this.fhirDataStore = FhirDataStore(getDataStore(platformContext))
+    this.fhirDataStore =
+      FhirDataStore(getDataStore(platformContext, configuration.storageDirectory))
   }
 
   fun isInitialized() = configuration != null
@@ -124,7 +125,7 @@ object FhirEngineProvider {
       SearchParamDefinitionsProviderImpl(customParams = buildCustomParamsMap(config))
     searchParamProvider = searchParamDefinitionsProvider
     val resourceIndexer = ResourceIndexer(searchParamDefinitionsProvider)
-    val database = DatabaseImpl(platformContext, resourceIndexer)
+    val database = DatabaseImpl(platformContext, resourceIndexer, config.storageDirectory)
 
     config.serverConfiguration?.let { serverConfig ->
       dataSource =
