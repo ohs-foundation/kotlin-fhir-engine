@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.impl
 
 import dev.ohs.fhir.FhirEngine
@@ -22,6 +21,8 @@ import dev.ohs.fhir.OffsetDateTime
 import dev.ohs.fhir.SearchResult
 import dev.ohs.fhir.db.Database
 import dev.ohs.fhir.db.LocalChangeResourceReference
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.search.Search
 import dev.ohs.fhir.search.count
@@ -33,8 +34,6 @@ import dev.ohs.fhir.sync.upload.ResourceConsolidatorFactory
 import dev.ohs.fhir.sync.upload.SyncUploadProgress
 import dev.ohs.fhir.sync.upload.UploadRequestResult
 import dev.ohs.fhir.sync.upload.UploadStrategy
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow

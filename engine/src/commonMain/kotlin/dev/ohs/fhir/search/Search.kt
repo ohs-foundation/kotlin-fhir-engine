@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search
 
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.filter.DateClientParamFilterCriteria
 import dev.ohs.fhir.search.filter.DateParamFilterCriterion
 import dev.ohs.fhir.search.filter.NumberParamFilterCriteria
@@ -30,7 +30,6 @@ import dev.ohs.fhir.search.filter.TokenParamFilterCriteria
 import dev.ohs.fhir.search.filter.TokenParamFilterCriterion
 import dev.ohs.fhir.search.filter.UriFilterCriteria
 import dev.ohs.fhir.search.filter.UriParamFilterCriterion
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /** Specifies search criteria for querying the FHIR database. */
 @SearchDslMarker

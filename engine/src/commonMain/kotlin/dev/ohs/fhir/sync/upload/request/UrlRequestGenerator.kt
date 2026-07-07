@@ -20,11 +20,11 @@ import dev.ohs.fhir.model.r4.Base64Binary
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.sync.upload.patch.Patch
 import dev.ohs.fhir.sync.upload.patch.PatchMapping
 import dev.ohs.fhir.sync.upload.patch.StronglyConnectedPatchMappings
 import kotlin.io.encoding.Base64
+import kotlinx.serialization.json.Json
 
 /** Generates list of [UrlUploadRequest]s for a list of [Patch]es. */
 internal class UrlRequestGenerator(
@@ -57,7 +57,7 @@ internal class UrlRequestGenerator(
 
   companion object Factory {
 
-    private val fhirR4Json = FhirR4Json()
+    private val fhirR4Json = Json
 
     private val createMapping =
       mapOf(

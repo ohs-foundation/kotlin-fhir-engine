@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.db.impl.dao
 
 import androidx.room.Room
@@ -21,9 +20,9 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.ohs.fhir.db.impl.ResourceDatabase
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
@@ -85,7 +84,7 @@ class LocalChangeDaoTest {
       resourceUuid = uuid,
       resourceType = ResourceType.Observation,
       resourceId = resource.id!!,
-      serializedResource = FhirR4Json().encodeToString(resource),
+      serializedResource = fhirJsonParser.encodeToString(resource),
       versionId = null,
       lastUpdatedRemote = null,
       lastUpdatedLocal = Clock.System.now(),
@@ -106,7 +105,7 @@ class LocalChangeDaoTest {
     assertEquals(uuid, change.resourceUuid)
     assertEquals("o1", change.resourceId)
     assertEquals(LocalChangeEntity.Type.INSERT.value, change.type)
-    assertEquals(FhirR4Json().encodeToString(obs), change.payload)
+    assertEquals(fhirJsonParser.encodeToString(obs), change.payload)
 
     val references = localChangeDao.getReferencesForLocalChange(change.id)
     assertEquals(2, references.size)

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.impl
 
 import dev.ohs.fhir.FhirEngineConfiguration
@@ -21,12 +20,12 @@ import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.db.ResourceNotFoundException
 import dev.ohs.fhir.get
-import dev.ohs.fhir.search.count
-import dev.ohs.fhir.search.search
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.search.count
+import dev.ohs.fhir.search.search
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -144,7 +143,10 @@ class FhirEngineImplTest {
   fun update_existingAndNonExistingResource_shouldNotUpdateAnyResource() = runTest {
     val fhirEngine = FhirEngineProvider.getInstance()
     val patient1 =
-      Patient(id = "test-update-patient-001", name = listOf(HumanName(family = FhirString(value = "Original"))))
+      Patient(
+        id = "test-update-patient-001",
+        name = listOf(HumanName(family = FhirString(value = "Original"))),
+      )
     fhirEngine.create(patient1)
 
     val updatedPatient1 =

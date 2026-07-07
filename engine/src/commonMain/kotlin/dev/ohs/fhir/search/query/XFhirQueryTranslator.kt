@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search.query
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.index.SearchParamType
 import dev.ohs.fhir.isValidDateOnly
+import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.DateClientParam
 import dev.ohs.fhir.search.NumberClientParam
 import dev.ohs.fhir.search.Order
@@ -31,10 +34,6 @@ import dev.ohs.fhir.search.StringClientParam
 import dev.ohs.fhir.search.TokenClientParam
 import dev.ohs.fhir.search.UriClientParam
 import dev.ohs.fhir.search.filter.TokenFilterValue
-import dev.ohs.fhir.model.r4.FhirDate
-import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
 
 /**
  * Supports translation of x-fhir-query defined in
@@ -47,10 +46,10 @@ internal object XFhirQueryTranslator {
 
   /**
    * This is a lazy accessor (not an eager `val` like the engine) because the engine relies on
-   * Robolectric's per-test classloader isolation to re-evaluate the provider for each test. KMP test
-   * runs share a single JVM/object instance, so an eager `val` would capture a stale provider across
-   * test classes (e.g. one without custom search parameters). Re-reading per call matches the
-   * engine's effective per-test behavior.
+   * Robolectric's per-test classloader isolation to re-evaluate the provider for each test. KMP
+   * test runs share a single JVM/object instance, so an eager `val` would capture a stale provider
+   * across test classes (e.g. one without custom search parameters). Re-reading per call matches
+   * the engine's effective per-test behavior.
    */
   private val searchParamProvider: SearchParamDefinitionsProviderImpl
     get() = FhirEngineProvider.getSearchParamProvider() ?: SearchParamDefinitionsProviderImpl()

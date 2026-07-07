@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.search
 
 import co.touchlab.kermit.Logger
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.SearchResult
 import dev.ohs.fhir.UcumValue
-import dev.ohs.fhir.toEqualCanonical
 import dev.ohs.fhir.db.Database
-import dev.ohs.fhir.resourceType
-import dev.ohs.fhir.ucumUrl
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.resourceType
+import dev.ohs.fhir.toEqualCanonical
+import dev.ohs.fhir.ucumUrl
 import kotlin.math.absoluteValue
 import kotlin.math.roundToLong
 import kotlin.time.Clock
@@ -46,17 +45,17 @@ import kotlinx.datetime.toInstant
 private const val APPROXIMATION_COEFFICIENT = 0.1
 
 /**
- * SQLite supports signed and unsigned integers with a maximum length of 8 bytes. The signed integers
- * can range from `-9223372036854775808` to `+9223372036854775807`. See
+ * SQLite supports signed and unsigned integers with a maximum length of 8 bytes. The signed
+ * integers can range from `-9223372036854775808` to `+9223372036854775807`. See
  * [Storage Classes and Datatypes](https://www.sqlite.org/datatype3.html)
  */
 private const val MIN_VALUE = "-9223372036854775808"
 private const val MAX_VALUE = "9223372036854775808"
 
 /**
- * Executes this search against [database]: runs the base query, then any `_include` (forward)
- * and `_revinclude` (reverse) reference queries, and assembles the matched [SearchResult]s with
- * their included/revIncluded resources grouped by search index.
+ * Executes this search against [database]: runs the base query, then any `_include` (forward) and
+ * `_revinclude` (reverse) reference queries, and assembles the matched [SearchResult]s with their
+ * included/revIncluded resources grouped by search index.
  */
 internal suspend fun <R : Resource> Search.execute(database: Database): List<SearchResult<R>> {
   val baseResources = database.search<R>(getQuery())
@@ -73,7 +72,8 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
     if (revIncludes.isEmpty() || baseResources.isEmpty()) {
       null
     } else {
-      val typeIdPairs = baseResources.map { "${it.resource.resourceType}/${it.resource.id.orEmpty()}" }
+      val typeIdPairs =
+        baseResources.map { "${it.resource.resourceType}/${it.resource.id.orEmpty()}" }
       database.searchReverseReferencedResources(getRevIncludeQuery(typeIdPairs))
     }
 
@@ -93,9 +93,7 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
               "${(baseResource as Resource).resourceType}/${baseResource.id.orEmpty()}"
           }
           ?.groupBy(
-            {
-              ResourceType.fromCode(it.resource.resourceType) to it.searchIndex
-            },
+            { ResourceType.fromCode(it.resource.resourceType) to it.searchIndex },
             { it.resource },
           ),
     )
@@ -113,9 +111,9 @@ fun Search.getQuery(isCount: Boolean = false): SearchQuery {
 }
 
 /**
- * Builds the SQL [SearchQuery] loading resources that reference the base results via
- * `_revinclude` (one `UNION ALL` branch per reverse include). [includeIds] are the base results'
- * `type/id` strings.
+ * Builds the SQL [SearchQuery] loading resources that reference the base results via `_revinclude`
+ * (one `UNION ALL` branch per reverse include). [includeIds] are the base results' `type/id`
+ * strings.
  */
 internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
@@ -149,8 +147,8 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
 }
 
 /**
- * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include`
- * (one `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
+ * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include` (one
+ * `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
  */
 internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
@@ -291,14 +289,14 @@ private fun Search.getSortOrder(
 }
 
 /**
- * Sorting by a field that has multiple indexed values may result in duplicated resources. So, we use
- * `GROUP BY` + `HAVING` clause to find distinct values in specified order.
+ * Sorting by a field that has multiple indexed values may result in duplicated resources. So, we
+ * use `GROUP BY` + `HAVING` clause to find distinct values in specified order.
  *
- * To make the sorting order a bit predictable, we use MIN and MAX functions with `HAVING` to use the
- * corresponding values for GROUPING to find the distinct results.
+ * To make the sorting order a bit predictable, we use MIN and MAX functions with `HAVING` to use
+ * the corresponding values for GROUPING to find the distinct results.
  *
- * e.g. If there are Two Patients resources with multiple first names P1 ( first names =`3`, `1`) and
- * P2 (first names = `2`, `4`), when sorting them in
+ * e.g. If there are Two Patients resources with multiple first names P1 ( first names =`3`, `1`)
+ * and P2 (first names = `2`, `4`), when sorting them in
  *
  * *ASCENDING order*: MIN function is used so that the smallest names of both the patients are
  * considered for Grouping `[P1(`1`), P2(`2`)]`.
@@ -306,13 +304,15 @@ private fun Search.getSortOrder(
  * *DESCENDING order*: MAX function is used so that the largest names of both the patients are
  * considered for Grouping `[P2(`4`), P1(`3`)]`.
  *
- * For the special case where the index value is NULL, we use the default 0 value and to complete the
- * expression, we check that the value is greater than [MIN_VALUE], the minimum value an INTEGER type
- * can store in SQLITE. The reason to check against [MIN_VALUE] rather that 0, since string is always
- * greater than integer (StringIndexEntity) and Date/DateTimeIndexEntity will always have positive
- * integer values, is because the NumberIndexEntity table may contain negative values in it.
+ * For the special case where the index value is NULL, we use the default 0 value and to complete
+ * the expression, we check that the value is greater than [MIN_VALUE], the minimum value an INTEGER
+ * type can store in SQLITE. The reason to check against [MIN_VALUE] rather that 0, since string is
+ * always greater than integer (StringIndexEntity) and Date/DateTimeIndexEntity will always have
+ * positive integer values, is because the NumberIndexEntity table may contain negative values in
+ * it.
  *
- * Without the `>= MIN_VALUE` check, NULL values are not included in the results if the default is 0.
+ * Without the `>= MIN_VALUE` check, NULL values are not included in the results if the default
+ * is 0.
  *
  * The default values provided in GROUP BY stage are not carried forward during the ORDER BY, so we
  * provide [MAX_VALUE] and [MIN_VALUE] as default in ORDER BY respectively for ASCENDING and
@@ -357,7 +357,10 @@ private fun generateGroupAndOrderQuery(
   return sortOrderStatement
 }
 
-/** Maps every filter criterion (string, quantity, number, reference, date/time, token, uri) to its subquery. */
+/**
+ * Maps every filter criterion (string, quantity, number, reference, date/time, token, uri) to its
+ * subquery.
+ */
 private fun Search.getFilterQueries() =
   (stringFilterCriteria +
       quantityFilterCriteria +
@@ -478,7 +481,8 @@ private val Order?.sqlString: String
 
 /**
  * Returns the SQL condition and bound params for a date [value] filtered with [prefix], over the
- * date index's `index_from`/`index_to` epoch-day range. See https://www.hl7.org/fhir/search.html#date.
+ * date index's `index_from`/`index_to` epoch-day range. See
+ * https://www.hl7.org/fhir/search.html#date.
  */
 internal fun getConditionParamPairForDate(
   prefix: SearchComparator,
@@ -526,8 +530,9 @@ internal fun getConditionParamPairForDate(
 }
 
 /**
- * Returns the SQL condition and bound params for a dateTime [value] filtered with [prefix], over the
- * dateTime index's `index_from`/`index_to` epoch-millis range. See https://www.hl7.org/fhir/search.html#date.
+ * Returns the SQL condition and bound params for a dateTime [value] filtered with [prefix], over
+ * the dateTime index's `index_from`/`index_to` epoch-millis range. See
+ * https://www.hl7.org/fhir/search.html#date.
  */
 internal fun getConditionParamPairForDateTime(
   prefix: SearchComparator,
@@ -596,11 +601,9 @@ internal fun getConditionParamPair(
       )
     }
     SearchComparator.Gt -> ConditionParam("index_value > ?", value.doubleValue(false))
-    SearchComparator.Ge ->
-      ConditionParam("index_value >= ?", value.doubleValue(false))
+    SearchComparator.Ge -> ConditionParam("index_value >= ?", value.doubleValue(false))
     SearchComparator.Lt -> ConditionParam("index_value < ?", value.doubleValue(false))
-    SearchComparator.Le ->
-      ConditionParam("index_value <= ?", value.doubleValue(false))
+    SearchComparator.Le -> ConditionParam("index_value <= ?", value.doubleValue(false))
     SearchComparator.Ne -> {
       val precision = value.getRange()
       ConditionParam(
@@ -722,7 +725,10 @@ private fun getApproximateDateRange(
 /** The widened [start]..[end] bounds produced for an approximate (`ap`) date search. */
 private data class ApproximateDateRange(val start: Long, val end: Long)
 
-/** Converts a [FhirDate] to its inclusive `[start, end]` epoch-day range (a year or month spans multiple days). */
+/**
+ * Converts a [FhirDate] to its inclusive `[start, end]` epoch-day range (a year or month spans
+ * multiple days).
+ */
 internal fun fhirDateToEpochDayRange(date: FhirDate): Pair<Long, Long> =
   when (date) {
     is FhirDate.Date -> {
@@ -757,7 +763,10 @@ internal fun fhirDateTimeToEpochMillis(dateTime: FhirDateTime): Long =
     }
   }
 
-/** Returns the end of [dateTime] as epoch milliseconds (UTC) — the last instant of its precision window. */
+/**
+ * Returns the end of [dateTime] as epoch milliseconds (UTC) — the last instant of its precision
+ * window.
+ */
 internal fun fhirDateTimeToEndEpochMillis(dateTime: FhirDateTime): Long =
   when (dateTime) {
     is FhirDateTime.DateTime ->

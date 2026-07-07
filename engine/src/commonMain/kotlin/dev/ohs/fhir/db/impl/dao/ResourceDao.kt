@@ -292,7 +292,7 @@ internal abstract class ResourceDao {
     lastUpdatedRemote: Instant?,
   ) {
     getResourceEntity(resourceId, resourceType)?.let { oldResourceEntity ->
-      val resource = fhirJsonParser.decodeFromString(oldResourceEntity.serializedResource)
+      val resource = fhirJsonParser.decodeFromString<Resource>(oldResourceEntity.serializedResource)
       val updated = resource.updateMeta(versionId, lastUpdatedRemote)
       updateResourceWithUuid(oldResourceEntity.resourceUuid, updated)
     }

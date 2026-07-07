@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir
 
 import dev.ohs.fhir.db.LocalChangeResourceReference
 import dev.ohs.fhir.db.ResourceNotFoundException
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.Search
 import dev.ohs.fhir.sync.ConflictResolver
 import dev.ohs.fhir.sync.upload.SyncUploadProgress
 import dev.ohs.fhir.sync.upload.UploadRequestResult
 import dev.ohs.fhir.sync.upload.UploadStrategy
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 

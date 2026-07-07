@@ -16,6 +16,7 @@
 package dev.ohs.fhir.index
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.db.impl.fhirJsonParser
 import dev.ohs.fhir.index.entities.DateIndex
 import dev.ohs.fhir.index.entities.DateTimeIndex
 import dev.ohs.fhir.index.entities.NumberIndex
@@ -42,7 +43,6 @@ import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Extension
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Identifier
 import dev.ohs.fhir.model.r4.Instant
@@ -1356,7 +1356,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_invoice() {
-    val invoice = FhirR4Json().decodeFromString(INVOICE_JSON) as dev.ohs.fhir.model.r4.Invoice
+    val invoice = fhirJsonParser.decodeFromString<Invoice>(INVOICE_JSON)
     val resourceIndices = resourceIndexer.index(invoice)
 
     assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Invoice.id", null, "example"))
@@ -1387,7 +1387,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_questionnaire() {
-    val q = FhirR4Json().decodeFromString(QUESTIONNAIRE_JSON) as Questionnaire
+    val q = fhirJsonParser.decodeFromString<Questionnaire>(QUESTIONNAIRE_JSON)
     val resourceIndices = resourceIndexer.index(q)
 
     assertContains(
@@ -1413,7 +1413,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_patient() {
-    val patient = FhirR4Json().decodeFromString(PATIENT_JSON) as Patient
+    val patient = fhirJsonParser.decodeFromString<Patient>(PATIENT_JSON)
     val resourceIndices = resourceIndexer.index(patient)
 
     assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Patient.id", null, "f001"))
@@ -1459,7 +1459,7 @@ class ResourceIndexerTest {
 
   @Test
   fun index_location() {
-    val location = FhirR4Json().decodeFromString(LOCATION_JSON) as Location
+    val location = fhirJsonParser.decodeFromString<Location>(LOCATION_JSON)
     val resourceIndices = resourceIndexer.index(location)
 
     assertContains(resourceIndices.positionIndices, PositionIndex(-83.69471, 42.2565))
