@@ -15,9 +15,9 @@
  */
 package dev.ohs.fhir.db.impl
 
-import androidx.room.TypeConverter
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import androidx.room3.TypeConverter
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 

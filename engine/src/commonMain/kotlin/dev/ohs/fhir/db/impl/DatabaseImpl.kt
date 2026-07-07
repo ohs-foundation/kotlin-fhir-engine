@@ -15,13 +15,11 @@
  */
 package dev.ohs.fhir.db.impl
 
-import androidx.room.PooledConnection
-import androidx.room.Transactor
-import androidx.room.execSQL
-import androidx.room.useReaderConnection
-import androidx.room.useWriterConnection
+import androidx.room3.PooledConnection
+import androidx.room3.Transactor
+import androidx.room3.useReaderConnection
+import androidx.room3.useWriterConnection
 import androidx.sqlite.SQLiteStatement
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.Database
@@ -42,26 +40,24 @@ import dev.ohs.fhir.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.db.impl.entities.UriIndexEntity
 import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.ResourceIndices
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.resourceType
 import dev.ohs.fhir.resourceTypeEnum
 import dev.ohs.fhir.search.SearchQuery
 import dev.ohs.fhir.toLocalChange
 import dev.ohs.fhir.updateMeta
 import dev.ohs.fhir.withId
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 
 /**
  * The implementation for the persistence layer using Room KMP. See docs for
  * [dev.ohs.fhir.db.Database] for the API docs.
  *
  * Note: Room KMP does not provide a `withTransaction` extension; transactions are run via
- * [androidx.room.useWriterConnection] + [androidx.room.Transactor.withTransaction]. DAO calls made
+ * [androidx.room3.useWriterConnection] + [androidx.room3.Transactor.withTransaction]. DAO calls made
  * inside reuse the writer connection from the coroutine context, so they participate in the
  * transaction.
  */
@@ -82,10 +78,11 @@ internal class DatabaseImpl(
         .trimIndent()
   }
 
+  // The SQLite driver and query coroutine context are platform-specific (bundled native driver on
+  // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
+  // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
     getDatabaseBuilder(platformContext)
-      .setDriver(BundledSQLiteDriver())
-      .setQueryCoroutineContext(Dispatchers.IO)
       .fallbackToDestructiveMigration(dropAllTables = true)
       .build()
 
@@ -203,7 +200,7 @@ internal class DatabaseImpl(
         tables.add(statement.getText(0))
       }
     }
-    tables.forEach { execSQL("DELETE FROM `$it`") }
+    tables.forEach { table -> usePrepared("DELETE FROM `$table`") { it.step() } }
   }
 
   override suspend fun update(vararg resources: Resource) {

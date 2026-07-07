@@ -1,4 +1,5 @@
 import codegen.GenerateSearchParamsTask
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -29,9 +30,13 @@ kotlin {
 
   jvm("desktop")
 
-  iosX64()
+  // Note: iosX64 (Intel iOS simulator) is omitted because Room 3 (androidx.room3) does not publish
+  // iosX64 artifacts; including it breaks dependency resolution.
   iosArm64()
   iosSimulatorArm64()
+
+  @OptIn(ExperimentalWasmDsl::class)
+  wasmJs { browser() }
 
   targets.configureEach {
     compilations.configureEach {
@@ -52,9 +57,7 @@ kotlin {
         implementation(libs.kotlin.fhir)
         implementation(libs.fhir.path)
         implementation(libs.kermit)
-        implementation(libs.androidx.room.runtime)
-        implementation(libs.androidx.sqlite.bundled)
-        implementation(libs.androidx.datastore.preferences)
+        implementation(libs.androidx.room3.runtime)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.client.logging)
@@ -69,15 +72,34 @@ kotlin {
         implementation(libs.kotlinx.coroutines.test)
       }
     }
+    // The bundled native SQLite driver has no wasmJs artifact, so it lives only in the non-web
+    // platform source sets (wasm uses the Web Worker driver from :sqlite-wasm-worker instead).
     val androidMain by getting {
       dependencies {
+        implementation(libs.androidx.sqlite.bundled)
         implementation(libs.androidx.work.runtime)
         implementation(libs.androidx.lifecycle.livedata)
         implementation(libs.ktor.client.okhttp)
       }
     }
-    val desktopMain by getting { dependencies { implementation(libs.ktor.client.java) } }
-    iosMain { dependencies { implementation(libs.ktor.client.darwin) } }
+    val desktopMain by getting {
+      dependencies {
+          implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.ktor.client.java)
+      }
+    }
+    iosMain {
+      dependencies {
+          implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.ktor.client.darwin)
+      }
+    }
+      val wasmJsMain by getting {
+          dependencies {
+              // Provides the web SQLite driver (WebWorkerSQLiteDriver) + the SQLite-WASM worker.
+              implementation(project(":sqlite-wasm-worker"))
+          }
+      }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.
@@ -97,8 +119,14 @@ kotlin {
 }
 
 dependencies {
-  listOf("kspAndroid", "kspDesktop", "kspIosX64", "kspIosArm64", "kspIosSimulatorArm64").forEach {
-    add(it, libs.androidx.room.compiler)
+  listOf(
+    "kspAndroid",
+    "kspDesktop",
+    "kspIosArm64",
+    "kspIosSimulatorArm64",
+      "kspWasmJs",
+  ).forEach {
+      add(it, libs.androidx.room3.compiler)
   }
 }
 

@@ -15,9 +15,12 @@
  */
 package dev.ohs.fhir.db.impl
 
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room3.Room
+import androidx.room3.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
@@ -26,6 +29,8 @@ internal actual fun getDatabaseBuilder(
   dbDir.mkdirs()
   val dbFile = File(dbDir, DATABASE_NAME)
   return Room.databaseBuilder<ResourceDatabase>(dbFile.absolutePath)
+    .setDriver(BundledSQLiteDriver())
+    .setQueryCoroutineContext(Dispatchers.IO)
 }
 
 private const val DATABASE_NAME = "resources.db"

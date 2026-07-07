@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -44,6 +45,12 @@ kotlin {
     }
   }
 
+  @OptIn(ExperimentalWasmDsl::class)
+  wasmJs {
+    browser()
+    binaries.executable()
+  }
+
   targets.configureEach {
     compilations.configureEach {
       compilerOptions.configure {
@@ -86,6 +93,12 @@ kotlin {
         // See
         // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
         implementation(libs.kotlinx.coroutines.swing)
+      }
+    }
+    val wasmJsMain by getting {
+      dependencies {
+        // Pulls in the SQLite-WASM worker (npm + worker.js) so it is bundled into the web app.
+        implementation(project(":sqlite-wasm-worker"))
       }
     }
   }

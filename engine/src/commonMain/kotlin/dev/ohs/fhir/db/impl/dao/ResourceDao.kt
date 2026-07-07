@@ -15,13 +15,13 @@
  */
 package dev.ohs.fhir.db.impl.dao
 
-import androidx.room.ColumnInfo
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.RawQuery
-import androidx.room.RoomRawQuery
+import androidx.room3.ColumnInfo
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.RawQuery
+import androidx.room3.RoomRawQuery
 import dev.ohs.fhir.db.ResourceNotFoundException
 import dev.ohs.fhir.db.impl.entities.DateIndexEntity
 import dev.ohs.fhir.db.impl.entities.DateTimeIndexEntity

@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.db.impl.entities
 
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.Embedded
+import androidx.room3.Entity
+import androidx.room3.ForeignKey
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 import dev.ohs.fhir.index.entities.PositionIndex
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.uuid.Uuid

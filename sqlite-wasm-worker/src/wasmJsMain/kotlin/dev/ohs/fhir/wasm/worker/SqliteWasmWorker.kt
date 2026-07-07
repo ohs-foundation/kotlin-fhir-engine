@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ohs.fhir.db.impl
 
-import androidx.room3.RoomDatabase
+package dev.ohs.fhir.wasm.worker
 
-/**
- * Returns a platform-specific [RoomDatabase.Builder] for [ResourceDatabase].
- *
- * @param platformContext Platform-specific context. On Android, this should be the application
- *   `Context`. On Desktop and iOS, this parameter is ignored.
- */
-internal expect fun getDatabaseBuilder(platformContext: Any): RoomDatabase.Builder<ResourceDatabase>
+import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
+import org.w3c.dom.Worker
+
+/** Creates a [WebWorkerSQLiteDriver] backed by a SQLite-WASM Web Worker (OPFS-persisted). */
+fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = WebWorkerSQLiteDriver(jsWorker())
+
+@OptIn(ExperimentalWasmJsInterop::class)
+private fun jsWorker(): Worker =
+  js("""new Worker(new URL("sqlite-wasm-worker/worker.js", import.meta.url), { type: "module" })""")

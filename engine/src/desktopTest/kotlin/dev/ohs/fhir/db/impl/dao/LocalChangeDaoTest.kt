@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhir.db.impl.dao
 
-import androidx.room.Room
+import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.ohs.fhir.db.impl.ResourceDatabase
 import dev.ohs.fhir.db.impl.entities.LocalChangeEntity

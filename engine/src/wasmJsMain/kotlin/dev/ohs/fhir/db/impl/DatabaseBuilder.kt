@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package dev.ohs.fhir.db.impl
 
+import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import dev.ohs.fhir.wasm.worker.createSqliteWasmDriver
 
-/**
- * Returns a platform-specific [RoomDatabase.Builder] for [ResourceDatabase].
- *
- * @param platformContext Platform-specific context. On Android, this should be the application
- *   `Context`. On Desktop and iOS, this parameter is ignored.
- */
-internal expect fun getDatabaseBuilder(platformContext: Any): RoomDatabase.Builder<ResourceDatabase>
+internal actual fun getDatabaseBuilder(
+  platformContext: Any,
+): RoomDatabase.Builder<ResourceDatabase> {
+  // The web driver persists to the Origin Private File System (OPFS) under this name, via a
+  // SQLite-WASM Web Worker. Query coroutine context is left to Room's default (web is async).
+  return Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME)
+    .setDriver(createSqliteWasmDriver())
+}
+
+private const val DATABASE_NAME = "resources.db"
