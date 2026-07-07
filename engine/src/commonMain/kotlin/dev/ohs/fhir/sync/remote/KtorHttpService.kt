@@ -78,8 +78,8 @@ internal class KtorHttpService(
             .filterKeys { it != "text" || !looksLikeNarrative(element[it]) }
             .mapValues { (_, v) -> stripNarrativeText(v) },
         )
-      is kotlinx.serialization.json.JsonArray ->
-        kotlinx.serialization.json.JsonArray(
+      is JsonArray ->
+        JsonArray(
           element.jsonArray.map { stripNarrativeText(it) },
         )
       else -> element

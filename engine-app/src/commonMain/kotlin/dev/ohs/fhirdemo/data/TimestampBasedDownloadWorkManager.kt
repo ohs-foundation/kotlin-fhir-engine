@@ -27,7 +27,7 @@ import dev.ohs.fhir.sync.SyncDataParams
 import dev.ohs.fhir.sync.download.DownloadRequest
 import kotlinx.datetime.toInstant
 
-class TimestampBasedDownloadWorkManagerImpl(private val dataStore: DemoDataStore) :
+class TimestampBasedDownloadWorkManager(private val dataStore: DemoDataStore) :
   DownloadWorkManager {
   private val resourceTypeList = ResourceType.entries.map { it.name }
   private val urls = ArrayDeque(listOf("Patient?address-city=NAIROBI&_sort=_lastUpdated"))

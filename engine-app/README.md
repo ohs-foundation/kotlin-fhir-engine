@@ -10,47 +10,6 @@ A Compose Multiplatform demo app for `kotlin-fhir-engine`. Runs on Android, Desk
 
 Built entirely on Material 3 components — no datacapture library, no other FHIR UI dependencies. The form is hand-rolled in Compose.
 
-## Architecture
-
-```
-commonMain/dev/ohs/fhirdemo/
-├── App.kt                          # Root composable + screen routing
-├── data/
-│   ├── Engine.kt                   # Lazy FhirEngineProvider init
-│   ├── PatientUiModel.kt           # Plain-Kotlin patient projection
-│   ├── PatientRepository.kt        # Engine wrapper + FHIR mapping
-│   ├── FhirSyncController.kt       # expect class — one-time & periodic sync API
-│   └── TimestampBasedDownloadWorkManagerImpl.kt  # DownloadWorkManager impl
-├── nav/Navigator.kt                # Sealed Screen + StateFlow
-└── ui/
-    ├── theme/Theme.kt              # Material3 colour scheme
-    ├── list/   PatientListScreen + ViewModel
-    ├── detail/ PatientDetailScreen + ViewModel
-    ├── form/   PatientFormScreen + ViewModel
-    └── sync/   SyncScreen + SyncViewModel, PeriodicSyncScreen + PeriodicSyncViewModel
-```
-
-Platform-specific sync wiring lives under each source set:
-
-```
-androidMain/data/
-├── DemoFhirSyncWorker.kt           # FhirSyncWorker impl (WorkManager)
-└── FhirSyncController.android.kt   # actual — delegates to Sync + WorkManager
-
-iosMain/data/
-├── DemoFhirSyncTask.ios.kt         # FhirSyncTask impl
-├── IosBgSyncScheduler.kt           # BGProcessingTask scheduler
-├── IosFhirSetup.kt                 # bgSyncScheduler singleton + initializeFhirSync()
-└── FhirSyncController.ios.kt       # actual — one-time via coroutine, periodic via BGTask
-
-desktopMain/data/
-├── DemoFhirSyncTask.desktop.kt     # FhirSyncTask impl
-├── Sync.kt                         # Coroutine-based foreground scheduler
-└── FhirSyncController.desktop.kt   # actual — delegates to Sync
-```
-
-ViewModels are plain Kotlin classes taking a `CoroutineScope` and a repository or controller. State flows through `MutableStateFlow` / `collectAsState`. Navigation is a tiny sealed class — no nav library dependency.
-
 ## Running
 
 ### Android
@@ -101,7 +60,7 @@ A 420×800 window will open.
 
 ## Sync
 
-The demo app implements sync via `FhirSyncController` — an `expect` class with a platform `actual` on each target. Both one-time and periodic sync are demonstrated in `SyncScreen` and `PeriodicSyncScreen`.
+Sync is the only part that diverges per platform. Everything else — ViewModels, navigation, UI — is shared Compose Multiplatform code. `FhirSyncController` is an `expect` class with a platform `actual` on each target; both one-time and periodic sync are demonstrated in `SyncScreen` and `PeriodicSyncScreen`.
 
 ### Android
 

@@ -17,12 +17,12 @@ package dev.ohs.fhir.sync.upload.request
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.sync.upload.patch.Patch
 import kotlin.time.Clock
+import kotlinx.serialization.json.Json
 
 internal object RequestGeneratorTestUtils {
 
@@ -36,7 +36,7 @@ internal object RequestGeneratorTestUtils {
       type = Patch.Type.from(type.value),
     )
 
-  val jsonParser = FhirR4Json()
+  val jsonParser = Json
   val insertionLocalChange =
     LocalChange(
       resourceType = ResourceType.Patient.name,

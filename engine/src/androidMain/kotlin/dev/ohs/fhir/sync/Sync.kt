@@ -17,11 +17,12 @@ package dev.ohs.fhir.sync
 
 import android.content.Context
 import androidx.lifecycle.asFlow
-import androidx.work.BackoffPolicy
+import androidx.work.BackoffPolicy as AndroidBackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType as AndroidNetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkInfo
@@ -414,10 +415,10 @@ object Sync {
     }
   }
 
-  private fun dev.ohs.fhir.sync.BackoffPolicy.toWorkManagerBackoffPolicy() =
+  private fun BackoffPolicy.toWorkManagerBackoffPolicy() =
     when (this) {
-      dev.ohs.fhir.sync.BackoffPolicy.EXPONENTIAL -> androidx.work.BackoffPolicy.EXPONENTIAL
-      dev.ohs.fhir.sync.BackoffPolicy.LINEAR -> BackoffPolicy.LINEAR
+      BackoffPolicy.EXPONENTIAL -> AndroidBackoffPolicy.EXPONENTIAL
+      BackoffPolicy.LINEAR -> AndroidBackoffPolicy.LINEAR
     }
 
   private fun SyncConstraints.toWorkManagerConstraints() =
@@ -425,11 +426,11 @@ object Sync {
       .apply {
         setRequiredNetworkType(
           when (requiredNetworkType) {
-            NetworkType.NOT_REQUIRED -> androidx.work.NetworkType.NOT_REQUIRED
-            NetworkType.CONNECTED -> androidx.work.NetworkType.CONNECTED
-            NetworkType.UNMETERED -> androidx.work.NetworkType.UNMETERED
-            NetworkType.NOT_ROAMING -> androidx.work.NetworkType.NOT_ROAMING
-            NetworkType.METERED -> androidx.work.NetworkType.METERED
+            NetworkType.NOT_REQUIRED -> AndroidNetworkType.NOT_REQUIRED
+            NetworkType.CONNECTED -> AndroidNetworkType.CONNECTED
+            NetworkType.UNMETERED -> AndroidNetworkType.UNMETERED
+            NetworkType.NOT_ROAMING -> AndroidNetworkType.NOT_ROAMING
+            NetworkType.METERED -> AndroidNetworkType.METERED
           },
         )
         setRequiresBatteryNotLow(requiresBatteryNotLow)

@@ -26,7 +26,6 @@ import dev.ohs.fhir.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Patient
@@ -54,6 +53,7 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
+import kotlinx.serialization.json.Json
 
 class UploaderTest {
   private lateinit var perResourcePatchGenerator: PatchGenerator
@@ -546,7 +546,7 @@ class UploaderTest {
     }
 
   companion object {
-    private val fhirR4Json = FhirR4Json()
+    private val fhirR4Json = Json
     private val urlUploadRequestGenerator =
       UploadRequestGeneratorFactory.byMode(
         UploadRequestGeneratorMode.UrlRequest(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Patch),

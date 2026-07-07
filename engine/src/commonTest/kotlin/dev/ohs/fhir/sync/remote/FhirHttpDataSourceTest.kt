@@ -22,7 +22,6 @@ import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
@@ -38,10 +37,11 @@ import io.ktor.util.encodeBase64
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 
 internal class FhirHttpDataSourceTest {
   private val baseUrl = "/baseR4/"
-  private val parser = FhirR4Json()
+  private val parser = Json
   private var requestData: HttpRequestData? = null
   private val fhirHttpService by lazy {
     KtorHttpService.Builder(baseUrl, NetworkConfiguration())

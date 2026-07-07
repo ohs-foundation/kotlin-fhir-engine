@@ -20,25 +20,33 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
 
-/** Data class for squashed local changes for resource */
+/**
+ * Squashed local changes for a resource pending upload.
+ *
+ * @property resourceType The [ResourceType].
+ * @property resourceId The resource id [Resource.id].
+ * @property versionId Server version this change is based on; `null` for new resources.
+ * @property timestamp When the user performed the create/update/delete operation.
+ * @property type Type of local change.
+ * @property payload JSON representation of the change — format depends on [type].
+ */
 internal data class Patch(
-  /** The [ResourceType] */
   val resourceType: String,
-  /** The resource id [Resource.id] */
   val resourceId: String,
-  /** This is the id of the version of the resource that this local change is based of */
   val versionId: String? = null,
-  /** The time instant the app user performed a CUD operation on the resource. */
   val timestamp: Instant,
-  /** Type of local change like insert, delete, etc */
   val type: Type,
-  /** json string with local changes */
   val payload: String,
 ) {
   enum class Type(val value: Int) {
-    INSERT(1), // create a new resource. payload is the entire resource json.
-    UPDATE(2), // patch. payload is the json patch.
-    DELETE(3), // delete. payload is empty string.
+    /** Create a new resource; payload is the full resource JSON. */
+    INSERT(1),
+
+    /** Update an existing resource; payload is a JSON Patch document. */
+    UPDATE(2),
+
+    /** Delete a resource; payload is empty. */
+    DELETE(3),
     ;
 
     companion object {

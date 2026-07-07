@@ -24,7 +24,6 @@ import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.Encounter
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.Group
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
@@ -39,6 +38,7 @@ import io.kotest.matchers.equals.shouldBeEqual
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 
 class PatchOrderingTest {
 
@@ -217,7 +217,7 @@ class PatchOrderingTest {
     }
 
   companion object {
-    private val jsonParser = FhirR4Json()
+    private val jsonParser = Json
 
     private fun createUpdateLocalChange(
       oldEntity: Resource,

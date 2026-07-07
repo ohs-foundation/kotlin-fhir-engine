@@ -27,6 +27,7 @@ import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.sync.DataSource
@@ -74,11 +75,11 @@ class DownloaderImplTest {
                           `class` =
                             Coding(
                               code = Code(value = "AMB"),
-                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory"),
+                              display = FhirR4String(value = "ambulatory"),
                             ),
                           subject =
                             Reference(
-                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"),
+                              reference = FhirR4String(value = "Patient/pa-123"),
                             ),
                         ),
                     ),
@@ -91,7 +92,7 @@ class DownloaderImplTest {
                     OperationOutcome.Issue(
                       severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
                       code = Enumeration(value = OperationOutcome.IssueType.Exception),
-                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."),
+                      diagnostics = FhirR4String(value = "Resource not found."),
                     ),
                   ),
               )
@@ -102,7 +103,7 @@ class DownloaderImplTest {
                     OperationOutcome.Issue(
                       severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
                       code = Enumeration(value = OperationOutcome.IssueType.Invalid),
-                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"),
+                      diagnostics = FhirR4String(value = "Unknown"),
                     ),
                   ),
               )
@@ -122,7 +123,7 @@ class DownloaderImplTest {
                       code = CodeableConcept(),
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                          reference = FhirR4String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),
@@ -132,7 +133,7 @@ class DownloaderImplTest {
                       id = "con-123",
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                          reference = FhirR4String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),
@@ -198,11 +199,11 @@ class DownloaderImplTest {
                           `class` =
                             Coding(
                               code = Code(value = "AMB"),
-                              display = dev.ohs.fhir.model.r4.String(value = "ambulatory"),
+                              display = FhirR4String(value = "ambulatory"),
                             ),
                           subject =
                             Reference(
-                              reference = dev.ohs.fhir.model.r4.String(value = "Patient/pa-123"),
+                              reference = FhirR4String(value = "Patient/pa-123"),
                             ),
                         ),
                     ),
@@ -215,7 +216,7 @@ class DownloaderImplTest {
                     OperationOutcome.Issue(
                       severity = Enumeration(value = OperationOutcome.IssueSeverity.Fatal),
                       code = Enumeration(value = OperationOutcome.IssueType.Exception),
-                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Resource not found."),
+                      diagnostics = FhirR4String(value = "Resource not found."),
                     ),
                   ),
               )
@@ -226,7 +227,7 @@ class DownloaderImplTest {
                     OperationOutcome.Issue(
                       severity = Enumeration(value = OperationOutcome.IssueSeverity.Error),
                       code = Enumeration(value = OperationOutcome.IssueType.Invalid),
-                      diagnostics = dev.ohs.fhir.model.r4.String(value = "Unknown"),
+                      diagnostics = FhirR4String(value = "Unknown"),
                     ),
                   ),
               )
@@ -246,7 +247,7 @@ class DownloaderImplTest {
                       code = CodeableConcept(),
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                          reference = FhirR4String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),
@@ -256,7 +257,7 @@ class DownloaderImplTest {
                       id = "con-123",
                       subject =
                         Reference(
-                          reference = dev.ohs.fhir.model.r4.String(value = "Patient/pq-123"),
+                          reference = FhirR4String(value = "Patient/pq-123"),
                         ),
                     ),
                 ),

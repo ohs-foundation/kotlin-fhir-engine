@@ -95,12 +95,10 @@ object FhirEngineProvider {
     return dataSource
   }
 
-  fun getFhirDataStore(): FhirDataStore {
+  fun getFhirDataStore(): FhirDataStore =
     checkNotNull(fhirDataStore) {
       "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
     }
-    return fhirDataStore!!
-  }
 
   /**
    * Returns the [SearchParamDefinitionsProvider] created when the [FhirEngine] was built (which

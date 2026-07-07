@@ -18,7 +18,6 @@ package dev.ohs.fhir.sync.remote
 import dev.ohs.fhir.NetworkConfiguration
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.FhirR4Json
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
@@ -29,10 +28,11 @@ import io.ktor.client.engine.mock.respondOk
 import io.ktor.http.Headers
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 
 class KtorHttpServiceTest {
 
-  private val parser = FhirR4Json()
+  private val parser = Json
 
   @Test // https://github.com/google/android-fhir/issues/1892
   fun should_assemble_download_request_correctly() = runTest {

@@ -102,8 +102,8 @@ internal object PatchOrdering {
     localChangeIdToReferenceMap: Map<Long, List<LocalChangeResourceReference>>,
   ): Map<Node, List<Node>> {
     val adjacencyList = mutableMapOf<Node, List<Node>>()
-    /* if the outgoing reference is to a resource that's just an update and not create, then don't
-    link to it. This may make the sub graphs smaller and also help avoid cyclic dependencies.*/
+    // Only link to INSERT resources — skipping UPDATEs keeps the graph smaller and avoids false
+    // cycles.
     val resourceIdsOfInsertTypeLocalChanges =
       asSequence()
         .filter { it.generatedPatch.type == Patch.Type.INSERT }
