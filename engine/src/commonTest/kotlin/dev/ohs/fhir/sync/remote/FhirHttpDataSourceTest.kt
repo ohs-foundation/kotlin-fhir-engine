@@ -141,7 +141,6 @@ internal class FhirHttpDataSourceTest {
 
     requestData!!.url.encodedPath.shouldBeEqual("${baseUrl}${request.url}")
     requestData!!.method.shouldBeEqual(HttpMethod.Patch)
-    //    requestData!!.headers["Content-Type"].shouldBe(ContentTypes.APPLICATION_JSON_PATCH)
     requestData!!
       .body
       .readBytearrayContentAsString()
