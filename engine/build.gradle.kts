@@ -25,6 +25,8 @@ kotlin {
     compileSdk = 36
     minSdk = 26
     withHostTestBuilder {}
+    withDeviceTestBuilder { sourceSetTreeName = "test" }
+      .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
   }
 
   jvm("desktop")
