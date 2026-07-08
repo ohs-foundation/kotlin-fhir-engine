@@ -15,13 +15,6 @@
  */
 package dev.ohs.fhirdemo.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import dev.ohs.fhir.sync.createDataStore
-import java.io.File
+import dev.ohs.fhir.FhirEngine
 
-private val demoDataStore: DataStore<Preferences> = createDataStore {
-  File(demoStorageDirectory, demoDataStoreFileName).absolutePath
-}
-
-fun createDemoDataStore(): DataStore<Preferences> = demoDataStore
+actual fun fhirEngine(platformContext: Any): FhirEngine = initFhirEngine(platformContext)

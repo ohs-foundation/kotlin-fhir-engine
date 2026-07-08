@@ -27,10 +27,18 @@ import dev.ohs.fhir.sync.remote.HttpLogger
 const val SERVER_BASE_URL = "https://hapi.fhir.org/baseR4/"
 
 /** Initializes [FhirEngineProvider] once and returns the [FhirEngine] instance. */
-fun fhirEngine(platformContext: Any = Unit): FhirEngine {
+expect fun fhirEngine(platformContext: Any = Unit): FhirEngine
+
+/**
+ * Initializes [FhirEngineProvider] (if needed) with the demo app's configuration and
+ * [storageDirectory], then returns the [FhirEngine] instance. Shared by each platform's actual
+ * [fhirEngine] so only the storage location varies per platform.
+ */
+internal fun initFhirEngine(platformContext: Any, storageDirectory: String? = null): FhirEngine {
   if (FhirEngineProvider.isNotInitialized()) {
     FhirEngineProvider.init(
       FhirEngineConfiguration(
+        storageDirectory = storageDirectory,
         serverConfiguration =
           ServerConfiguration(
             baseUrl = SERVER_BASE_URL,

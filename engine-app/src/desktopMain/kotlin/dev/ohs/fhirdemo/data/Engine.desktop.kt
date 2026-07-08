@@ -15,13 +15,16 @@
  */
 package dev.ohs.fhirdemo.data
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import dev.ohs.fhir.sync.createDataStore
+import dev.ohs.fhir.FhirEngine
 import java.io.File
 
-private val demoDataStore: DataStore<Preferences> = createDataStore {
-  File(demoStorageDirectory, demoDataStoreFileName).absolutePath
-}
+/**
+ * Directory where the FHIR engine's database/preferences (and this demo app's own preferences, see
+ * `DemoDataStore.desktop.kt`) are stored. Defaults to `~/.fhir-engine`; change this to override it.
+ * See `FhirEngineConfiguration.storageDirectory`.
+ */
+internal val demoStorageDirectory: String
+  get() = File(System.getProperty("user.home"), ".fhir-engine").absolutePath
 
-fun createDemoDataStore(): DataStore<Preferences> = demoDataStore
+actual fun fhirEngine(platformContext: Any): FhirEngine =
+  initFhirEngine(platformContext, storageDirectory = demoStorageDirectory)
