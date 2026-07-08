@@ -22,5 +22,11 @@ import androidx.room.RoomDatabase
  *
  * @param platformContext Platform-specific context. On Android, this should be the application
  *   `Context`. On Desktop and iOS, this parameter is ignored.
+ * @param storageDirectory Directory for the database file. Only honored on Desktop; ignored on
+ *   Android/iOS which have an OS-provided app-scoped storage location. See
+ *   [dev.ohs.fhir.FhirEngineConfiguration.storageDirectory].
  */
-internal expect fun getDatabaseBuilder(platformContext: Any): RoomDatabase.Builder<ResourceDatabase>
+internal expect fun getDatabaseBuilder(
+  platformContext: Any,
+  storageDirectory: String?,
+): RoomDatabase.Builder<ResourceDatabase>

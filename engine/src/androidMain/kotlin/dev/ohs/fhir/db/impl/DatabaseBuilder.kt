@@ -21,6 +21,7 @@ import androidx.room.RoomDatabase
 
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
+  storageDirectory: String?,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val context = platformContext as Context
   val dbFile = context.getDatabasePath(DATABASE_NAME)

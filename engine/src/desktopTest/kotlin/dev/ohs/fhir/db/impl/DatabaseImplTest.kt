@@ -27,6 +27,7 @@ import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.testStorageDirectory
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -54,7 +55,12 @@ class DatabaseImplTest {
 
   @BeforeTest
   fun setUp() = runTest {
-    database = DatabaseImpl(Unit, ResourceIndexer(SearchParamDefinitionsProviderImpl()))
+    database =
+      DatabaseImpl(
+        Unit,
+        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory = testStorageDirectory(),
+      )
     database.clearDatabase()
     database.insert(TEST_PATIENT_1)
   }

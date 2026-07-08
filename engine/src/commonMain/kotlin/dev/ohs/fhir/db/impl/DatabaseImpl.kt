@@ -68,6 +68,7 @@ import kotlinx.coroutines.IO
 internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
+  storageDirectory: String? = null,
 ) : Database {
 
   private companion object {
@@ -83,7 +84,7 @@ internal class DatabaseImpl(
   }
 
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext)
+    getDatabaseBuilder(platformContext, storageDirectory)
       .setDriver(BundledSQLiteDriver())
       .setQueryCoroutineContext(Dispatchers.IO)
       .fallbackToDestructiveMigration(dropAllTables = true)

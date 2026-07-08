@@ -18,27 +18,43 @@ package dev.ohs.fhirdemo.data
 import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.FhirEngineConfiguration
 import dev.ohs.fhir.FhirEngineProvider
+import dev.ohs.fhir.NetworkConfiguration
+import dev.ohs.fhir.ServerConfiguration
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamType
+import dev.ohs.fhir.sync.remote.HttpLogger
+
+const val SERVER_BASE_URL = "https://hapi.fhir.org/baseR4/"
+
+/** Initializes [FhirEngineProvider] once and returns the [FhirEngine] instance. */
+expect fun fhirEngine(platformContext: Any = Unit): FhirEngine
 
 /**
- * Initializes [FhirEngineProvider] exactly once. Backed by [lazy], which defaults to
- * [LazyThreadSafetyMode.SYNCHRONIZED] and is safe across all Kotlin Multiplatform targets.
+ * Initializes [FhirEngineProvider] (if needed) with the demo app's configuration and
+ * [storageDirectory], then returns the [FhirEngine] instance. Shared by each platform's actual
+ * [fhirEngine] so only the storage location varies per platform.
  */
-private val engineInitializer: Unit by lazy {
-  FhirEngineProvider.init(
-    FhirEngineConfiguration(
-      customSearchParameters =
-        listOf(
-          SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
-          SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
-          SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
-        ),
-    ),
-  )
-}
+internal fun initFhirEngine(platformContext: Any, storageDirectory: String? = null): FhirEngine {
+  if (FhirEngineProvider.isNotInitialized()) {
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(
+        storageDirectory = storageDirectory,
+        serverConfiguration =
+          ServerConfiguration(
+            baseUrl = SERVER_BASE_URL,
+            networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
+            httpLogger = HttpLogger(level = HttpLogger.Level.BODY),
+          ),
+        customSearchParameters =
+          listOf(
+            SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
+            SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
+            SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
+          ),
+      ),
+      platformContext,
+    )
+  }
 
-fun fhirEngine(platformContext: Any = Unit): FhirEngine {
-  engineInitializer
   return FhirEngineProvider.getInstance(platformContext)
 }

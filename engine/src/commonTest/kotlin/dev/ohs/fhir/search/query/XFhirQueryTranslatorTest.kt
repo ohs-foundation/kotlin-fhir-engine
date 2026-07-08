@@ -28,6 +28,7 @@ import dev.ohs.fhir.search.Search
 import dev.ohs.fhir.search.query.XFhirQueryTranslator.applyFilterParam
 import dev.ohs.fhir.search.query.XFhirQueryTranslator.applySortParam
 import dev.ohs.fhir.search.query.XFhirQueryTranslator.translate
+import dev.ohs.fhir.testStorageDirectory
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -42,6 +43,7 @@ class XFhirQueryTranslatorTest {
   fun setUp() {
     FhirEngineProvider.init(
       FhirEngineConfiguration(
+        storageDirectory = testStorageDirectory(),
         customSearchParameters =
           listOf(
             SearchParamDefinition(

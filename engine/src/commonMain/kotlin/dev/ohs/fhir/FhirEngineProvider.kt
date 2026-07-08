@@ -21,6 +21,8 @@ import dev.ohs.fhir.index.ResourceIndexer
 import dev.ohs.fhir.index.SearchParamDefinition
 import dev.ohs.fhir.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.sync.DataSource
+import dev.ohs.fhir.sync.FhirDataStore
+import dev.ohs.fhir.sync.getDataStore
 import dev.ohs.fhir.sync.remote.FhirHttpDataSource
 import dev.ohs.fhir.sync.remote.KtorHttpService
 
@@ -41,6 +43,7 @@ object FhirEngineProvider {
   private var configuration: FhirEngineConfiguration? = null
   private var fhirEngine: FhirEngine? = null
   private var dataSource: DataSource? = null
+  private var fhirDataStore: FhirDataStore? = null
   private var platformContext: Any = Unit
   private var searchParamProvider: SearchParamDefinitionsProviderImpl? = null
 
@@ -54,7 +57,13 @@ object FhirEngineProvider {
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
+    this.fhirDataStore =
+      FhirDataStore(getDataStore(platformContext, configuration.storageDirectory))
   }
+
+  fun isInitialized() = configuration != null
+
+  fun isNotInitialized() = !isInitialized()
 
   /**
    * Returns the [FhirEngine] instance, creating it if necessary.
@@ -87,6 +96,11 @@ object FhirEngineProvider {
     return dataSource
   }
 
+  fun getFhirDataStore(): FhirDataStore =
+    checkNotNull(fhirDataStore) {
+      "FhirEngineProvider not initialized. Call FhirEngineProvider.init() first."
+    }
+
   /**
    * Returns the [SearchParamDefinitionsProvider] created when the [FhirEngine] was built (which
    * includes any custom search parameters), or `null` if the engine hasn't been created yet. Used
@@ -111,7 +125,7 @@ object FhirEngineProvider {
       SearchParamDefinitionsProviderImpl(customParams = buildCustomParamsMap(config))
     searchParamProvider = searchParamDefinitionsProvider
     val resourceIndexer = ResourceIndexer(searchParamDefinitionsProvider)
-    val database = DatabaseImpl(platformContext, resourceIndexer)
+    val database = DatabaseImpl(platformContext, resourceIndexer, config.storageDirectory)
 
     config.serverConfiguration?.let { serverConfig ->
       dataSource =

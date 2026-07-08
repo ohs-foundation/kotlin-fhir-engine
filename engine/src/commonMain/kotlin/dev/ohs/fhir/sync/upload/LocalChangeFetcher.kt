@@ -17,6 +17,7 @@ package dev.ohs.fhir.sync.upload
 
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.db.Database
+import kotlin.properties.Delegates
 
 /**
  * Fetches local changes.
@@ -44,6 +45,64 @@ internal interface LocalChangeFetcher {
   suspend fun getProgress(): SyncUploadProgress
 }
 
-internal object LocalChangeFetcherFactory {
-  fun byMode(mode: Any, database: Database): LocalChangeFetcher = TODO()
+internal class AllChangesLocalChangeFetcher(
+  private val database: Database,
+) : LocalChangeFetcher {
+
+  override var total by Delegates.notNull<Int>()
+
+  suspend fun initTotalCount() {
+    total = database.getLocalChangesCount()
+  }
+
+  override suspend fun hasNext(): Boolean = database.getLocalChangesCount().isNotZero()
+
+  override suspend fun next(): List<LocalChange> = database.getAllLocalChanges()
+
+  override suspend fun getProgress(): SyncUploadProgress =
+    SyncUploadProgress(database.getLocalChangesCount(), total)
 }
+
+internal class PerResourceLocalChangeFetcher(
+  private val database: Database,
+) : LocalChangeFetcher {
+
+  override var total by Delegates.notNull<Int>()
+
+  suspend fun initTotalCount() {
+    total = database.getLocalChangesCount()
+  }
+
+  override suspend fun hasNext(): Boolean = database.getLocalChangesCount().isNotZero()
+
+  override suspend fun next(): List<LocalChange> =
+    database.getAllChangesForEarliestChangedResource()
+
+  override suspend fun getProgress(): SyncUploadProgress =
+    SyncUploadProgress(database.getLocalChangesCount(), total)
+}
+
+/** Represents the mode in which local changes should be fetched. */
+sealed class LocalChangesFetchMode {
+  object AllChanges : LocalChangesFetchMode()
+
+  object PerResource : LocalChangesFetchMode()
+
+  object EarliestChange : LocalChangesFetchMode()
+}
+
+internal object LocalChangeFetcherFactory {
+  suspend fun byMode(
+    mode: LocalChangesFetchMode,
+    database: Database,
+  ): LocalChangeFetcher =
+    when (mode) {
+      is LocalChangesFetchMode.AllChanges ->
+        AllChangesLocalChangeFetcher(database).apply { initTotalCount() }
+      is LocalChangesFetchMode.PerResource ->
+        PerResourceLocalChangeFetcher(database).apply { initTotalCount() }
+      else -> throw NotImplementedError("$mode is not implemented yet.")
+    }
+}
+
+private fun Int.isNotZero() = this != 0

@@ -1,0 +1,10 @@
+// Configuration settings for iosApp target.
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
+
+// To sign for a device, copy Local.xcconfig.example → Local.xcconfig and set your TEAM_ID there.
+#include? "Local.xcconfig"
+
+PRODUCT_NAME=kotlin-fhir-engine demo
+PRODUCT_BUNDLE_IDENTIFIER = dev.ohs.fhirdemo

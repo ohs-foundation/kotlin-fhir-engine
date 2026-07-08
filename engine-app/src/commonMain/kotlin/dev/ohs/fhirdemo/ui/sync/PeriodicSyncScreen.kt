@@ -102,13 +102,6 @@ fun PeriodicSyncScreen(
           Text("Start Periodic Sync")
         }
       }
-
-      Text(
-        text =
-          "Note: sync is not yet implemented in the engine module — this screen demonstrates the UI only.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
   }
 }

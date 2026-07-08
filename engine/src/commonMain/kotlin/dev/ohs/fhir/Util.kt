@@ -15,18 +15,22 @@
  */
 package dev.ohs.fhir
 
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 
 /** Formats an [Instant] as an ISO 8601 date-time string with timezone offset. */
 internal fun Instant.toTimeZoneString(): String {
-  val localDateTime = this.toLocalDateTime(TimeZone.currentSystemDefault())
-  return localDateTime.toString()
+  val currentTimeZone = TimeZone.currentSystemDefault()
+  val localDateTime = this.toLocalDateTime(currentTimeZone)
+  return OffsetDateTime(localDateTime, offset = currentTimeZone.offsetAt(Clock.System.now()))
+    .toString()
 }
 
 /** Returns true if given string matches ISO date format i.e. "yyyy-MM-dd", false otherwise. */
