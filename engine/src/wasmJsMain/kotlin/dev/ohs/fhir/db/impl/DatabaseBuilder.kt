@@ -19,12 +19,18 @@ import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import dev.ohs.fhir.wasm.worker.createSqliteWasmDriver
 
+/**
+ * Returns a [RoomDatabase.Builder] backed by a SQLite-WASM Web Worker that persists to the Origin
+ * Private File System (OPFS). The query coroutine context is left to Room's default, since web
+ * database access is inherently asynchronous.
+ *
+ * @param platformContext Ignored on web; there is no platform context to pass.
+ * @param storageDirectory Ignored on web; OPFS keys the database by name, not a filesystem path.
+ */
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
-): RoomDatabase.Builder<ResourceDatabase> {
-  // The web driver persists to the Origin Private File System (OPFS) under this name, via a
-  // SQLite-WASM Web Worker. Query coroutine context is left to Room's default (web is async).
-  return Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME).setDriver(createSqliteWasmDriver())
-}
+  storageDirectory: String?,
+): RoomDatabase.Builder<ResourceDatabase> =
+  Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME).setDriver(createSqliteWasmDriver())
 
 private const val DATABASE_NAME = "resources.db"
