@@ -31,7 +31,7 @@ class FhirEngineProviderTest {
 
   @Test
   fun getInstance_calledTwice_shouldReturnSameFhirEngine() {
-    FhirEngineProvider.init(FhirEngineConfiguration())
+    FhirEngineProvider.init(FhirEngineConfiguration(storageDirectory = testStorageDirectory()))
     val engineOne = FhirEngineProvider.getInstance()
     val engineTwo = FhirEngineProvider.getInstance()
     assertSame(engineOne, engineTwo)
@@ -39,10 +39,14 @@ class FhirEngineProviderTest {
 
   @Test
   fun getInstance_afterClearInstance_shouldReturnDifferentInstances() {
-    FhirEngineProvider.init(FhirEngineConfiguration(testMode = true))
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
+    )
     val engineOne = FhirEngineProvider.getInstance()
     FhirEngineProvider.clearInstance()
-    FhirEngineProvider.init(FhirEngineConfiguration(testMode = true))
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
+    )
     val engineTwo = FhirEngineProvider.getInstance()
     assertNotSame(engineOne, engineTwo)
   }

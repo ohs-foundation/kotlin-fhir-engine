@@ -37,13 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.ohs.fhir.sync.CurrentSyncJobStatus
 
 @Composable
 fun SyncScreen(
   viewModel: SyncViewModel,
   onBack: () -> Unit,
 ) {
-  val status by viewModel.status.collectAsStateWithLifecycle()
+  val status by viewModel.pollState.collectAsStateWithLifecycle(CurrentSyncJobStatus.Blocked)
   val lastSyncTime by viewModel.lastSyncTime.collectAsStateWithLifecycle()
 
   Scaffold(
@@ -74,13 +75,14 @@ fun SyncScreen(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
       Text(
-        text = "Current sync status: ${status.name}",
+        text =
+          "Current sync status: ${if (status == CurrentSyncJobStatus.Blocked) "" else status::class.simpleName}",
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
 
       val running =
-        status == CurrentSyncJobStatus.Running || status == CurrentSyncJobStatus.Enqueued
+        status is CurrentSyncJobStatus.Running || status == CurrentSyncJobStatus.Enqueued
       if (running) {
         CircularProgressIndicator()
       }
@@ -100,13 +102,6 @@ fun SyncScreen(
           Text("Sync Now")
         }
       }
-
-      Text(
-        text =
-          "Note: sync is not yet implemented in the engine module — this screen demonstrates the UI only.",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
     }
   }
 }

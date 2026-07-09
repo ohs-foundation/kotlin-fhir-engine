@@ -57,13 +57,14 @@ import kotlin.uuid.Uuid
  * [dev.ohs.fhir.db.Database] for the API docs.
  *
  * Note: Room KMP does not provide a `withTransaction` extension; transactions are run via
- * [androidx.room3.useWriterConnection] + [androidx.room3.Transactor.withTransaction]. DAO calls
+ * [androidx.room3.useWriterConnection] and [androidx.room3.Transactor.withTransaction]. DAO calls
  * made inside reuse the writer connection from the coroutine context, so they participate in the
  * transaction.
  */
 internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
+  storageDirectory: String? = null,
 ) : Database {
 
   private companion object {
@@ -82,7 +83,7 @@ internal class DatabaseImpl(
   // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
   // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext).fallbackToDestructiveMigration(dropAllTables = true).build()
+    getDatabaseBuilder(platformContext, storageDirectory).fallbackToDestructiveMigration(dropAllTables = true).build()
 
   private val resourceDao by lazy { db.resourceDao().also { it.resourceIndexer = resourceIndexer } }
   private val localChangeDao by lazy { db.localChangeDao() }

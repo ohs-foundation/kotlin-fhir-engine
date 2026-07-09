@@ -26,6 +26,8 @@ kotlin {
     compileSdk = 36
     minSdk = 26
     withHostTestBuilder {}
+    withDeviceTestBuilder { sourceSetTreeName = "test" }
+      .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
   }
 
   jvm("desktop")
@@ -57,6 +59,8 @@ kotlin {
         implementation(libs.fhir.path)
         implementation(libs.kermit)
         implementation(libs.androidx.room3.runtime)
+        implementation(libs.androidx.sqlite.bundled)
+        api(libs.androidx.datastore.preferences)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.client.logging)
@@ -67,8 +71,10 @@ kotlin {
     }
     commonTest {
       dependencies {
+        implementation(libs.kotest.assertions.core)
         implementation(libs.kotlin.test)
         implementation(libs.kotlinx.coroutines.test)
+        implementation(libs.ktor.client.mock.engine)
       }
     }
     // The bundled native SQLite driver has no wasmJs artifact, so it lives only in the non-web

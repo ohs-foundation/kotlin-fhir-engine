@@ -26,6 +26,7 @@ import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.search.count
 import dev.ohs.fhir.search.search
+import dev.ohs.fhir.testStorageDirectory
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -40,7 +41,7 @@ class FhirEngineImplTest {
 
   @BeforeTest
   fun setUp() = runTest {
-    FhirEngineProvider.init(FhirEngineConfiguration())
+    FhirEngineProvider.init(FhirEngineConfiguration(storageDirectory = testStorageDirectory()))
     FhirEngineProvider.getInstance().clearDatabase()
     FhirEngineProvider.getInstance().create(TEST_PATIENT_1)
   }
