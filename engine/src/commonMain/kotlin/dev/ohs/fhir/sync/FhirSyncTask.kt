@@ -22,8 +22,6 @@ import dev.ohs.fhir.sync.upload.UploadStrategy
 import dev.ohs.fhir.sync.upload.Uploader
 import dev.ohs.fhir.sync.upload.patch.PatchGeneratorFactory
 import dev.ohs.fhir.sync.upload.request.UploadRequestGeneratorFactory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -90,7 +88,7 @@ suspend fun FhirSyncTask.runSync(
     )
 
   return coroutineScope {
-    launch(Dispatchers.IO) {
+    launch(syncDispatcher) {
       synchronizer.syncState.collect { syncJobStatus ->
         when (syncJobStatus) {
           is SyncJobStatus.Succeeded,
