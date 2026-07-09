@@ -1,3 +1,12 @@
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec
+import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec
+import org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootEnvSpec
+
 plugins {
   alias(libs.plugins.android.application) apply false
   alias(libs.plugins.android.kotlin.multiplatform.library) apply false
@@ -20,22 +29,22 @@ val nodeHome: String? = (findProperty("nodeHome") as String?)?.takeIf { it.isNot
 
 if (nodeHome != null) {
   val nodeDir = file(nodeHome)
-  plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
-    the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().apply {
+  plugins.withType<NodeJsRootPlugin> {
+    the<NodeJsEnvSpec>().apply {
       download.set(false)
       installationDirectory.fileValue(nodeDir)
     }
   }
-  plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-    the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec>().download.set(false)
+  plugins.withType<YarnPlugin> {
+    the<YarnRootEnvSpec>().download.set(false)
   }
-  plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsRootPlugin> {
-    the<org.jetbrains.kotlin.gradle.targets.wasm.nodejs.WasmNodeJsEnvSpec>().apply {
+  plugins.withType<WasmNodeJsRootPlugin> {
+    the<WasmNodeJsEnvSpec>().apply {
       download.set(false)
       installationDirectory.fileValue(nodeDir)
     }
   }
-  plugins.withType<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin> {
-    the<org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootEnvSpec>().download.set(false)
+  plugins.withType<WasmYarnPlugin> {
+    the<WasmYarnRootEnvSpec>().download.set(false)
   }
 }
