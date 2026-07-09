@@ -59,7 +59,7 @@ kotlin {
         implementation(libs.fhir.path)
         implementation(libs.kermit)
         implementation(libs.androidx.room3.runtime)
-        api(libs.androidx.datastore.preferences)
+        api(libs.androidx.datastore.preferences.core)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.content.negotiation)
         implementation(libs.ktor.client.logging)

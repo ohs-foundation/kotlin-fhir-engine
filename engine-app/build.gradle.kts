@@ -67,7 +67,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":engine"))
-      implementation(libs.androidx.datastore.preferences)
+      implementation(libs.androidx.datastore.preferences.core)
       implementation(libs.kermit)
       implementation(libs.kotlin.fhir)
       implementation(libs.kotlinx.coroutines.core)
