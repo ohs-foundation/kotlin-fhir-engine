@@ -22,8 +22,8 @@ import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * No-op sync controller for web. Background and periodic sync rely on platform schedulers
- * (WorkManager on Android, a coroutine scheduler on Desktop/iOS) that have no browser equivalent, so
- * every method is a stub: the sync screens render but do nothing. Wiring real web sync is future
+ * (WorkManager on Android, a coroutine scheduler on Desktop/iOS) that have no browser equivalent,
+ * so every method is a stub: the sync screens render but do nothing. Wiring real web sync is future
  * work (see the engine's web notes).
  */
 actual class FhirSyncController actual constructor(context: Any) {

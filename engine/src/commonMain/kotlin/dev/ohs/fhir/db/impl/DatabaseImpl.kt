@@ -83,7 +83,9 @@ internal class DatabaseImpl(
   // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
   // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory).fallbackToDestructiveMigration(dropAllTables = true).build()
+    getDatabaseBuilder(platformContext, storageDirectory)
+      .fallbackToDestructiveMigration(dropAllTables = true)
+      .build()
 
   private val resourceDao by lazy { db.resourceDao().also { it.resourceIndexer = resourceIndexer } }
   private val localChangeDao by lazy { db.localChangeDao() }

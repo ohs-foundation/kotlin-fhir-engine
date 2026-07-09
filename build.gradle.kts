@@ -35,16 +35,12 @@ if (nodeHome != null) {
       installationDirectory.fileValue(nodeDir)
     }
   }
-  plugins.withType<YarnPlugin> {
-    the<YarnRootEnvSpec>().download.set(false)
-  }
+  plugins.withType<YarnPlugin> { the<YarnRootEnvSpec>().download.set(false) }
   plugins.withType<WasmNodeJsRootPlugin> {
     the<WasmNodeJsEnvSpec>().apply {
       download.set(false)
       installationDirectory.fileValue(nodeDir)
     }
   }
-  plugins.withType<WasmYarnPlugin> {
-    the<WasmYarnRootEnvSpec>().download.set(false)
-  }
+  plugins.withType<WasmYarnPlugin> { the<WasmYarnRootEnvSpec>().download.set(false) }
 }
