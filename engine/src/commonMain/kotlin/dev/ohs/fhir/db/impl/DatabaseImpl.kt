@@ -20,6 +20,7 @@ import androidx.room3.Transactor
 import androidx.room3.useReaderConnection
 import androidx.room3.useWriterConnection
 import androidx.sqlite.SQLiteStatement
+import androidx.sqlite.async.step
 import dev.ohs.fhir.LocalChange
 import dev.ohs.fhir.LocalChangeToken
 import dev.ohs.fhir.db.Database
