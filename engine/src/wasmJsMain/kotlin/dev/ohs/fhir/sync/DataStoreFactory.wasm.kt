@@ -16,24 +16,29 @@
 package dev.ohs.fhir.sync
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.okio.WebLocalStorage
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferencesSerializer
 
-private var dataStoreInstance: DataStore<Preferences>? = null
+private val dataStores = mutableMapOf<String, DataStore<Preferences>>()
 
 /**
- * Returns the FHIR engine's preferences [DataStore] on web.
- *
- * The store is constructed keyed by [fhirDataStoreFileName] but is **not durably persisted** in the
- * browser — the path-based backing has no filesystem there. This is sufficient today because the
- * engine only reads or writes these preferences during sync, which is not wired up on web (see the
- * wasm `FhirSyncController` actual). Durable web persistence would use `WebLocalStorage`, available
- * in a newer DataStore release.
+ * Returns a preferences [DataStore] backed by the browser's `localStorage` (persisted across page
+ * reloads and shared across tabs).
  *
  * @param platformContext Ignored on web.
- * @param storageDirectory Ignored on web; the browser has no filesystem directory.
+ * @param storageDirectory Namespaces the `localStorage` key. The browser has no directories, so it is
+ *   used as a name prefix; this keeps a test store separate from the app's default store.
  */
 internal actual fun getDataStore(
   platformContext: Any,
   storageDirectory: String?,
-): DataStore<Preferences> =
-  dataStoreInstance ?: createDataStore { fhirDataStoreFileName }.also { dataStoreInstance = it }
+): DataStore<Preferences> {
+  val name = storageDirectory?.let { "$it-$fhirDataStoreFileName" } ?: fhirDataStoreFileName
+  return dataStores.getOrPut(name) {
+    PreferenceDataStoreFactory.create(
+      storage = WebLocalStorage(serializer = PreferencesSerializer, name = name),
+    )
+  }
+}
