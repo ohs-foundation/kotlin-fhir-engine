@@ -82,9 +82,7 @@ kotlin {
     }
     androidMain.dependencies {
       implementation(libs.androidx.activity.compose)
-      // Provides Dispatchers.Main on Android via ServiceLoader (Room's DB coroutine needs it).
-      // See
-      // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
+      implementation(libs.androidx.work.runtime)
       implementation(libs.kotlinx.coroutines.android)
     }
     val desktopMain by getting {
