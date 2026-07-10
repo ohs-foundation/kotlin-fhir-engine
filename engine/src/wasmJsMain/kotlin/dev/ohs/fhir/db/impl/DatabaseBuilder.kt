@@ -25,12 +25,16 @@ import dev.ohs.fhir.wasm.worker.createSqliteWasmDriver
  * database access is inherently asynchronous.
  *
  * @param platformContext Ignored on web; there is no platform context to pass.
- * @param storageDirectory Ignored on web; OPFS keys the database by name, not a filesystem path.
+ * @param storageDirectory Namespaces the OPFS database file. The browser has no real directories, so
+ *   it is applied as a filename prefix rather than a path; this keeps a test database (which passes a
+ *   value here) separate from the app's default `resources.db`.
  */
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
-): RoomDatabase.Builder<ResourceDatabase> =
-  Room.databaseBuilder<ResourceDatabase>(DATABASE_NAME).setDriver(createSqliteWasmDriver())
+): RoomDatabase.Builder<ResourceDatabase> {
+  val databaseName = storageDirectory?.let { "$it-$DATABASE_NAME" } ?: DATABASE_NAME
+  return Room.databaseBuilder<ResourceDatabase>(databaseName).setDriver(createSqliteWasmDriver())
+}
 
 private const val DATABASE_NAME = "resources.db"
