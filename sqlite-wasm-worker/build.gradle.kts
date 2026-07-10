@@ -21,7 +21,7 @@ kotlin {
     commonMain.dependencies {
       // Exposes WebWorkerSQLiteDriver to consumers (engine wasm source set).
       api(libs.androidx.sqlite.web)
-      // Local npm module: worker.js + @sqlite.org/sqlite-wasm (see ./worker).
+      // Local npm module: worker.js and @sqlite.org/sqlite-wasm (see ./worker).
       implementation(npm("sqlite-wasm-worker", layout.projectDirectory.dir("worker").asFile))
     }
     val wasmJsMain by getting { dependencies { implementation(libs.kotlinx.browser) } }

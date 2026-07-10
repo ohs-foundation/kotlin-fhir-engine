@@ -100,7 +100,6 @@ kotlin {
     }
     val wasmJsMain by getting {
       dependencies {
-        // Provides the web SQLite driver (WebWorkerSQLiteDriver) + the SQLite-WASM worker.
         implementation(project(":sqlite-wasm-worker"))
       }
     }
