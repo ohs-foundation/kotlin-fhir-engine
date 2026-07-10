@@ -15,6 +15,7 @@
  */
 package dev.ohs.fhir.impl
 
+import dev.ohs.fhir.FhirEngine
 import dev.ohs.fhir.FhirEngineConfiguration
 import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.LocalChange
@@ -28,7 +29,6 @@ import dev.ohs.fhir.search.count
 import dev.ohs.fhir.search.search
 import dev.ohs.fhir.testStorageDirectory
 import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -39,11 +39,21 @@ import kotlinx.coroutines.test.runTest
 
 class FhirEngineImplTest {
 
-  @BeforeTest
-  fun setUp() = runTest {
+  /**
+   * Initializes [FhirEngineProvider] and returns a [FhirEngine] seeded with [TEST_PATIENT_1].
+   *
+   * Called at the start of each test's [runTest] instead of from an async `@BeforeTest`: on
+   * Kotlin/Wasm `runTest` returns a `Promise` that the test framework does not await for
+   * `@BeforeTest`, so the seed would not reliably be applied before the test body runs.
+   * `@AfterTest` clears the singleton between tests, so [FhirEngineProvider.init] runs fresh each
+   * time.
+   */
+  private suspend fun setUpEngine(): FhirEngine {
     FhirEngineProvider.init(FhirEngineConfiguration(storageDirectory = testStorageDirectory()))
-    FhirEngineProvider.getInstance().clearDatabase()
-    FhirEngineProvider.getInstance().create(TEST_PATIENT_1)
+    return FhirEngineProvider.getInstance().apply {
+      clearDatabase()
+      create(TEST_PATIENT_1)
+    }
   }
 
   @AfterTest
@@ -53,7 +63,7 @@ class FhirEngineImplTest {
 
   @Test
   fun create_shouldCreateResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     val ids = fhirEngine.create(TEST_PATIENT_2)
 
@@ -65,7 +75,7 @@ class FhirEngineImplTest {
 
   @Test
   fun createAll_shouldCreateResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     val ids = fhirEngine.create(TEST_PATIENT_1, TEST_PATIENT_2)
 
@@ -80,7 +90,7 @@ class FhirEngineImplTest {
 
   @Test
   fun create_resourceWithoutId_shouldCreateResourceWithAssignedId() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient =
       Patient(
         name =
@@ -103,14 +113,14 @@ class FhirEngineImplTest {
 
   @Test
   fun update_nonexistentResource_shouldThrowResourceNotFoundException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     assertFailsWith<ResourceNotFoundException> { fhirEngine.update(TEST_PATIENT_2) }
   }
 
   @Test
   fun update_shouldUpdateResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient1 = Patient(id = "test-update-patient-001")
     val patient2 = Patient(id = "test-update-patient-002")
     fhirEngine.create(patient1, patient2)
@@ -142,7 +152,7 @@ class FhirEngineImplTest {
 
   @Test
   fun update_existingAndNonExistingResource_shouldNotUpdateAnyResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient1 =
       Patient(
         id = "test-update-patient-001",
@@ -164,7 +174,7 @@ class FhirEngineImplTest {
 
   @Test
   fun update_existingAndNonExistingResource_shouldThrowResourceNotFoundException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient1 = Patient(id = "test-update-patient-001")
     fhirEngine.create(patient1)
 
@@ -175,7 +185,7 @@ class FhirEngineImplTest {
 
   @Test
   fun load_nonexistentResource_shouldThrowResourceNotFoundException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     val exception =
       assertFailsWith<ResourceNotFoundException> {
@@ -188,7 +198,7 @@ class FhirEngineImplTest {
 
   @Test
   fun load_shouldReturnResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     val result = fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID)
 
@@ -198,7 +208,7 @@ class FhirEngineImplTest {
 
   @Test
   fun clearDatabase_shouldClearAllTablesData() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "clear-1"), Patient(id = "clear-2"))
     assertEquals(3, fhirEngine.count<Patient> {})
 
@@ -209,7 +219,7 @@ class FhirEngineImplTest {
 
   @Test
   fun delete_shouldRemoveResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     assertIs<Patient>(fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID))
 
     fhirEngine.delete(ResourceType.Patient, TEST_PATIENT_1_ID)
@@ -222,7 +232,7 @@ class FhirEngineImplTest {
 
   @Test
   fun delete_nonexistentResource_isNoOp() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
 
     fhirEngine.delete(ResourceType.Patient, "does-not-exist")
 
@@ -231,7 +241,7 @@ class FhirEngineImplTest {
 
   @Test
   fun crud_fullCycle_createReadUpdateDelete() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val id = "crud-cycle-1"
 
     fhirEngine.create(Patient(id = id, name = listOf(HumanName(family = FhirString(value = "A")))))
@@ -252,7 +262,7 @@ class FhirEngineImplTest {
 
   @Test
   fun search_xFhirQueryString_filtersById_andLimitsByCount() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "xq1"), Patient(id = "xq2"), Patient(id = "xq3"))
 
     val byId = fhirEngine.search("Patient?_id=xq2")
@@ -265,7 +275,7 @@ class FhirEngineImplTest {
 
   @Test
   fun search_xFhirQueryString_unrecognizedParam_throwsIllegalArgumentException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val exception =
       assertFailsWith<IllegalArgumentException> {
         fhirEngine.search("Patient?customParam=true&gender=male&_sort=name")
@@ -275,7 +285,7 @@ class FhirEngineImplTest {
 
   @Test
   fun getLocalChanges_shouldReturnSingleLocalChange() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient = Patient(id = "lc-1")
     fhirEngine.create(patient)
 
@@ -289,7 +299,7 @@ class FhirEngineImplTest {
 
   @Test
   fun getLocalChanges_shouldReturnAllLocalChanges() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val patient = Patient(id = "lc-all")
     fhirEngine.create(patient)
     fhirEngine.update(
@@ -311,7 +321,7 @@ class FhirEngineImplTest {
 
   @Test
   fun getLocalChanges_wrongResourceId_shouldReturnEmpty() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "lc-present"))
 
     assertTrue(fhirEngine.getLocalChanges(ResourceType.Patient, "nonexistent_patient").isEmpty())
@@ -319,7 +329,7 @@ class FhirEngineImplTest {
 
   @Test
   fun getLocalChanges_wrongResourceType_shouldReturnEmpty() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "lc-type"))
 
     assertTrue(fhirEngine.getLocalChanges(ResourceType.Encounter, "lc-type").isEmpty())
@@ -327,7 +337,7 @@ class FhirEngineImplTest {
 
   @Test
   fun purge_withLocalChangeAndForcePurgeTrue_shouldPurgeResource() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID, true)
 
     assertFailsWith<ResourceNotFoundException> {
@@ -338,7 +348,7 @@ class FhirEngineImplTest {
 
   @Test
   fun purge_multipleWithLocalChangeAndForcePurgeTrue_shouldPurgeResources() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "purge-a"), Patient(id = "purge-b"))
 
     fhirEngine.purge(ResourceType.Patient, setOf("purge-a", "purge-b"), true)
@@ -351,7 +361,7 @@ class FhirEngineImplTest {
 
   @Test
   fun purge_withLocalChangeAndForcePurgeFalse_shouldThrowIllegalStateException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val exception =
       assertFailsWith<IllegalStateException> {
         fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID)
@@ -361,7 +371,7 @@ class FhirEngineImplTest {
 
   @Test
   fun purge_resourceNotAvailable_shouldThrowResourceNotFoundException() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     val exception =
       assertFailsWith<ResourceNotFoundException> {
         fhirEngine.purge(ResourceType.Patient, "nonexistent_patient")
@@ -371,7 +381,7 @@ class FhirEngineImplTest {
 
   @Test
   fun withTransaction_savesChangesSuccessfully() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     fhirEngine.withTransaction {
       create(Patient(id = "txn-1", name = listOf(HumanName(family = FhirString(value = "A")))))
       create(Patient(id = "txn-2", name = listOf(HumanName(family = FhirString(value = "B")))))
@@ -383,7 +393,7 @@ class FhirEngineImplTest {
 
   @Test
   fun withTransaction_rollsBackChangesWhenErrorOccurs() = runTest {
-    val fhirEngine = FhirEngineProvider.getInstance()
+    val fhirEngine = setUpEngine()
     try {
       fhirEngine.withTransaction {
         create(Patient(id = "txn-rollback"))

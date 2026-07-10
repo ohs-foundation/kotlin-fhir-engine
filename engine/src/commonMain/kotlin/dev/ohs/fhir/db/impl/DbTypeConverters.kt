@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhir.db.impl
 
-import androidx.room.TypeConverter
+import androidx.room3.TypeConverter
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant

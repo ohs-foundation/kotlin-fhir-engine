@@ -236,14 +236,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_create_by_delete() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Delete,
-            Bundle.HTTPVerb.Patch,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Delete,
+          Bundle.HTTPVerb.Patch,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Creation using DELETE is not supported.")
   }
@@ -252,14 +250,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_create_by_get() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Get,
-            Bundle.HTTPVerb.Patch,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Get,
+          Bundle.HTTPVerb.Patch,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Creation using GET is not supported.")
   }
@@ -268,14 +264,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_create_by_patch() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Patch,
-            Bundle.HTTPVerb.Patch,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Patch,
+          Bundle.HTTPVerb.Patch,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Creation using PATCH is not supported.")
   }
@@ -284,14 +278,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_update_by_delete() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Put,
-            Bundle.HTTPVerb.Delete,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Put,
+          Bundle.HTTPVerb.Delete,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Update using DELETE is not supported.")
   }
@@ -300,14 +292,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_update_by_get() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Put,
-            Bundle.HTTPVerb.Get,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Put,
+          Bundle.HTTPVerb.Get,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Update using GET is not supported.")
   }
@@ -316,14 +306,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_update_by_post() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Put,
-            Bundle.HTTPVerb.Post,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Put,
+          Bundle.HTTPVerb.Post,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Update using POST is not supported.")
   }
@@ -332,14 +320,12 @@ class TransactionBundleGeneratorTest {
   fun get_generator_should_through_exception_for_update_by_put() {
     val exception =
       assertFailsWith(IllegalArgumentException::class) {
-        runTest {
-          TransactionBundleGenerator.getGenerator(
-            Bundle.HTTPVerb.Put,
-            Bundle.HTTPVerb.Put,
-            generatedBundleSize = 500,
-            useETagForUpload = true,
-          )
-        }
+        TransactionBundleGenerator.getGenerator(
+          Bundle.HTTPVerb.Put,
+          Bundle.HTTPVerb.Put,
+          generatedBundleSize = 500,
+          useETagForUpload = true,
+        )
       }
     exception.message.shouldBe("Update using PUT is not supported.")
   }

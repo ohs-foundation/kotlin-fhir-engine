@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -44,6 +45,12 @@ kotlin {
     }
   }
 
+  @OptIn(ExperimentalWasmDsl::class)
+  wasmJs {
+    browser()
+    binaries.executable()
+  }
+
   targets.configureEach {
     compilations.configureEach {
       compilerOptions.configure {
@@ -60,7 +67,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":engine"))
-      implementation(libs.androidx.datastore.preferences)
+      implementation(libs.androidx.datastore.preferences.core)
       implementation(libs.kermit)
       implementation(libs.kotlin.fhir)
       implementation(libs.kotlinx.coroutines.core)
@@ -75,21 +82,16 @@ kotlin {
     }
     androidMain.dependencies {
       implementation(libs.androidx.activity.compose)
-      // Provides Dispatchers.Main on Android via ServiceLoader (Room's DB coroutine needs it).
-      // See
-      // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
+      implementation(libs.androidx.work.runtime)
       implementation(libs.kotlinx.coroutines.android)
     }
     val desktopMain by getting {
       dependencies {
         implementation(compose.desktop.currentOs)
-        // Provides Dispatchers.Main on the JVM/desktop via ServiceLoader (Room's DB coroutine needs
-        // it).
-        // See
-        // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-main.html
         implementation(libs.kotlinx.coroutines.swing)
       }
     }
+    val wasmJsMain by getting { dependencies { implementation(project(":sqlite-wasm-worker")) } }
   }
 }
 

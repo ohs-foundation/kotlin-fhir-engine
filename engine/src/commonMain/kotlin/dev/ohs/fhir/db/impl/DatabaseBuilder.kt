@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhir.db.impl
 
-import androidx.room.RoomDatabase
+import androidx.room3.RoomDatabase
 
 /**
  * Returns a platform-specific [RoomDatabase.Builder] for [ResourceDatabase].
