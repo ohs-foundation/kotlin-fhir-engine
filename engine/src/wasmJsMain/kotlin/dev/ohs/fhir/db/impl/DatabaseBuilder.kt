@@ -25,9 +25,9 @@ import dev.ohs.fhir.wasm.worker.createSqliteWasmDriver
  * database access is inherently asynchronous.
  *
  * @param platformContext Ignored on web; there is no platform context to pass.
- * @param storageDirectory Namespaces the OPFS database file. The browser has no real directories, so
- *   it is applied as a filename prefix rather than a path; this keeps a test database (which passes a
- *   value here) separate from the app's default `resources.db`.
+ * @param storageDirectory Namespaces the OPFS database file. The browser has no real directories,
+ *   so it is applied as a filename prefix rather than a path; this keeps a test database (which
+ *   passes a value here) separate from the app's default `resources.db`.
  */
 internal actual fun getDatabaseBuilder(
   platformContext: Any,

@@ -91,11 +91,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.swing)
       }
     }
-    val wasmJsMain by getting {
-      dependencies {
-        implementation(project(":sqlite-wasm-worker"))
-      }
-    }
+    val wasmJsMain by getting { dependencies { implementation(project(":sqlite-wasm-worker")) } }
   }
 }
 

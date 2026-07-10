@@ -28,8 +28,8 @@ private val dataStores = mutableMapOf<String, DataStore<Preferences>>()
  * reloads and shared across tabs).
  *
  * @param platformContext Ignored on web.
- * @param storageDirectory Namespaces the `localStorage` key. The browser has no directories, so it is
- *   used as a name prefix; this keeps a test store separate from the app's default store.
+ * @param storageDirectory Namespaces the `localStorage` key. The browser has no directories, so it
+ *   is used as a name prefix; this keeps a test store separate from the app's default store.
  */
 internal actual fun getDataStore(
   platformContext: Any,

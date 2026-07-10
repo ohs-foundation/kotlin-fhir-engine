@@ -44,8 +44,9 @@ class FhirEngineImplTest {
    *
    * Called at the start of each test's [runTest] instead of from an async `@BeforeTest`: on
    * Kotlin/Wasm `runTest` returns a `Promise` that the test framework does not await for
-   * `@BeforeTest`, so the seed would not reliably be applied before the test body runs. `@AfterTest`
-   * clears the singleton between tests, so [FhirEngineProvider.init] runs fresh each time.
+   * `@BeforeTest`, so the seed would not reliably be applied before the test body runs.
+   * `@AfterTest` clears the singleton between tests, so [FhirEngineProvider.init] runs fresh each
+   * time.
    */
   private suspend fun setUpEngine(): FhirEngine {
     FhirEngineProvider.init(FhirEngineConfiguration(storageDirectory = testStorageDirectory()))
