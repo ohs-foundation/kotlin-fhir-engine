@@ -59,6 +59,7 @@ kotlin {
         implementation(libs.fhir.path)
         implementation(libs.kermit)
         implementation(libs.androidx.room3.runtime)
+        implementation(libs.androidx.sqlite.async)
         api(libs.androidx.datastore.preferences.core)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.content.negotiation)
