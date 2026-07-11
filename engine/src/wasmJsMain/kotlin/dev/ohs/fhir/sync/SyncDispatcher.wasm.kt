@@ -19,4 +19,4 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 // The browser has no blocking-I/O thread pool, so Dispatchers.IO does not exist on wasm.
-internal actual val syncDispatcher: CoroutineDispatcher = Dispatchers.Default
+actual val syncDispatcher: CoroutineDispatcher = Dispatchers.Default

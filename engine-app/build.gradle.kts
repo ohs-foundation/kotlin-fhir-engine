@@ -32,6 +32,18 @@ android {
 kotlin {
   jvmToolchain(21)
 
+  // Desktop and wasmJs both lack a native OS background scheduler (no WorkManager, no
+  // BGTaskScheduler), so they share a "foregroundOnly" source set for coroutine-based foreground
+  // scheduling. See `foregroundOnlyMain/.../data/Sync.kt`.
+  applyDefaultHierarchyTemplate {
+    common {
+      group("foregroundOnly") {
+        withJvm()
+        withWasmJs()
+      }
+    }
+  }
+
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_21) } }
 
   jvm("desktop")

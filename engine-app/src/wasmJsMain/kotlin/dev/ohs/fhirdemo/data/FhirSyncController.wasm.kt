@@ -15,25 +15,56 @@
  */
 package dev.ohs.fhirdemo.data
 
+import dev.ohs.fhir.FhirEngineProvider
 import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.sync.LastSyncJobStatus
+import dev.ohs.fhir.sync.PeriodicSyncConfiguration
 import dev.ohs.fhir.sync.PeriodicSyncJobStatus
+import dev.ohs.fhir.sync.RepeatInterval
+import dev.ohs.fhir.sync.SyncJobStatus
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
 
 /**
- * No-op sync controller for web. Background and periodic sync rely on platform schedulers
- * (WorkManager on Android, a coroutine scheduler on Desktop/iOS) that have no browser equivalent,
- * so every method is a stub: the sync screens render but do nothing. Wiring real web sync is future
- * work (see the engine's web notes).
+ * Web sync controller backed by [Sync], the coroutine-based foreground scheduler shared with
+ * Desktop. The browser has no background scheduler equivalent to WorkManager, so sync only runs
+ * while this tab stays open — see [Sync]'s docs for why that tradeoff was chosen over a Service
+ * Worker + Periodic Background Sync API.
  */
 actual class FhirSyncController actual constructor(context: Any) {
-  actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> = emptyFlow()
+  actual suspend fun oneTimeSync(): Flow<CurrentSyncJobStatus> =
+    Sync.oneTimeSync(taskFactory = { DemoFhirSyncTask() })
 
-  actual suspend fun cancelOneTimeSync() {}
+  actual suspend fun cancelOneTimeSync() {
+    Sync.cancelOneTimeSync<DemoFhirSyncTask>()
+  }
 
-  actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> = emptyFlow()
+  actual suspend fun periodicSync(): Flow<PeriodicSyncJobStatus> =
+    Sync.periodicSync(
+      periodicSyncConfiguration =
+        PeriodicSyncConfiguration(
+          repeat = RepeatInterval(interval = 15.minutes),
+        ),
+      taskFactory = { DemoFhirSyncTask() },
+    )
 
-  actual suspend fun cancelPeriodicSync() {}
+  actual suspend fun cancelPeriodicSync() {
+    Sync.cancelPeriodicSync<DemoFhirSyncTask>()
+  }
 
-  actual suspend fun lastPeriodicSyncStatus(): Flow<PeriodicSyncJobStatus> = emptyFlow()
+  actual suspend fun lastPeriodicSyncStatus(): Flow<PeriodicSyncJobStatus> =
+    FhirEngineProvider.getFhirDataStore()
+      .observeTerminalSyncJobStatus(Sync.createSyncUniqueName<DemoFhirSyncTask>("periodicSync"))
+      .map { status ->
+        PeriodicSyncJobStatus(
+          lastSyncJobStatus =
+            when (status) {
+              is SyncJobStatus.Succeeded -> LastSyncJobStatus.Succeeded(status.timestamp)
+              is SyncJobStatus.Failed -> LastSyncJobStatus.Failed(status.timestamp)
+              else -> null
+            },
+          currentSyncJobStatus = CurrentSyncJobStatus.Enqueued,
+        )
+      }
 }

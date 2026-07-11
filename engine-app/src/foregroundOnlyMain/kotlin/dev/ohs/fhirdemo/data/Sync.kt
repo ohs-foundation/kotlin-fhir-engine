@@ -28,13 +28,13 @@ import dev.ohs.fhir.sync.RetryConfiguration
 import dev.ohs.fhir.sync.SyncJobStatus
 import dev.ohs.fhir.sync.defaultRetryConfiguration
 import dev.ohs.fhir.sync.runSync
+import dev.ohs.fhir.sync.syncDispatcher
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -47,11 +47,30 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Provides desktop (foreground-only) scheduling for FHIR sync jobs backed by Kotlin Coroutines.
+ * Provides foreground-only scheduling for FHIR sync jobs backed by Kotlin Coroutines, shared by
+ * Desktop (JVM) and wasmJs (browser) — neither platform has a native OS background scheduler (no
+ * WorkManager, no BGTaskScheduler).
  *
- * Sync runs only while the JVM process is alive. There is no background scheduling — the
- * application must remain running for the duration of the sync. For long-running syncs (up to 45
- * minutes), use [syncTimeout] to ensure stalled operations eventually fail and get retried.
+ * Sync runs only while the host process is alive: the JVM process on Desktop, or the browser tab on
+ * wasmJs. There is no background scheduling — the process/tab must remain open for the duration of
+ * the sync, and for periodic sync to keep firing. For long-running syncs (up to 45 minutes), use
+ * [syncTimeout] to ensure stalled operations eventually fail and get retried.
+ *
+ * **Why the browser tab must stay open:** the alternative on the web platform is a Service Worker
+ * registered for the Periodic Background Sync API, which can run after a tab is closed. It was
+ * deliberately not used here:
+ * - It only ships in Chromium (Chrome/Edge) — no Firefox, no Safari.
+ * - It requires the site to be installed as a PWA and pass a browser-determined site-engagement
+ *   heuristic; registration can silently fail with no user-visible signal.
+ * - The browser — not the app — decides the actual firing cadence, so a requested interval is only
+ *   a hint; real-world delays of hours (or the sync never firing) are normal.
+ * - It requires a separate execution context (the Service Worker) with message-passing back to the
+ *   page, which is substantial added complexity for what this scheduler needs to do.
+ *
+ * A tab-open coroutine scheduler is fully cross-browser and has predictable timing, which matters
+ * more here than surviving tab closure. A backgrounded/minimized tab keeps running (browsers
+ * throttle timers while backgrounded but don't stop them); only closing the tab stops it — the same
+ * "process must stay alive" constraint Desktop already has.
  *
  * Implement [FhirSyncTask] and pass a factory to [oneTimeSync] or [periodicSync]. The returned
  * [Flow] emits state transitions for the lifetime of the sync operation.
@@ -78,7 +97,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * ```
  */
 internal object Sync {
-  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val scope = CoroutineScope(SupervisorJob() + syncDispatcher)
   private val mutex = Mutex()
   private val activeSyncs = mutableMapOf<String, SyncHandle>()
   private val fhirDataStore: FhirDataStore by lazy { FhirEngineProvider.getFhirDataStore() }
@@ -256,7 +275,9 @@ internal object Sync {
 
           while (attempt <= maxRetries) {
             if (attempt > 0) {
-              delay(computeBackoffDelayMillis(config.retryConfiguration!!, attempt - 1))
+              delay(
+                computeBackoffDelayMillis(config.retryConfiguration!!, attempt - 1).milliseconds
+              )
             }
             currentStatusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
             lastResult =
@@ -288,7 +309,7 @@ internal object Sync {
 
           val elapsed = Clock.System.now() - cycleStart
           val remaining = (config.repeat.interval - elapsed).coerceAtLeast(Duration.ZERO)
-          delay(remaining.inWholeMilliseconds)
+          delay(remaining.inWholeMilliseconds.milliseconds)
           currentStatusFlow.emit(CurrentSyncJobStatus.Enqueued)
         }
       }

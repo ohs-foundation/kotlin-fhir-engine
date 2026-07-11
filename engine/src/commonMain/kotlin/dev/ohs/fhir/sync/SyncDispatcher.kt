@@ -22,4 +22,4 @@ import kotlinx.coroutines.CoroutineDispatcher
  * with a dedicated blocking-I/O thread pool (Android, Desktop, iOS). The browser has no such pool,
  * so the wasm actual uses [kotlinx.coroutines.Dispatchers.Default].
  */
-internal expect val syncDispatcher: CoroutineDispatcher
+expect val syncDispatcher: CoroutineDispatcher
