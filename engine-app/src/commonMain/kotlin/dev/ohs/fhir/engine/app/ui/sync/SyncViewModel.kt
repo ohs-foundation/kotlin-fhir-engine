@@ -15,9 +15,9 @@
  */
 package dev.ohs.fhir.engine.app.ui.sync
 
-import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.engine.app.data.FhirSyncController
 import dev.ohs.fhir.engine.app.util.formatTimestamp
+import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi

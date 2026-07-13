@@ -19,6 +19,9 @@ import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.LocalChangeToken
 import dev.ohs.fhir.engine.db.LocalChangeResourceReference
 import dev.ohs.fhir.engine.db.impl.JsonDiff
+import dev.ohs.fhir.engine.resourceType
+import dev.ohs.fhir.engine.sync.upload.patch.PatchOrdering.createAdjacencyListForCreateReferences
+import dev.ohs.fhir.engine.versionId
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
@@ -30,9 +33,6 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.RelatedPerson
 import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.engine.resourceType
-import dev.ohs.fhir.engine.sync.upload.patch.PatchOrdering.createAdjacencyListForCreateReferences
-import dev.ohs.fhir.engine.versionId
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.equals.shouldBeEqual
 import kotlin.test.Test

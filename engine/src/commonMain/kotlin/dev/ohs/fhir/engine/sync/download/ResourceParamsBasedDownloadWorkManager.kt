@@ -16,10 +16,6 @@
 package dev.ohs.fhir.engine.sync.download
 
 import dev.ohs.fhir.engine.lastUpdated
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.OperationOutcome
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.resourceType
 import dev.ohs.fhir.engine.sync.DownloadWorkManager
 import dev.ohs.fhir.engine.sync.GREATER_THAN_PREFIX
@@ -27,6 +23,10 @@ import dev.ohs.fhir.engine.sync.ParamMap
 import dev.ohs.fhir.engine.sync.SyncDataParams
 import dev.ohs.fhir.engine.sync.concatParams
 import dev.ohs.fhir.engine.toTimeZoneString
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 typealias ResourceSearchParams = Map<ResourceType, ParamMap>
 

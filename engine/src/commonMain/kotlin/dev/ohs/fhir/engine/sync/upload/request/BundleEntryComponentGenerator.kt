@@ -15,12 +15,12 @@
  */
 package dev.ohs.fhir.engine.sync.upload.request
 
+import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.String
 import dev.ohs.fhir.model.r4.Uri
-import dev.ohs.fhir.engine.sync.upload.patch.Patch
 
 /**
  * Abstract class for generating [Bundle.Entry] for a [Patch] to be added to the [Bundle] based on

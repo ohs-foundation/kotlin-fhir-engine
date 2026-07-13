@@ -16,11 +16,11 @@
 package dev.ohs.fhir.engine.sync.upload.request
 
 import dev.ohs.fhir.engine.LocalChange
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import dev.ohs.fhir.engine.sync.upload.patch.PatchMapping
 import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Enumeration
 
 /** Generates list of [BundleUploadRequest] of type Transaction [Bundle] from the [Patch]es */
 internal class TransactionBundleGenerator(

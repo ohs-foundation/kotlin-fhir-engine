@@ -15,6 +15,7 @@
  */
 package dev.ohs.fhir.engine.sync.download
 
+import dev.ohs.fhir.engine.sync.SyncDataParams
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
@@ -23,7 +24,6 @@ import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.SyncDataParams
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.nulls.shouldBeNull

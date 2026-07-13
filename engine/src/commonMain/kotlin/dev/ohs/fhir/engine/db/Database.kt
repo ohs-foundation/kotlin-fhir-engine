@@ -20,9 +20,9 @@ import dev.ohs.fhir.engine.LocalChangeToken
 import dev.ohs.fhir.engine.db.impl.dao.ForwardIncludeSearchResult
 import dev.ohs.fhir.engine.db.impl.dao.ReverseIncludeSearchResult
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
+import dev.ohs.fhir.engine.search.SearchQuery
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.search.SearchQuery
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

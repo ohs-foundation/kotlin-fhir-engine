@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.sync.remote
 
 import dev.ohs.fhir.engine.ContentTypes
 import dev.ohs.fhir.engine.NetworkConfiguration
+import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequest
 import dev.ohs.fhir.model.r4.Base64Binary
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
@@ -25,7 +26,6 @@ import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
-import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequest
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.ktor.client.engine.mock.MockEngine

@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.engine.sync
 
+import dev.ohs.fhir.engine.sync.download.DownloadRequest
+import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.engine.sync.download.DownloadRequest
-import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 
 /** Interface for an abstraction of retrieving FHIR data from a network source. */
 internal interface DataSource {

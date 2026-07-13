@@ -16,10 +16,10 @@
 package dev.ohs.fhir.engine.sync.upload.request
 
 import dev.ohs.fhir.engine.LocalChange
-import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import dev.ohs.fhir.engine.sync.upload.patch.PatchMapping
 import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
+import dev.ohs.fhir.model.r4.Bundle
 
 /**
  * Generator that generates [UploadRequest]s from the [Patch]es present in the

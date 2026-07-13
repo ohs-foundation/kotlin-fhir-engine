@@ -15,7 +15,6 @@
  */
 package dev.ohs.fhir.engine.search
 
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.search.filter.DateClientParamFilterCriteria
 import dev.ohs.fhir.engine.search.filter.DateParamFilterCriterion
 import dev.ohs.fhir.engine.search.filter.NumberParamFilterCriteria
@@ -30,6 +29,7 @@ import dev.ohs.fhir.engine.search.filter.TokenParamFilterCriteria
 import dev.ohs.fhir.engine.search.filter.TokenParamFilterCriterion
 import dev.ohs.fhir.engine.search.filter.UriFilterCriteria
 import dev.ohs.fhir.engine.search.filter.UriParamFilterCriterion
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /** Specifies search criteria for querying the FHIR database. */
 @SearchDslMarker

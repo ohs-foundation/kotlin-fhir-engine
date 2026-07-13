@@ -17,13 +17,13 @@ package dev.ohs.fhir.engine.app.data
 
 import android.content.Context
 import androidx.work.WorkerParameters
+import dev.ohs.fhir.engine.app.DemoApplication
 import dev.ohs.fhir.engine.sync.AcceptLocalConflictResolver
 import dev.ohs.fhir.engine.sync.DownloadWorkManager
 import dev.ohs.fhir.engine.sync.FhirSyncWorker
 import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
 import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
-import dev.ohs.fhir.engine.app.DemoApplication
 
 class DemoFhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
   FhirSyncWorker(appContext, workerParams) {

@@ -18,11 +18,6 @@ package dev.ohs.fhir.engine.sync.upload
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.db.LocalChangeResourceReference
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.DomainResource
-import dev.ohs.fhir.model.r4.OperationOutcome
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.resourceType
 import dev.ohs.fhir.engine.sync.DataSource
 import dev.ohs.fhir.engine.sync.ResourceSyncException
@@ -31,6 +26,11 @@ import dev.ohs.fhir.engine.sync.upload.request.BundleUploadRequestMapping
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGenerator
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestMapping
 import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequestMapping
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.DomainResource
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.transformWhile
 

@@ -15,16 +15,16 @@
  */
 package dev.ohs.fhir.engine.search.filter
 
+import dev.ohs.fhir.engine.search.ConditionParam
+import dev.ohs.fhir.engine.search.Operation
+import dev.ohs.fhir.engine.search.SearchDslMarker
+import dev.ohs.fhir.engine.search.TokenClientParam
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.ContactPoint
 import dev.ohs.fhir.model.r4.Identifier
 import dev.ohs.fhir.model.r4.Uri
-import dev.ohs.fhir.engine.search.ConditionParam
-import dev.ohs.fhir.engine.search.Operation
-import dev.ohs.fhir.engine.search.SearchDslMarker
-import dev.ohs.fhir.engine.search.TokenClientParam
 
 /**
  * Represents a criterion for filtering [TokenClientParam]. e.g. filter(Patient.GENDER, { value =

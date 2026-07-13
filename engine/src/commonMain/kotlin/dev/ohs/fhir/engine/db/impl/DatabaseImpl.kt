@@ -41,14 +41,14 @@ import dev.ohs.fhir.engine.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.ResourceIndices
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.resourceType
 import dev.ohs.fhir.engine.resourceTypeEnum
 import dev.ohs.fhir.engine.search.SearchQuery
 import dev.ohs.fhir.engine.toLocalChange
 import dev.ohs.fhir.engine.updateMeta
 import dev.ohs.fhir.engine.withId
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

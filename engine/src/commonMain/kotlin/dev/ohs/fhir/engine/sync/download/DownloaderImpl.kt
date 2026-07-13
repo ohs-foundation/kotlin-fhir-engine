@@ -16,19 +16,20 @@
 package dev.ohs.fhir.engine.sync.download
 
 import co.touchlab.kermit.Logger
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.sync.DataSource
 import dev.ohs.fhir.engine.sync.DownloadWorkManager
 import dev.ohs.fhir.engine.sync.ResourceSyncException
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * Implementation of the [dev.ohs.fhir.engine.sync.download.Downloader]. It orchestrates the pre & post
- * processing of resources via [DownloadWorkManager] and downloading of resources via [DataSource].
- * [dev.ohs.fhir.engine.sync.download.Downloader] clients should call download and listen to the various
- * states emitted by [DownloadWorkManager] as [dev.ohs.fhir.engine.sync.download.DownloadState].
+ * Implementation of the [dev.ohs.fhir.engine.sync.download.Downloader]. It orchestrates the pre &
+ * post processing of resources via [DownloadWorkManager] and downloading of resources via
+ * [DataSource]. [dev.ohs.fhir.engine.sync.download.Downloader] clients should call download and
+ * listen to the various states emitted by [DownloadWorkManager] as
+ * [dev.ohs.fhir.engine.sync.download.DownloadState].
  */
 internal class DownloaderImpl(
   private val dataSource: DataSource,

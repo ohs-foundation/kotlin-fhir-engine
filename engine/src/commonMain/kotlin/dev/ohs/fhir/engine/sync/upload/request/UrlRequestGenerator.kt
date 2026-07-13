@@ -16,13 +16,13 @@
 package dev.ohs.fhir.engine.sync.upload.request
 
 import dev.ohs.fhir.engine.ContentTypes
+import dev.ohs.fhir.engine.sync.upload.patch.Patch
+import dev.ohs.fhir.engine.sync.upload.patch.PatchMapping
+import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
 import dev.ohs.fhir.model.r4.Base64Binary
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
-import dev.ohs.fhir.engine.sync.upload.patch.Patch
-import dev.ohs.fhir.engine.sync.upload.patch.PatchMapping
-import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
 import kotlin.io.encoding.Base64
 import kotlinx.serialization.json.Json
 

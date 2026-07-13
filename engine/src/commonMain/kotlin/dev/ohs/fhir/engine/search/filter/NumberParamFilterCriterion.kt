@@ -16,12 +16,12 @@
 package dev.ohs.fhir.engine.search.filter
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.engine.search.ConditionParam
 import dev.ohs.fhir.engine.search.NumberClientParam
 import dev.ohs.fhir.engine.search.Operation
 import dev.ohs.fhir.engine.search.SearchDslMarker
 import dev.ohs.fhir.engine.search.getConditionParamPair
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 
 /**
  * Represents a criterion for filtering [NumberClientParam]. e.g.

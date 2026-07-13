@@ -15,9 +15,6 @@
  */
 package dev.ohs.fhir.engine.sync.remote
 
-import dev.ohs.fhir.model.r4.Binary
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.engine.sync.DataSource
 import dev.ohs.fhir.engine.sync.download.BundleDownloadRequest
 import dev.ohs.fhir.engine.sync.download.DownloadRequest
@@ -25,6 +22,9 @@ import dev.ohs.fhir.engine.sync.download.UrlDownloadRequest
 import dev.ohs.fhir.engine.sync.upload.request.BundleUploadRequest
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequest
+import dev.ohs.fhir.model.r4.Binary
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Resource
 import io.ktor.util.decodeBase64String
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray

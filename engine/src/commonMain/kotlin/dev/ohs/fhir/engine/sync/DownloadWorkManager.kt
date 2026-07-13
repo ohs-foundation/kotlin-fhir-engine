@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.engine.sync
 
+import dev.ohs.fhir.engine.sync.download.DownloadRequest
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.List
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.download.DownloadRequest
 
 /**
  * Manages the process of downloading FHIR resources from a remote server.

@@ -17,8 +17,8 @@ package dev.ohs.fhir.engine.sync.remote
 
 import co.touchlab.kermit.Logger as KermitLogger
 import dev.ohs.fhir.engine.NetworkConfiguration
-import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.engine.sync.HttpAuthenticator
+import dev.ohs.fhir.model.r4.Resource
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body

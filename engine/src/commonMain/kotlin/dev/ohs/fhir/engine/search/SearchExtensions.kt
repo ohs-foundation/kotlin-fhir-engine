@@ -18,8 +18,8 @@ package dev.ohs.fhir.engine.search
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.SearchResult
 import dev.ohs.fhir.engine.getResourceType
-import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.engine.search.query.XFhirQueryTranslator
+import dev.ohs.fhir.model.r4.Resource
 
 /**
  * Searches the database and returns a list of resources matching the given [Search] criteria.

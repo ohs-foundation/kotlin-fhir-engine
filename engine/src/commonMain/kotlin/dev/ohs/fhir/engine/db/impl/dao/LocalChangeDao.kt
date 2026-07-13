@@ -30,10 +30,10 @@ import dev.ohs.fhir.engine.db.impl.entities.LocalChangeResourceReferenceEntity
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.engine.db.impl.fhirJsonParser
 import dev.ohs.fhir.engine.db.impl.replaceJsonValue
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.resourceTypeEnum
 import dev.ohs.fhir.engine.versionId
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid

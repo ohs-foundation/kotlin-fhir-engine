@@ -16,11 +16,11 @@
 package dev.ohs.fhir.engine.sync
 
 import dev.ohs.fhir.engine.FhirEngine
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.sync.download.DownloadState
 import dev.ohs.fhir.engine.sync.download.Downloader
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 import dev.ohs.fhir.engine.sync.upload.Uploader
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow

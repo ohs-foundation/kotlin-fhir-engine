@@ -17,9 +17,6 @@ package dev.ohs.fhir.engine.index
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.engine.UcumValue
-import dev.ohs.fhir.fhirpath.FhirPathEngine
-import dev.ohs.fhir.fhirpath.types.FhirPathDate
-import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
 import dev.ohs.fhir.engine.getResourceType
 import dev.ohs.fhir.engine.index.entities.DateIndex
 import dev.ohs.fhir.engine.index.entities.DateTimeIndex
@@ -30,6 +27,13 @@ import dev.ohs.fhir.engine.index.entities.ReferenceIndex
 import dev.ohs.fhir.engine.index.entities.StringIndex
 import dev.ohs.fhir.engine.index.entities.TokenIndex
 import dev.ohs.fhir.engine.index.entities.UriIndex
+import dev.ohs.fhir.engine.search.LAST_UPDATED
+import dev.ohs.fhir.engine.search.LOCAL_LAST_UPDATED
+import dev.ohs.fhir.engine.toEqualCanonical
+import dev.ohs.fhir.engine.ucumUrl
+import dev.ohs.fhir.fhirpath.FhirPathEngine
+import dev.ohs.fhir.fhirpath.types.FhirPathDate
+import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
 import dev.ohs.fhir.model.r4.Address
 import dev.ohs.fhir.model.r4.Canonical
 import dev.ohs.fhir.model.r4.Code
@@ -54,10 +58,6 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.Timing
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.search.LAST_UPDATED
-import dev.ohs.fhir.engine.search.LOCAL_LAST_UPDATED
-import dev.ohs.fhir.engine.toEqualCanonical
-import dev.ohs.fhir.engine.ucumUrl
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime

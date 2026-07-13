@@ -24,13 +24,6 @@ import dev.ohs.fhir.engine.db.impl.dao.ForwardIncludeSearchResult
 import dev.ohs.fhir.engine.db.impl.dao.ReverseIncludeSearchResult
 import dev.ohs.fhir.engine.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.HumanName
-import dev.ohs.fhir.model.r4.OperationOutcome
-import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.Resource
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.search.SearchQuery
 import dev.ohs.fhir.engine.sync.BundleDataSource
 import dev.ohs.fhir.engine.sync.UrlRequestDataSource
@@ -40,6 +33,13 @@ import dev.ohs.fhir.engine.sync.upload.patch.PatchGeneratorMode
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorFactory
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorMode
 import dev.ohs.fhir.engine.toLocalChange
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Enumeration
+import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.OperationOutcome
+import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe

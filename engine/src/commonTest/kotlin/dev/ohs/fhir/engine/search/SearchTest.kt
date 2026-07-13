@@ -16,6 +16,8 @@
 package dev.ohs.fhir.engine.search
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import dev.ohs.fhir.engine.search.filter.ReferenceParamFilterCriterion
+import dev.ohs.fhir.engine.search.filter.TokenFilterValue
 import dev.ohs.fhir.model.r4.ContactPoint
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.FhirDate
@@ -23,8 +25,6 @@ import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.search.filter.ReferenceParamFilterCriterion
-import dev.ohs.fhir.engine.search.filter.TokenFilterValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.datetime.LocalDate

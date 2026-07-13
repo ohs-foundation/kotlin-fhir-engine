@@ -22,8 +22,8 @@ import java.io.File
 private var dataStoreInstance: DataStore<Preferences>? = null
 
 /**
- * Default storage directory used when [dev.ohs.fhir.engine.FhirEngineConfiguration.storageDirectory] is
- * unset.
+ * Default storage directory used when
+ * [dev.ohs.fhir.engine.FhirEngineConfiguration.storageDirectory] is unset.
  */
 internal val defaultDesktopStorageDirectory: String
   get() = File(System.getProperty("user.home"), ".fhir-engine").absolutePath

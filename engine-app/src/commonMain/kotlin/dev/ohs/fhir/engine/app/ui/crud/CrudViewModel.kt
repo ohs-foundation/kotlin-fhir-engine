@@ -15,9 +15,9 @@
  */
 package dev.ohs.fhir.engine.app.ui.crud
 
-import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.engine.app.data.PatientRepository
 import dev.ohs.fhir.engine.app.data.PatientUiModel
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

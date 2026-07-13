@@ -15,9 +15,9 @@
  */
 package dev.ohs.fhir.engine.sync.download
 
+import dev.ohs.fhir.engine.sync.ResourceSyncException
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.ResourceSyncException
 import kotlinx.coroutines.flow.Flow
 
 /** Module for downloading the resources from the server. */

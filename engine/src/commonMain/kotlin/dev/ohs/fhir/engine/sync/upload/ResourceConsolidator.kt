@@ -18,11 +18,11 @@ package dev.ohs.fhir.engine.sync.upload
 import dev.ohs.fhir.engine.LocalChangeToken
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.lastUpdated
+import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorMode
+import dev.ohs.fhir.engine.versionId
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.DomainResource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorMode
-import dev.ohs.fhir.engine.versionId
 import kotlin.time.Instant
 
 /**

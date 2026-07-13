@@ -15,6 +15,9 @@
  */
 package dev.ohs.fhir.engine.sync.download
 
+import dev.ohs.fhir.engine.sync.DataSource
+import dev.ohs.fhir.engine.sync.DownloadWorkManager
+import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Code
 import dev.ohs.fhir.model.r4.CodeableConcept
@@ -30,9 +33,6 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.DataSource
-import dev.ohs.fhir.engine.sync.DownloadWorkManager
-import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 import io.kotest.matchers.collections.shouldContainInOrder
 import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed

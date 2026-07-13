@@ -20,6 +20,7 @@ import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
+import dev.ohs.fhir.engine.testStorageDirectory
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
@@ -27,7 +28,6 @@ import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.testStorageDirectory
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

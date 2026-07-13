@@ -17,10 +17,10 @@ package dev.ohs.fhir.engine.sync.upload.request
 
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.LocalChangeToken
+import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import kotlin.time.Clock
 import kotlinx.serialization.json.Json
 

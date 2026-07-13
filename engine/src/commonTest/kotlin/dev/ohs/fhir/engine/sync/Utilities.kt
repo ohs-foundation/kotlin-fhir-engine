@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.engine.sync
 
-import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.engine.sync.download.DownloadRequest
 import dev.ohs.fhir.engine.sync.upload.request.BundleUploadRequest
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequest
 import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequest
+import dev.ohs.fhir.model.r4.Resource
 
 internal class BundleDataSource(val onPostBundle: suspend (BundleUploadRequest) -> Resource) :
   DataSource {

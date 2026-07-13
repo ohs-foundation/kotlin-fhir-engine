@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.engine.search.filter
 
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.search.ClientParam
 import dev.ohs.fhir.engine.search.ConditionParam
 import dev.ohs.fhir.engine.search.Operation
 import dev.ohs.fhir.engine.search.SearchQuery
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /** Represents filter for a [ClientParam]. */
 internal interface FilterCriterion {

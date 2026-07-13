@@ -17,14 +17,14 @@ package dev.ohs.fhir.engine.sync.upload.request
 
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.LocalChangeToken
-import dev.ohs.fhir.model.r4.Bundle
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.sync.upload.patch.PatchMapping
 import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.deleteLocalChange
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.insertionLocalChange
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.toPatch
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.updateLocalChange
+import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly

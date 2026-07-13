@@ -15,14 +15,14 @@
  */
 package dev.ohs.fhir.engine.sync.upload
 
-import dev.ohs.fhir.model.r4.Bundle.HTTPVerb
 import dev.ohs.fhir.engine.sync.upload.patch.PatchGeneratorMode
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorMode
+import dev.ohs.fhir.model.r4.Bundle.HTTPVerb
 
 /**
- * Defines strategies for uploading FHIR resource [local changes][dev.ohs.fhir.engine.LocalChange] to a
- * server during synchronization. It is used by the [dev.ohs.fhir.engine.sync.SyncScheduler] to determine
- * the specific upload behavior.
+ * Defines strategies for uploading FHIR resource [local changes][dev.ohs.fhir.engine.LocalChange]
+ * to a server during synchronization. It is used by the [dev.ohs.fhir.engine.sync.SyncScheduler] to
+ * determine the specific upload behavior.
  *
  * To specify an upload strategy, provide it when scheduling sync:
  * ```kotlin

@@ -21,9 +21,6 @@ import dev.ohs.fhir.engine.index.SearchParamDefinition
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.engine.index.SearchParamType
 import dev.ohs.fhir.engine.isValidDateOnly
-import dev.ohs.fhir.model.r4.FhirDate
-import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import dev.ohs.fhir.engine.search.DateClientParam
 import dev.ohs.fhir.engine.search.NumberClientParam
 import dev.ohs.fhir.engine.search.Order
@@ -34,6 +31,9 @@ import dev.ohs.fhir.engine.search.StringClientParam
 import dev.ohs.fhir.engine.search.TokenClientParam
 import dev.ohs.fhir.engine.search.UriClientParam
 import dev.ohs.fhir.engine.search.filter.TokenFilterValue
+import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /**
  * Supports translation of x-fhir-query defined in
