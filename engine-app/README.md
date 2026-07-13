@@ -85,7 +85,7 @@ iOS uses two mechanisms:
    ```xml
    <key>BGTaskSchedulerPermittedIdentifiers</key>
    <array>
-     <string>dev.ohs.fhirdemo.sync.periodic</string>
+     <string>dev.ohs.fhir.engine.app.sync.periodic</string>
    </array>
    ```
 2. **Background modes** — enable `processing` under `UIBackgroundModes` (or in Xcode: _Signing & Capabilities → Background Modes → Background processing_):
@@ -117,7 +117,7 @@ The OS does not fire `BGProcessingTask` spontaneously in the Simulator. To trigg
 2. In the LLDB console, run:
 
    ```
-   e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"dev.ohs.fhirdemo.sync.periodic"]
+   e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWithIdentifier:@"dev.ohs.fhir.engine.app.sync.periodic"]
    ```
 3. Resume execution. The task handler fires immediately — sync runs and re-schedules itself on completion.
 
