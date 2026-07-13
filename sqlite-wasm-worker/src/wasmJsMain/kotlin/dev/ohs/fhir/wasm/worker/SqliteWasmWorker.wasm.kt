@@ -18,8 +18,7 @@ package dev.ohs.fhir.wasm.worker
 import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
 import org.w3c.dom.Worker
 
-/** Creates a [WebWorkerSQLiteDriver] backed by a SQLite-WASM Web Worker (OPFS-persisted). */
-fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = WebWorkerSQLiteDriver(jsWorker())
+actual fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = WebWorkerSQLiteDriver(jsWorker())
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun jsWorker(): Worker =

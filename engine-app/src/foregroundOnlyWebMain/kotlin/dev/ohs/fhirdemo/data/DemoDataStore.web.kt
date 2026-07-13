@@ -22,7 +22,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferencesSerializer
 
 // No filesystem on web: the demo app's own preferences (distinct from the FHIR engine's own
-// datastore, see `engine`'s `DataStoreFactory.wasm.kt`) live in the browser's `localStorage`.
+// datastore, see `engine`'s `DataStoreFactory.web.kt`) live in the browser's `localStorage`.
 private val demoDataStore: DataStore<Preferences> by lazy {
   PreferenceDataStoreFactory.create(
     storage = WebLocalStorage(serializer = PreferencesSerializer, name = demoDataStoreFileName),

@@ -48,11 +48,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Provides foreground-only scheduling for FHIR sync jobs backed by Kotlin Coroutines, shared by
- * Desktop (JVM) and wasmJs (browser) — neither platform has a native OS background scheduler (no
- * WorkManager, no BGTaskScheduler).
+ * Desktop (JVM) and the web (js, wasmJs) — none of these platforms has a native OS background
+ * scheduler (no WorkManager, no BGTaskScheduler).
  *
  * Sync runs only while the host process is alive: the JVM process on Desktop, or the browser tab on
- * wasmJs. There is no background scheduling — the process/tab must remain open for the duration of
+ * the web. There is no background scheduling — the process/tab must remain open for the duration of
  * the sync, and for periodic sync to keep firing. For long-running syncs (up to 45 minutes), use
  * [syncTimeout] to ensure stalled operations eventually fail and get retried.
  *
@@ -276,7 +276,7 @@ internal object Sync {
           while (attempt <= maxRetries) {
             if (attempt > 0) {
               delay(
-                computeBackoffDelayMillis(config.retryConfiguration!!, attempt - 1).milliseconds
+                computeBackoffDelayMillis(config.retryConfiguration!!, attempt - 1).milliseconds,
               )
             }
             currentStatusFlow.emit(CurrentSyncJobStatus.Running(SyncJobStatus.Started()))
@@ -338,8 +338,10 @@ internal object Sync {
     }
   }
 
+  // `KClass.qualifiedName` isn't supported on Kotlin/JS, so `simpleName` is used here instead —
+  // safe cross-platform since [FhirSyncTask] implementations are always named (never anonymous).
   inline fun <reified T : FhirSyncTask> createSyncUniqueName(syncType: String): String =
-    "${T::class.qualifiedName ?: T::class.simpleName}-$syncType"
+    "${T::class.simpleName}-$syncType"
 
   private fun mapSyncJobStatusToLastSync(status: SyncJobStatus?): LastSyncJobStatus? =
     status?.let {
