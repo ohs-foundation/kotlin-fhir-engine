@@ -17,7 +17,7 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
-import dev.ohs.fhir.wasm.worker.createSqliteWasmDriver
+import dev.ohs.fhir.engine.wasm.worker.createSqliteWasmDriver
 
 /**
  * Returns a [RoomDatabase.Builder] backed by a SQLite-WASM Web Worker that persists to the Origin
