@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package codegen
+package dev.ohs.fhir.engine.codegen
 
 import dev.ohs.fhir.model.r4.Bundle
 import kotlinx.serialization.json.Json

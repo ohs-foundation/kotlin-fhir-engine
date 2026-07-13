@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package codegen
+package dev.ohs.fhir.engine.codegen
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -46,7 +46,7 @@ internal object SearchParameterRepositoryGenerator {
   private const val generatedClassName = "SearchParameterRepository_Generated"
   private val generatedComment =
     """
-      This File is Generated from codegen.SearchParameterRepositoryGenerator. All changes to this
+      This File is Generated from dev.ohs.fhir.engine.codegen.SearchParameterRepositoryGenerator. All changes to this
       file must be made through the aforementioned file only.
     """
       .trimIndent()

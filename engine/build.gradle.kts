@@ -1,4 +1,4 @@
-import codegen.GenerateSearchParamsTask
+import dev.ohs.fhir.engine.codegen.GenerateSearchParamsTask
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
