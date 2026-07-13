@@ -17,7 +17,7 @@ package dev.ohs.fhirdemo.data
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import dev.ohs.fhir.sync.createDataStore
+import dev.ohs.fhir.engine.sync.createDataStore
 import java.io.File
 
 private val demoDataStore: DataStore<Preferences> = createDataStore {

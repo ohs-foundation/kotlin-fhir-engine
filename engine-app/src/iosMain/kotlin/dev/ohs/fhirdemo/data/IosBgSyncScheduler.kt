@@ -16,9 +16,9 @@
 package dev.ohs.fhirdemo.data
 
 import co.touchlab.kermit.Logger
-import dev.ohs.fhir.sync.FhirSyncTask
-import dev.ohs.fhir.sync.SyncJobStatus
-import dev.ohs.fhir.sync.runSync
+import dev.ohs.fhir.engine.sync.FhirSyncTask
+import dev.ohs.fhir.engine.sync.SyncJobStatus
+import dev.ohs.fhir.engine.sync.runSync
 import kotlin.concurrent.AtomicInt
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.cinterop.BetaInteropApi

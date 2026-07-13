@@ -15,6 +15,6 @@
  */
 package dev.ohs.fhirdemo.data
 
-import dev.ohs.fhir.FhirEngine
+import dev.ohs.fhir.engine.FhirEngine
 
 actual fun fhirEngine(platformContext: Any): FhirEngine = initFhirEngine(platformContext)

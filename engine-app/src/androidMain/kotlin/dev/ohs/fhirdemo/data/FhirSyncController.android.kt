@@ -16,14 +16,14 @@
 package dev.ohs.fhirdemo.data
 
 import android.content.Context
-import dev.ohs.fhir.FhirEngineProvider
-import dev.ohs.fhir.sync.CurrentSyncJobStatus
-import dev.ohs.fhir.sync.LastSyncJobStatus
-import dev.ohs.fhir.sync.PeriodicSyncConfiguration
-import dev.ohs.fhir.sync.PeriodicSyncJobStatus
-import dev.ohs.fhir.sync.RepeatInterval
-import dev.ohs.fhir.sync.Sync
-import dev.ohs.fhir.sync.SyncJobStatus
+import dev.ohs.fhir.engine.FhirEngineProvider
+import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.engine.sync.LastSyncJobStatus
+import dev.ohs.fhir.engine.sync.PeriodicSyncConfiguration
+import dev.ohs.fhir.engine.sync.PeriodicSyncJobStatus
+import dev.ohs.fhir.engine.sync.RepeatInterval
+import dev.ohs.fhir.engine.sync.Sync
+import dev.ohs.fhir.engine.sync.SyncJobStatus
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

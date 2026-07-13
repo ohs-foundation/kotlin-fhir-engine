@@ -15,12 +15,12 @@
  */
 package dev.ohs.fhirdemo.data
 
-import dev.ohs.fhir.FhirEngine
-import dev.ohs.fhir.delete
-import dev.ohs.fhir.get
+import dev.ohs.fhir.engine.FhirEngine
+import dev.ohs.fhir.engine.delete
+import dev.ohs.fhir.engine.get
 import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.search.StringClientParam
-import dev.ohs.fhir.search.search
+import dev.ohs.fhir.engine.search.StringClientParam
+import dev.ohs.fhir.engine.search.search
 
 class PatientRepository(private val engine: FhirEngine) {
 

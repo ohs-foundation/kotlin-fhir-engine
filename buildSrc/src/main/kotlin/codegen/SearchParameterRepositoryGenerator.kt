@@ -41,7 +41,7 @@ internal data class SearchParamDef(val name: String, val paramTypeCode: String, 
 
 internal object SearchParameterRepositoryGenerator {
 
-  private const val indexPackage = "dev.ohs.fhir.index"
+  private const val indexPackage = "dev.ohs.fhir.engine.index"
   private const val resourcePackage = "dev.ohs.fhir.model.r4"
   private const val generatedClassName = "SearchParameterRepository_Generated"
   private val generatedComment =

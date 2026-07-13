@@ -37,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 
 @Composable
 fun SyncScreen(

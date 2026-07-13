@@ -15,8 +15,8 @@
  */
 package dev.ohs.fhirdemo.data
 
-import dev.ohs.fhir.sync.CurrentSyncJobStatus
-import dev.ohs.fhir.sync.PeriodicSyncJobStatus
+import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.engine.sync.PeriodicSyncJobStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 

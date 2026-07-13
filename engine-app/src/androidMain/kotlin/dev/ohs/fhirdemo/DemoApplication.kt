@@ -17,7 +17,7 @@ package dev.ohs.fhirdemo
 
 import android.app.Application
 import android.content.Context
-import dev.ohs.fhir.FhirEngineProvider
+import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhirdemo.data.DemoDataStore
 import dev.ohs.fhirdemo.data.createDemoDataStore
 

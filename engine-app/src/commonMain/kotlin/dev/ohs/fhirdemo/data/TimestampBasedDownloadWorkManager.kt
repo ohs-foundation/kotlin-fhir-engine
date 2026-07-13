@@ -21,10 +21,10 @@ import dev.ohs.fhir.model.r4.OperationOutcome
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import dev.ohs.fhir.resourceType
-import dev.ohs.fhir.sync.DownloadWorkManager
-import dev.ohs.fhir.sync.SyncDataParams
-import dev.ohs.fhir.sync.download.DownloadRequest
+import dev.ohs.fhir.engine.resourceType
+import dev.ohs.fhir.engine.sync.DownloadWorkManager
+import dev.ohs.fhir.engine.sync.SyncDataParams
+import dev.ohs.fhir.engine.sync.download.DownloadRequest
 import kotlinx.datetime.toInstant
 
 class TimestampBasedDownloadWorkManager(private val dataStore: DemoDataStore) :

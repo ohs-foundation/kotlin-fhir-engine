@@ -15,14 +15,14 @@
  */
 package dev.ohs.fhirdemo.data
 
-import dev.ohs.fhir.FhirEngine
-import dev.ohs.fhir.FhirEngineConfiguration
-import dev.ohs.fhir.FhirEngineProvider
-import dev.ohs.fhir.NetworkConfiguration
-import dev.ohs.fhir.ServerConfiguration
-import dev.ohs.fhir.index.SearchParamDefinition
-import dev.ohs.fhir.index.SearchParamType
-import dev.ohs.fhir.sync.remote.HttpLogger
+import dev.ohs.fhir.engine.FhirEngine
+import dev.ohs.fhir.engine.FhirEngineConfiguration
+import dev.ohs.fhir.engine.FhirEngineProvider
+import dev.ohs.fhir.engine.NetworkConfiguration
+import dev.ohs.fhir.engine.ServerConfiguration
+import dev.ohs.fhir.engine.index.SearchParamDefinition
+import dev.ohs.fhir.engine.index.SearchParamType
+import dev.ohs.fhir.engine.sync.remote.HttpLogger
 
 const val SERVER_BASE_URL = "https://hapi.fhir.org/baseR4/"
 

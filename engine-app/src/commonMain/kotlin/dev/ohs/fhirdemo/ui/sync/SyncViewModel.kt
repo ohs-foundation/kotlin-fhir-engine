@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhirdemo.ui.sync
 
-import dev.ohs.fhir.sync.CurrentSyncJobStatus
+import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhirdemo.data.FhirSyncController
 import dev.ohs.fhirdemo.util.formatTimestamp
 import kotlin.time.Instant

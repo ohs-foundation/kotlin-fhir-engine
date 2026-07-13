@@ -17,12 +17,12 @@ package dev.ohs.fhirdemo.data
 
 import android.content.Context
 import androidx.work.WorkerParameters
-import dev.ohs.fhir.sync.AcceptLocalConflictResolver
-import dev.ohs.fhir.sync.DownloadWorkManager
-import dev.ohs.fhir.sync.FhirSyncWorker
-import dev.ohs.fhir.sync.upload.HttpCreateMethod
-import dev.ohs.fhir.sync.upload.HttpUpdateMethod
-import dev.ohs.fhir.sync.upload.UploadStrategy
+import dev.ohs.fhir.engine.sync.AcceptLocalConflictResolver
+import dev.ohs.fhir.engine.sync.DownloadWorkManager
+import dev.ohs.fhir.engine.sync.FhirSyncWorker
+import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
+import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
+import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 import dev.ohs.fhirdemo.DemoApplication
 
 class DemoFhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
