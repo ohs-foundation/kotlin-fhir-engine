@@ -28,7 +28,7 @@ import dev.ohs.fhir.engine.sync.RetryConfiguration
 import dev.ohs.fhir.engine.sync.SyncJobStatus
 import dev.ohs.fhir.engine.sync.defaultRetryConfiguration
 import dev.ohs.fhir.engine.sync.runSync
-import dev.ohs.fhir.sync.syncDispatcher
+import dev.ohs.fhir.engine.sync.syncDispatcher
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration

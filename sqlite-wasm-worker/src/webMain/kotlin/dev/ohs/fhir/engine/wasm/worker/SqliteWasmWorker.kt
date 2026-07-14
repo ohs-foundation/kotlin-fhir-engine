@@ -17,11 +17,12 @@ package dev.ohs.fhir.engine.wasm.worker
 
 import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
 
-/**                                                                                                                                                                          
-  * Creates a [WebWorkerSQLiteDriver] backed by a SQLite-WASM Web Worker (OPFS-persisted).                                                                                    
-  *                                                                                                                                                                           
-  * Declared `expect` (with `actuals` in jsMain and wasmJsMain) rather than as a plain function here,                                                                         
-  * because [WebWorkerSQLiteDriver] is an `expect class`. Kotlin forbids constructing it from a shared                                                                        
-  * source set like this one, so the `WebWorkerSQLiteDriver()` call must happen in platform code.                                                                          
-  */ 
+/**
+ * Creates a [WebWorkerSQLiteDriver] backed by a SQLite-WASM Web Worker (OPFS-persisted).
+ *
+ * Declared `expect` (with `actuals` in jsMain and wasmJsMain) rather than as a plain function here,
+ * because [WebWorkerSQLiteDriver] is an `expect class`. Kotlin forbids constructing it from a
+ * shared source set like this one, so the `WebWorkerSQLiteDriver()` call must happen in platform
+ * code.
+ */
 expect fun createSqliteWasmDriver(): WebWorkerSQLiteDriver

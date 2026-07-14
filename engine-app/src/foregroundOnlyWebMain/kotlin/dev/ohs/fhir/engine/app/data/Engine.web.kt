@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhir.engine.app.data
 
-import dev.ohs.fhir.FhirEngine
+import dev.ohs.fhir.engine.FhirEngine
 
 // No storage directory on web: the database lives in OPFS and preferences are keyed by name.
 actual fun fhirEngine(platformContext: Any): FhirEngine = initFhirEngine(platformContext)

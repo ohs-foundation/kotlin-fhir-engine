@@ -15,14 +15,14 @@
  */
 package dev.ohs.fhir.engine.app.data
 
-import dev.ohs.fhir.FhirEngine
-import dev.ohs.fhir.sync.AcceptLocalConflictResolver
-import dev.ohs.fhir.sync.ConflictResolver
-import dev.ohs.fhir.sync.DownloadWorkManager
-import dev.ohs.fhir.sync.FhirSyncTask
-import dev.ohs.fhir.sync.upload.HttpCreateMethod
-import dev.ohs.fhir.sync.upload.HttpUpdateMethod
-import dev.ohs.fhir.sync.upload.UploadStrategy
+import dev.ohs.fhir.engine.FhirEngine
+import dev.ohs.fhir.engine.sync.AcceptLocalConflictResolver
+import dev.ohs.fhir.engine.sync.ConflictResolver
+import dev.ohs.fhir.engine.sync.DownloadWorkManager
+import dev.ohs.fhir.engine.sync.FhirSyncTask
+import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
+import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
+import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 
 class DemoFhirSyncTask : FhirSyncTask {
   override fun getFhirEngine(): FhirEngine = fhirEngine()
