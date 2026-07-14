@@ -19,7 +19,7 @@
 
     <key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-        <string>dev.ohs.fhirdemo.sync.periodic</string>
+        <string>dev.ohs.fhir.engine.app.sync.periodic</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

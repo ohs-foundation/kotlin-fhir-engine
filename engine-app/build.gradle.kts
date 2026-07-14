@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-  namespace = "dev.ohs.fhirdemo"
+  namespace = "dev.ohs.fhir.engine.app"
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "dev.ohs.fhirdemo"
+    applicationId = "dev.ohs.fhir.engine.app"
     minSdk = 26
     targetSdk = 36
     versionCode = 1
@@ -97,7 +97,7 @@ kotlin {
 
 compose.desktop {
   application {
-    mainClass = "dev.ohs.fhirdemo.MainKt"
+    mainClass = "dev.ohs.fhir.engine.app.MainKt"
     nativeDistributions {
       targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
       packageName = "kotlin-fhir-engine-demo"
