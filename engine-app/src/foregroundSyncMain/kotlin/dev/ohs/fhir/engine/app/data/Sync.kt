@@ -275,7 +275,7 @@ internal object Sync {
           var lastResult: SyncJobStatus = SyncJobStatus.Failed()
 
           while (attempt <= maxRetries) {
-            if (attempt > 0) {
+            if (attempt > 0 && config.retryConfiguration != null) {
               delay(
                 computeBackoffDelayMillis(config.retryConfiguration!!, attempt - 1).milliseconds,
               )
