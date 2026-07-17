@@ -1,7 +1,9 @@
 # :sqlite-wasm-worker
 
-The Wasm SQLite backend for the engine's Room database. Only the engine's `wasmJsMain` depends on
-it.
+The Wasm SQLite backend for the engine's Room database. `engine`'s js/wasmJs targets depend on it
+via `api`, which means it's part of `engine`'s public API surface for those targets and is
+published to Maven Central alongside `engine` (see the root [README](../README.md#publishing)) —
+it is not merely an internal implementation detail bundled into `engine`.
 
 ## Why it's needed
 

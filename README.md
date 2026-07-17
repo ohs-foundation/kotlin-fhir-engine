@@ -244,7 +244,9 @@ requires **Room 3** (`androidx.room3`), Room 2 has no Wasm target, which is why 
 Android, iOS, and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
 `sqlite-bundled`), which has no Wasm build. On Wasm the database instead uses `WebWorkerSQLiteDriver`,
 backed by a SQLite-WASM Web Worker. That worker and its driver live in the `:sqlite-wasm-worker`
-module, see its [README](sqlite-wasm-worker/README.md).
+module, see its [README](sqlite-wasm-worker/README.md). `engine`'s js/wasmJs targets depend on it
+via `api`, so it's published to Maven Central alongside `engine` — see
+[Publishing](#publishing) below.
 
 ## Developer guide
 
@@ -253,13 +255,22 @@ module, see its [README](sqlite-wasm-worker/README.md).
 To publish a new release, first update `mavenVersion` in `gradle.properties` to the new version. Then
 follow one of the methods below.
 
+`mavenGroupId` is shared by both published modules, `:engine` and `:sqlite-wasm-worker`, but each
+has its own artifactId and version (`mavenArtifactId`/`mavenVersion` for `:engine`,
+`sqliteWasmWorkerArtifactId`/`sqliteWasmWorkerVersion` for `:sqlite-wasm-worker`), released
+independently. `:sqlite-wasm-worker` is a dependency of `engine`'s js/wasmJs targets though, so
+whatever `sqliteWasmWorkerVersion` currently points to must already be published to Maven Central
+(in this release or a prior one) before `:engine` is published, or those targets won't resolve for
+consumers. The commands below publish everything; scope one to a single module (e.g.
+`:sqlite-wasm-worker:publishToMavenCentral`) to test one module's publication in isolation.
+
 #### Maven Local
 
 To publish artifacts to your local Maven repository (`~/.m2/repository`) for local development and
 testing, run:
 
 ```bash
-./gradlew :engine:publishToMavenLocal
+./gradlew publishToMavenLocal
 ```
 
 #### Maven Central
@@ -294,7 +305,7 @@ signing.secretKeyRingFile=/path/to/secring.gpg
 Then run:
 
 ```bash
-./gradlew :engine:publishToMavenCentral
+./gradlew publishToMavenCentral
 ```
 
 ##### Publishing to Maven Central using GitHub Actions
