@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -32,17 +35,16 @@ android {
 kotlin {
   jvmToolchain(21)
 
-  // Desktop, js and wasmJs all lack a native OS background scheduler (no WorkManager, no
-  // BGTaskScheduler), so they share a "foregroundOnly" source set for coroutine-based foreground
-  // scheduling. See `foregroundOnlyMain/.../data/Sync.kt`. Within that, js and wasmJs further share
-  // a "foregroundOnlyWeb" source set for the [Sync]-backed web wiring (`FhirSyncController`, etc.)
-  // — separate from the plain `webMain` group (default hierarchy template), which has no
-  // dependency on `foregroundOnlyMain` and holds web code that doesn't need [Sync].
+  // Desktop, js and wasmJs lack a native OS background scheduler, so they share a "foregroundSync"
+  // source set (see `foregroundSyncMain/.../data/Sync.kt`) letting one coroutine-based scheduler
+  // serve all three instead of a separate implementation per platform. js and wasmJs further share
+  // a nested "foregroundSyncWeb" for [Sync]'s web wiring, kept apart from the default `webMain`
+  // group, which holds web code unrelated to [Sync].
   applyDefaultHierarchyTemplate {
     common {
-      group("foregroundOnly") {
+      group("foregroundSync") {
         withJvm()
-        group("foregroundOnlyWeb") {
+        group("foregroundSyncWeb") {
           withJs()
           withWasmJs()
         }
@@ -114,7 +116,6 @@ kotlin {
         implementation(libs.kotlinx.coroutines.swing)
       }
     }
-    webMain.dependencies { implementation(project(":sqlite-wasm-worker")) }
   }
 }
 

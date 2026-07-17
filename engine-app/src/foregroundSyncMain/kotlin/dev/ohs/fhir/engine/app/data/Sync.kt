@@ -49,7 +49,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 /**
  * Provides foreground-only scheduling for FHIR sync jobs backed by Kotlin Coroutines, shared by
  * Desktop (JVM) and the web (js, wasmJs) — none of these platforms has a native OS background
- * scheduler (no WorkManager, no BGTaskScheduler).
+ * scheduler (no WorkManager, no BGTaskScheduler). Other scheduling mechanisms may be available on a
+ * given platform (e.g. a JVM `ExecutorService`, JobRunr, or Quartz Scheduler on Desktop).
  *
  * Sync runs only while the host process is alive: the JVM process on Desktop, or the browser tab on
  * the web. There is no background scheduling — the process/tab must remain open for the duration of
