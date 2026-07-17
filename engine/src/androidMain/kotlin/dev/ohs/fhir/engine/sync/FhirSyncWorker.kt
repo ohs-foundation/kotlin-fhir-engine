@@ -29,8 +29,8 @@ import kotlinx.serialization.json.Json
  * Handles FHIR data synchronization between local database and remote server.
  *
  * Extend this abstract [CoroutineWorker] and implement the abstract methods to define your specific
- * synchronization behavior. The custom worker class can then be used to schedule periodic
- * synchronization jobs using [Sync].
+ * synchronization behavior. The custom worker class can then be enqueued as periodic
+ * synchronization jobs via WorkManager.
  */
 abstract class FhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
   CoroutineWorker(appContext, workerParams), FhirSyncTask {
