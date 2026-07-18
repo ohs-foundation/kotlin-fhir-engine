@@ -101,7 +101,7 @@ kotlin {
         implementation(libs.ktor.client.darwin)
       }
     }
-    webMain.dependencies { api(project(":sqlite-wasm-worker")) }
+    webMain.dependencies { implementation(project(":sqlite-wasm-worker")) }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.
