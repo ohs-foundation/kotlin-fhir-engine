@@ -16,10 +16,7 @@
 package dev.ohs.fhir.engine.sync
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
-/**
- * Dispatcher for background sync work. Resolves to [kotlinx.coroutines.Dispatchers.IO] on platforms
- * with a dedicated blocking-I/O thread pool (Android, Desktop, iOS). The browser has no such pool,
- * so the wasm actual uses [kotlinx.coroutines.Dispatchers.Default].
- */
-expect val syncDispatcher: CoroutineDispatcher
+// The browser has no blocking-I/O thread pool, so Dispatchers.IO does not exist on wasm.
+actual val syncDispatcher: CoroutineDispatcher = Dispatchers.Default

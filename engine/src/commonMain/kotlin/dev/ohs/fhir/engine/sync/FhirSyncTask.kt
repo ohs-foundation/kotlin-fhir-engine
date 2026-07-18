@@ -31,8 +31,11 @@ import kotlinx.coroutines.launch
  * implementation in its own scheduling mechanism:
  * - **Android**: extend [FhirSyncWorker] (which implements this interface) and schedule via
  *   WorkManager
- * - **iOS**: pass a factory to `IosSyncScheduler` (in engine-app) to run as BGTask background jobs
- * - **Desktop**: use `Sync` (in engine-app) for coroutine-based foreground scheduling
+ * - **iOS**: schedule via BGTaskScheduler, invoking [runSync] when the registered background task
+ *   fires
+ * - **Desktop / wasmJs**: neither platform has a native background scheduler, so the app decides
+ *   how and when to invoke [runSync] — e.g. a coroutine loop, a thread pool/executor, or a
+ *   job-scheduling library — with sync only running while the process/tab stays alive
  */
 interface FhirSyncTask {
   fun getFhirEngine(): FhirEngine
@@ -51,7 +54,7 @@ interface FhirSyncTask {
  * This is the single execution path shared by all platform schedulers.
  *
  * @param taskName Unique name used to persist the terminal status in [FhirDataStore]. Null when the
- *   sync was not scheduled via [Sync] (e.g. in tests or one-off invocations).
+ *   sync was not scheduled via a named task (e.g. in tests or one-off invocations).
  * @param onProgress Called for every non-terminal [SyncJobStatus] emission so the caller can
  *   forward progress via its own signalling mechanism (e.g. WorkManager's `setProgress`).
  */

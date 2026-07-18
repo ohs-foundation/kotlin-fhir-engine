@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -32,6 +35,23 @@ android {
 kotlin {
   jvmToolchain(21)
 
+  // Desktop, js and wasmJs lack a native OS background scheduler, so they share a "foregroundSync"
+  // source set (see `foregroundSyncMain/.../data/Sync.kt`) letting one coroutine-based scheduler
+  // serve all three instead of a separate implementation per platform. js and wasmJs further share
+  // a nested "foregroundSyncWeb" for [Sync]'s web wiring, kept apart from the default `webMain`
+  // group, which holds web code unrelated to [Sync].
+  applyDefaultHierarchyTemplate {
+    common {
+      group("foregroundSync") {
+        withJvm()
+        group("foregroundSyncWeb") {
+          withJs()
+          withWasmJs()
+        }
+      }
+    }
+  }
+
   androidTarget { compilerOptions { jvmTarget.set(JvmTarget.JVM_21) } }
 
   jvm("desktop")
@@ -43,6 +63,11 @@ kotlin {
       baseName = "EngineDemoKit"
       isStatic = true
     }
+  }
+
+  js {
+    browser()
+    binaries.executable()
   }
 
   @OptIn(ExperimentalWasmDsl::class)
@@ -91,7 +116,6 @@ kotlin {
         implementation(libs.kotlinx.coroutines.swing)
       }
     }
-    val wasmJsMain by getting { dependencies { implementation(project(":sqlite-wasm-worker")) } }
   }
 }
 

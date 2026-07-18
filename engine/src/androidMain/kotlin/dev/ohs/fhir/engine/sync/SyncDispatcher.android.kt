@@ -19,4 +19,4 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
-internal actual val syncDispatcher: CoroutineDispatcher = Dispatchers.IO
+actual val syncDispatcher: CoroutineDispatcher = Dispatchers.IO

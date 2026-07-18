@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ohs.fhir.engine.sync
+package dev.ohs.fhir.engine.wasm.worker
 
-import kotlinx.coroutines.CoroutineDispatcher
+import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
+import org.w3c.dom.Worker
 
-/**
- * Dispatcher for background sync work. Resolves to [kotlinx.coroutines.Dispatchers.IO] on platforms
- * with a dedicated blocking-I/O thread pool (Android, Desktop, iOS). The browser has no such pool,
- * so the wasm actual uses [kotlinx.coroutines.Dispatchers.Default].
- */
-expect val syncDispatcher: CoroutineDispatcher
+actual fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = WebWorkerSQLiteDriver(jsWorker())
+
+private fun jsWorker(): Worker =
+  js("""new Worker(new URL("sqlite-wasm-worker/worker.js", import.meta.url), { type: "module" })""")

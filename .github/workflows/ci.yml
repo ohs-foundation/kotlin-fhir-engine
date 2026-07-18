@@ -10,13 +10,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Override the large heap configured in gradle.properties — CI runners have ~7GB total RAM.
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8"
+
 jobs:
   test:
     name: Run Tests
-    runs-on: ubuntu-latest
-    env:
-      # Override the large heap configured in gradle.properties — CI runners have ~7GB total RAM.
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=2g -Dfile.encoding=UTF-8"
+    # macos-latest so Kotlin/Native can also cross-compile the iOS targets (arm64 + simulator) —
+    # Apple targets only cross-compile on a macOS host.
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +41,13 @@ jobs:
 
       - name: Check code formatting (Spotless)
         run: ./gradlew spotlessCheck
+
+      - name: Check all platforms compile
+        # Unqualified task names run in every subproject that declares them (:engine, :engine-app,
+        # and :sqlite-wasm-worker for js/wasmJs), so this covers every platform in one call.
+        run: >
+          ./gradlew compileDebugKotlinAndroid compileKotlinDesktop compileKotlinJs
+          compileKotlinWasmJs compileKotlinIosArm64 compileKotlinIosSimulatorArm64
 
       - name: Run desktop tests
         run: ./gradlew :engine:desktopTest
