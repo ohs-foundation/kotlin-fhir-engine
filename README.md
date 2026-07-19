@@ -243,8 +243,16 @@ requires **Room 3** (`androidx.room3`), Room 2 has no Wasm target, which is why 
 
 Android, iOS, and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
 `sqlite-bundled`), which has no Wasm build. On Wasm the database instead uses `WebWorkerSQLiteDriver`,
-backed by a SQLite-WASM Web Worker. That worker and its driver live in the `:sqlite-wasm-worker`
-module, see its [README](sqlite-wasm-worker/README.md).
+backed by a SQLite-WASM Web Worker running in an
+[OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)-persisted
+Web Worker (`engine/src/webMain/npm/sqlite-wasm-worker/worker.js`, npm dependency
+`@sqlite.org/sqlite-wasm`). `createSqliteWasmDriver()`
+(`engine/src/webMain/kotlin/dev/ohs/fhir/engine/wasm/worker/SqliteWasmWorker.kt`) wires that worker to
+`WebWorkerSQLiteDriver`, which the engine's Wasm `DatabaseBuilder` uses via `.setDriver()`.
+
+SQLite-WASM and OPFS need `SharedArrayBuffer`, which requires a
+[cross-origin-isolated](https://web.dev/articles/coop-coep) page. The demo app sets the required
+`COOP`/`COEP` headers in `engine-app/webpack.config.d/coop-coep.js`.
 
 ## Developer guide
 

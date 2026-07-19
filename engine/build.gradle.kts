@@ -37,9 +37,18 @@ kotlin {
   iosArm64()
   iosSimulatorArm64()
 
-  js { browser() }
+  // useEsModules() is required so the SQLite-WASM Web Worker (loaded via `new Worker(new
+  // URL(..., import.meta.url), { type: "module" })`) can be resolved as an ES module.
+  js {
+    browser()
+    useEsModules()
+  }
 
-  @OptIn(ExperimentalWasmDsl::class) wasmJs { browser() }
+  @OptIn(ExperimentalWasmDsl::class)
+  wasmJs {
+    browser()
+    useEsModules()
+  }
 
   targets.configureEach {
     compilations.configureEach {
@@ -80,7 +89,7 @@ kotlin {
       }
     }
     // The bundled native SQLite driver has no web artifact, so it lives only in the non-web
-    // platform source sets (web uses the Web Worker driver from :sqlite-wasm-worker instead).
+    // platform source sets (web uses the Web Worker driver from webMain instead).
     val androidMain by getting {
       dependencies {
         implementation(libs.androidx.sqlite.bundled)
@@ -101,7 +110,18 @@ kotlin {
         implementation(libs.ktor.client.darwin)
       }
     }
-    webMain.dependencies { implementation(project(":sqlite-wasm-worker")) }
+    webMain.dependencies {
+      // Exposes WebWorkerSQLiteDriver to consumers of DatabaseBuilder.kt.
+      api(libs.androidx.sqlite.web)
+      implementation(libs.kotlinx.browser)
+      // Local npm module: worker.js and @sqlite.org/sqlite-wasm (see src/webMain/npm).
+      implementation(
+        npm(
+          "sqlite-wasm-worker",
+          layout.projectDirectory.dir("src/webMain/npm/sqlite-wasm-worker").asFile,
+        ),
+      )
+    }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.

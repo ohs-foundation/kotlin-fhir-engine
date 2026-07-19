@@ -2866,7 +2866,7 @@ spdy@^4.0.2:
     select-hose "^2.0.0"
     spdy-transport "^3.0.0"
 
-"sqlite-wasm-worker@file:../../sqlite-wasm-worker/worker":
+"sqlite-wasm-worker@file:../../engine/src/webMain/npm/sqlite-wasm-worker":
   version "0.0.0"
   dependencies:
     "@sqlite.org/sqlite-wasm" "^3.50.1-build1"
