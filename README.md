@@ -254,6 +254,53 @@ SQLite-WASM and OPFS need `SharedArrayBuffer`, which requires a
 [cross-origin-isolated](https://web.dev/articles/coop-coep) page. The demo app sets the required
 `COOP`/`COEP` headers in `engine-app/webpack.config.d/coop-coep.js`.
 
+#### Required workaround for consumers targeting `js`/`wasmJs`
+
+`sqlite-wasm-worker` is a **local** npm module, not a published one, so Gradle can't propagate it to
+projects that depend on `fhir-engine` from Maven (unlike `@sqlite.org/sqlite-wasm`, a real npm
+package, which does propagate automatically). Without this workaround, apps that depend on
+`fhir-engine` will hit `Module not found: Error: Can't resolve 'sqlite-wasm-worker/worker.js'` when
+building for `js` or `wasmJs`.
+
+**Fix:** copy the worker module into your own project and declare a matching local npm dependency,
+so your build resolves the same specifier the engine's compiled code looks for.
+
+1. Copy `package.json` and `worker.js` from
+   [`engine/src/webMain/npm/sqlite-wasm-worker/`](https://github.com/ohs-foundation/kotlin-fhir-engine/tree/main/engine/src/webMain/npm/sqlite-wasm-worker)
+   into your project, e.g. `app/src/webMain/npm/sqlite-wasm-worker/`.
+2. Declare a matching npm dependency on the source set that compiles for your `js`/`wasmJs` targets
+   (Kotlin's default hierarchy template groups both under `webMain` once both targets are declared):
+
+   ```kotlin
+   // e.g. app/build.gradle.kts
+   kotlin {
+     sourceSets {
+       webMain.dependencies {
+         implementation(
+           npm(
+             "sqlite-wasm-worker",
+             layout.projectDirectory.dir("src/webMain/npm/sqlite-wasm-worker").asFile,
+           ),
+         )
+       }
+     }
+   }
+   ```
+3. Copy
+   [`engine-app/webpack.config.d/coop-coep.js`](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/engine-app/webpack.config.d/coop-coep.js)
+   into your own project's `webpack.config.d/` directory. Every Kotlin/JS module builds its own
+   webpack config, so this doesn't propagate from `:engine` — without it, `sqlite3.oo1.OpfsDb` is
+   unavailable and every database operation fails. This only covers your local dev server; your
+   production host/CDN must also send the same `Cross-Origin-Opener-Policy: same-origin` and
+   `Cross-Origin-Embedder-Policy: require-corp` headers.
+
+This is temporary. AndroidX's own
+[Room 3 release notes](https://developer.android.com/jetpack/androidx/releases/room3) note that
+`WebWorkerSQLiteDriver` doesn't yet ship a default worker and that "a future version of the Web
+driver might contain a default worker published in NPM, making the web setup simpler." Once that
+ships, this workaround — and the local `sqlite-wasm-worker` module in `:engine` itself — will no
+longer be necessary.
+
 ## Developer guide
 
 ### Publishing
