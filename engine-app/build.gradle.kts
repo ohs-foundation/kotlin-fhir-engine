@@ -116,6 +116,20 @@ kotlin {
         implementation(libs.kotlinx.coroutines.swing)
       }
     }
+    // Reference implementation of the workaround documented in the root README's "Required
+    // workaround for consumers targeting js/wasmJs" — proves it against :engine's *published*
+    // artifact shape. This app itself depends on :engine via project(":engine") so it never hits
+    // the "Module not found: sqlite-wasm-worker/worker.js" bug this fixes (that only affects
+    // consumers resolving :engine from Maven, whose yarn workspace has no local npm module of
+    // :engine's own) — this declaration is here purely so implementers have a real file to copy.
+    webMain.dependencies {
+      implementation(
+        npm(
+          "sqlite-wasm-worker",
+          layout.projectDirectory.dir("src/webMain/npm/sqlite-wasm-worker").asFile,
+        ),
+      )
+    }
   }
 }
 

@@ -263,10 +263,16 @@ package, which does propagate automatically). Without this workaround, apps that
 building for `js` or `wasmJs`.
 
 **Fix:** copy the worker module into your own project and declare a matching local npm dependency,
-so your build resolves the same specifier the engine's compiled code looks for.
+so your build resolves the same specifier the engine's compiled code looks for. The demo app
+(`engine-app`) has this workaround wired up as a working, copy-pasteable reference — see
+[`engine-app/src/webMain/npm/sqlite-wasm-worker/`](https://github.com/ohs-foundation/kotlin-fhir-engine/tree/main/engine-app/src/webMain/npm/sqlite-wasm-worker)
+and the `webMain.dependencies` block in
+[`engine-app/build.gradle.kts`](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/engine-app/build.gradle.kts).
 
-1. Copy `package.json` and `worker.js` from
-   [`engine/src/webMain/npm/sqlite-wasm-worker/`](https://github.com/ohs-foundation/kotlin-fhir-engine/tree/main/engine/src/webMain/npm/sqlite-wasm-worker)
+1. Copy
+   [`package.json`](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/engine-app/src/webMain/npm/sqlite-wasm-worker/package.json)
+   and
+   [`worker.js`](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/engine-app/src/webMain/npm/sqlite-wasm-worker/worker.js)
    into your project, e.g. `app/src/webMain/npm/sqlite-wasm-worker/`.
 2. Declare a matching npm dependency on the source set that compiles for your `js`/`wasmJs` targets
    (Kotlin's default hierarchy template groups both under `webMain` once both targets are declared):
