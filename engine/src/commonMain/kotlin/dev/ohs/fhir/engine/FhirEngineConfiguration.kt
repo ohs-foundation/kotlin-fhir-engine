@@ -23,8 +23,10 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  * Configuration for the FHIR Engine, including database setup, error recovery, server connection,
  * and custom search parameters.
  *
- * @property enableEncryptionIfSupported Enables database encryption if supported by the platform.
- *   Defaults to false.
+ * @property enableEncryptionIfSupported Database encryption is NOT yet supported in the
+ *   multiplatform engine; setting this to true throws [IllegalArgumentException]. The flag is kept
+ *   to preserve the call sites for when encryption is implemented. Until then, all data is stored
+ *   unencrypted.
  * @property databaseErrorStrategy The strategy to handle database errors. Defaults to
  *   [DatabaseErrorStrategy.UNSPECIFIED].
  * @property serverConfiguration Optional configuration for connecting to a remote FHIR server.
@@ -48,7 +50,13 @@ data class FhirEngineConfiguration(
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
   val storageDirectory: String? = null,
-)
+) {
+  init {
+    require(!enableEncryptionIfSupported) {
+      "Database encryption is not yet supported in the multiplatform FHIR engine."
+    }
+  }
+}
 
 /** How database errors should be handled. */
 enum class DatabaseErrorStrategy {

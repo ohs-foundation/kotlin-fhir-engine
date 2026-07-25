@@ -119,6 +119,12 @@ fhirEngine.delete(ResourceType.Patient, "patient-1")
 val patients = fhirEngine.search<Patient> {}
 ```
 
+### Encryption
+
+**Encryption is not yet supported.** The multiplatform engine currently stores all data
+unencrypted. Setting `enableEncryptionIfSupported = true` throws immediately rather than silently
+storing plaintext.
+
 ### Synchronizing with a FHIR server
 
 The engine synchronises with a remote FHIR server in two phases: download changed resources from the server, then upload local changes. You wire this up by implementing `FhirSyncTask` and scheduling it with a platform-appropriate mechanism.
