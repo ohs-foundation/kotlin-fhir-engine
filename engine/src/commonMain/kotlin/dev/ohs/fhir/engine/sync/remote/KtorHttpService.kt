@@ -27,6 +27,8 @@ import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.compression.ContentEncoding
+import io.ktor.client.plugins.compression.ContentEncodingConfig
+import io.ktor.client.plugins.compression.compress
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.delete
@@ -50,6 +52,7 @@ import kotlinx.serialization.json.jsonObject
 internal class KtorHttpService(
   private val client: HttpClient,
   private val fhirJson: Json = Json,
+  private val compressUploads: Boolean = false,
 ) : FhirHttpService {
 
   /**
@@ -105,6 +108,7 @@ internal class KtorHttpService(
         .post(path) {
           contentType(ContentType.Application.Json)
           headers { headers.forEach { (k, v) -> append(k, v) } }
+          if (compressUploads) compress("gzip")
           setBody(fhirJson.encodeToString(resource))
         }
         .body()
@@ -121,6 +125,7 @@ internal class KtorHttpService(
         .put(path) {
           contentType(ContentType.Application.Json)
           headers { headers.forEach { (k, v) -> append(k, v) } }
+          if (compressUploads) compress("gzip")
           setBody(fhirJson.encodeToString(resource))
         }
         .body()
@@ -137,6 +142,7 @@ internal class KtorHttpService(
         .patch(path) {
           contentType(ContentType.parse("application/json-patch+json"))
           headers { headers.forEach { (k, v) -> append(k, v) } }
+          if (compressUploads) compress("gzip")
           setBody(patchDocument.toString())
         }
         .body()
@@ -181,7 +187,10 @@ internal class KtorHttpService(
       }
 
       if (networkConfiguration.uploadWithGzip) {
-        install(ContentEncoding) { gzip() }
+        install(ContentEncoding) {
+          gzip()
+          mode = ContentEncodingConfig.Mode.All
+        }
       }
 
       if (networkConfiguration.httpCache != null) {
@@ -226,12 +235,12 @@ internal class KtorHttpService(
 
     internal fun build(engine: HttpClientEngine): KtorHttpService {
       val client = HttpClient(engine) { configureClient() }
-      return KtorHttpService(client)
+      return KtorHttpService(client, compressUploads = networkConfiguration.uploadWithGzip)
     }
 
     fun build(): KtorHttpService {
       val client = HttpClient { configureClient() }
-      return KtorHttpService(client)
+      return KtorHttpService(client, compressUploads = networkConfiguration.uploadWithGzip)
     }
   }
 }
