@@ -42,8 +42,11 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  *   Desktop has no such per-application directory, so without an explicit value every application
  *   embedding this library on the same machine would default to sharing the same `~/.fhir-engine`
  *   directory, and could read or corrupt each other's data. Defaults to `~/.fhir-engine` when null.
+ * @throws IllegalArgumentException if [enableEncryptionIfSupported] is true.
  */
-data class FhirEngineConfiguration(
+data class FhirEngineConfiguration
+@Throws(IllegalArgumentException::class)
+constructor(
   val enableEncryptionIfSupported: Boolean = false,
   val databaseErrorStrategy: DatabaseErrorStrategy = DatabaseErrorStrategy.UNSPECIFIED,
   val serverConfiguration: ServerConfiguration? = null,

@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine
 
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 
 class FhirEngineConfigurationTest {
 
@@ -30,5 +31,16 @@ class FhirEngineConfigurationTest {
   @Test
   fun default_configuration_does_not_throw() {
     FhirEngineConfiguration()
+  }
+
+  @Test
+  fun encryption_request_can_fall_back_to_an_unencrypted_configuration() {
+    val configuration =
+      try {
+        FhirEngineConfiguration(enableEncryptionIfSupported = true)
+      } catch (_: IllegalArgumentException) {
+        FhirEngineConfiguration()
+      }
+    assertFalse(configuration.enableEncryptionIfSupported)
   }
 }
