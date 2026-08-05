@@ -36,14 +36,13 @@ import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.Date
 import dev.ohs.fhir.model.r4.DateTime as FhirDateTimeWrapper
-import dev.ohs.fhir.model.r4.Decimal as FhirDecimalWrapper
+import dev.ohs.fhir.model.r4.Decimal as FhirDecimal
 import dev.ohs.fhir.model.r4.Device
 import dev.ohs.fhir.model.r4.Encounter
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Extension
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
-import dev.ohs.fhir.model.r4.FhirDecimal
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Identifier
 import dev.ohs.fhir.model.r4.Instant
@@ -209,7 +208,7 @@ class ResourceIndexerTest {
             RiskAssessment.Prediction(
               probability =
                 RiskAssessment.Prediction.Probability.Decimal(
-                  FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(decimalValue)),
+                  FhirDecimal(value = decimalValue),
                 ),
             ),
           ),
@@ -386,7 +385,7 @@ class ResourceIndexerTest {
               repeat =
                 Timing.Repeat(
                   frequency = PositiveInt(value = 1),
-                  period = FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.ONE)),
+                  period = FhirDecimal(value = BigDecimal.ONE),
                   periodUnit = Enumeration(value = Timing.UnitsOfTime.D),
                 ),
             ),
@@ -702,7 +701,7 @@ class ResourceIndexerTest {
         status = Enumeration(value = Invoice.InvoiceStatus.Issued),
         totalNet =
           Money(
-            value = FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(300))),
+            value = FhirDecimal(value = BigDecimal.fromInt(300)),
             currency = Enumeration(value = Currencies.Eur),
           ),
       )
@@ -733,8 +732,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(100))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(100)),
                 ),
             ),
           ),
@@ -760,8 +758,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(100))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   unit = FhirString(value = "kg"),
                 ),
             ),
@@ -801,8 +798,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(100))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   system = Uri(value = "http://unitsofmeasure.org"),
                   code = Code(value = "mg"),
                 ),
@@ -836,8 +832,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(100))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(100)),
                   system = Uri(value = "http://unitsofmeasure.org"),
                   code = Code(value = "randomUnit"),
                 ),
@@ -890,14 +885,8 @@ class ResourceIndexerTest {
         id = "someID",
         position =
           Location.Position(
-            latitude =
-              FhirDecimalWrapper(
-                value = FhirDecimal.fromBigDecimal(BigDecimal.fromDouble(latitude)),
-              ),
-            longitude =
-              FhirDecimalWrapper(
-                value = FhirDecimal.fromBigDecimal(BigDecimal.fromDouble(longitude)),
-              ),
+            latitude = FhirDecimal(value = BigDecimal.fromDouble(latitude)),
+            longitude = FhirDecimal(value = BigDecimal.fromDouble(longitude)),
           ),
       )
     val resourceIndices = resourceIndexer.index(location)
@@ -1155,7 +1144,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value = FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(value)),
+                  value = FhirDecimal(value = value),
                   system = Uri(value = systemValue),
                   unit = FhirString(value = unitValue),
                 ),
@@ -1163,7 +1152,7 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value = FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(value)),
+                  value = FhirDecimal(value = value),
                   system = Uri(value = systemValue),
                   unit = FhirString(value = unitValue),
                 ),
@@ -1171,15 +1160,13 @@ class ResourceIndexerTest {
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(200))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(200)),
                 ),
             ),
             Substance.Instance(
               quantity =
                 Quantity(
-                  value =
-                    FhirDecimalWrapper(value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(300))),
+                  value = FhirDecimal(value = BigDecimal.fromInt(300)),
                 ),
             ),
           ),
@@ -1235,10 +1222,7 @@ class ResourceIndexerTest {
               value =
                 Observation.Component.Value.Quantity(
                   Quantity(
-                    value =
-                      FhirDecimalWrapper(
-                        value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(70)),
-                      ),
+                    value = FhirDecimal(value = BigDecimal.fromInt(70)),
                     system = Uri(value = "http://unitsofmeasure.org"),
                   ),
                 ),
@@ -1248,10 +1232,7 @@ class ResourceIndexerTest {
               value =
                 Observation.Component.Value.Quantity(
                   Quantity(
-                    value =
-                      FhirDecimalWrapper(
-                        value = FhirDecimal.fromBigDecimal(BigDecimal.fromInt(110)),
-                      ),
+                    value = FhirDecimal(value = BigDecimal.fromInt(110)),
                     system = Uri(value = "http://unitsofmeasure.org"),
                   ),
                 ),
