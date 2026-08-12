@@ -129,28 +129,74 @@ internal class DatabaseImpl(
 
   override suspend fun <R : Resource> insertRemote(vararg resource: R) {
     inTransaction {
+      val entities = ArrayList<ResourceEntity>(resource.size)
+      val stringIdx = ArrayList<StringIndexEntity>()
+      val referenceIdx = ArrayList<ReferenceIndexEntity>()
+      val tokenIdx = ArrayList<TokenIndexEntity>()
+      val quantityIdx = ArrayList<QuantityIndexEntity>()
+      val uriIdx = ArrayList<UriIndexEntity>()
+      val dateIdx = ArrayList<DateIndexEntity>()
+      val dateTimeIdx = ArrayList<DateTimeIndexEntity>()
+      val numberIdx = ArrayList<NumberIndexEntity>()
+      val positionIdx = ArrayList<PositionIndexEntity>()
+
       resource.forEach { res ->
         val resourceId = res.id ?: error("Remote resource must have an id")
         val resourceUuid = Uuid.random()
-        val resourceTypeEnum = res.resourceTypeEnum
+        val resourceType = res.resourceTypeEnum
         val now = Clock.System.now()
 
-        val entity =
+        entities.add(
           ResourceEntity(
             id = 0,
             resourceUuid = resourceUuid,
-            resourceType = resourceTypeEnum,
+            resourceType = resourceType,
             resourceId = resourceId,
             serializedResource = serializeResource(res),
             versionId = null,
             lastUpdatedRemote = now,
             lastUpdatedLocal = now,
-          )
-        resourceDao.insertResource(entity)
+          ),
+        )
 
         val indices = resourceIndexer.index(res)
-        insertIndices(resourceUuid, resourceTypeEnum, indices)
+        indices.stringIndices.forEach {
+          stringIdx.add(StringIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.referenceIndices.forEach {
+          referenceIdx.add(ReferenceIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.tokenIndices.forEach {
+          tokenIdx.add(TokenIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.quantityIndices.forEach {
+          quantityIdx.add(QuantityIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.uriIndices.forEach { uriIdx.add(UriIndexEntity(0, resourceUuid, resourceType, it)) }
+        indices.dateIndices.forEach {
+          dateIdx.add(DateIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.dateTimeIndices.forEach {
+          dateTimeIdx.add(DateTimeIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.numberIndices.forEach {
+          numberIdx.add(NumberIndexEntity(0, resourceUuid, resourceType, it))
+        }
+        indices.positionIndices.forEach {
+          positionIdx.add(PositionIndexEntity(0, resourceUuid, resourceType, it))
+        }
       }
+
+      resourceDao.insertResources(entities)
+      if (stringIdx.isNotEmpty()) resourceDao.insertStringIndices(stringIdx)
+      if (referenceIdx.isNotEmpty()) resourceDao.insertReferenceIndices(referenceIdx)
+      if (tokenIdx.isNotEmpty()) resourceDao.insertCodeIndices(tokenIdx)
+      if (quantityIdx.isNotEmpty()) resourceDao.insertQuantityIndices(quantityIdx)
+      if (uriIdx.isNotEmpty()) resourceDao.insertUriIndices(uriIdx)
+      if (dateIdx.isNotEmpty()) resourceDao.insertDateIndices(dateIdx)
+      if (dateTimeIdx.isNotEmpty()) resourceDao.insertDateTimeIndices(dateTimeIdx)
+      if (numberIdx.isNotEmpty()) resourceDao.insertNumberIndices(numberIdx)
+      if (positionIdx.isNotEmpty()) resourceDao.insertPositionIndices(positionIdx)
     }
   }
 
@@ -168,7 +214,8 @@ internal class DatabaseImpl(
       ?: throw ResourceNotFoundException(type.name, id)
 
   override suspend fun insertSyncedResources(resources: List<Resource>) {
-    inTransaction { insertRemote(*resources.toTypedArray()) }
+    // insertRemote already opens a writer transaction; wrapping it again just adds a savepoint.
+    insertRemote(*resources.toTypedArray())
   }
 
   override suspend fun withTransaction(block: suspend () -> Unit) {
