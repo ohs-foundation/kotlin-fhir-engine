@@ -348,7 +348,7 @@ internal class DatabaseImpl(
             .decodeFromString<Resource>(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
-        updateResourceAndReferences(oldResourceId, updatedResource)
+        rename(oldResourceId, updatedResource)
       }
     }
   }
@@ -456,33 +456,34 @@ internal class DatabaseImpl(
     currentResourceId: String,
     updatedResource: Resource,
   ) {
-    withTransaction {
-      val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource =
-        fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
-      val resourceUuid = currentResourceEntity.resourceUuid
-      updateResourceEntity(resourceUuid, updatedResource)
+    withTransaction { rename(currentResourceId, updatedResource) }
+  }
 
-      if (currentResourceId == updatedResource.id.orEmpty()) {
-        return@withTransaction
-      }
+  /** As [updateResourceAndReferences], on a transaction the caller already opened. */
+  private suspend fun rename(currentResourceId: String, updatedResource: Resource) {
+    val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
+    val oldResource =
+      fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
+    val resourceUuid = currentResourceEntity.resourceUuid
+    updateResourceEntity(resourceUuid, updatedResource)
 
-      // Update LocalChange records and identify referring resources. We update LocalChange records
-      // first because they may contain references to the old resource ID that aren't present in the
-      // latest ResourceEntity; the LocalChangeResourceReferenceEntity table lets us find them.
-      val uuidsOfReferringResources =
-        localChangeDao.updateResourceIdAndReferences(
-          resourceUuid = resourceUuid,
-          oldResource = oldResource,
-          updatedResourceId = updatedResource.id.orEmpty(),
-        )
+    if (currentResourceId == updatedResource.id.orEmpty()) return
 
-      updateReferringResources(
-        referringResourcesUuids = uuidsOfReferringResources,
+    // Update LocalChange records and identify referring resources. We update LocalChange records
+    // first because they may contain references to the old resource ID that aren't present in the
+    // latest ResourceEntity; the LocalChangeResourceReferenceEntity table lets us find them.
+    val uuidsOfReferringResources =
+      localChangeDao.updateResourceIdAndReferences(
+        resourceUuid = resourceUuid,
         oldResource = oldResource,
-        updatedResource = updatedResource,
+        updatedResourceId = updatedResource.id.orEmpty(),
       )
-    }
+
+    updateReferringResources(
+      referringResourcesUuids = uuidsOfReferringResources,
+      oldResource = oldResource,
+      updatedResource = updatedResource,
+    )
   }
 
   /** Updates the [ResourceEntity] (resource + resourceId) associated with [resourceUuid]. */
