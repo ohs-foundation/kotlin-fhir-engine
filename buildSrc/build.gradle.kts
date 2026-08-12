@@ -10,12 +10,12 @@ repositories {
 
 dependencies {
   implementation(libs.kotlinpoet)
-  implementation(libs.kotlin.fhir)
+  implementation(libs.fhir.model.r4)
   implementation(libs.kotlinx.serialization.json)
   implementation(libs.spotless.plugin.gradle)
 }
 
-// fhir-model is built with Kotlin 2.2; the kotlin-dsl plugin in Gradle 8.13 still uses 2.0.
+// fhir-model-r4 is built with Kotlin 2.2; the kotlin-dsl plugin in Gradle 8.13 still uses 2.0.
 // Allow reading the newer metadata.
 tasks.withType<KotlinCompile>().configureEach {
   compilerOptions { freeCompilerArgs.add("-Xskip-metadata-version-check") }

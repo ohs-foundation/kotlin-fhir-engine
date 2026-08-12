@@ -94,7 +94,7 @@ kotlin {
       implementation(project(":engine"))
       implementation(libs.androidx.datastore.preferences.core)
       implementation(libs.kermit)
-      implementation(libs.kotlin.fhir)
+      implementation(libs.fhir.model.r4)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kotlinx.datetime)
       implementation(libs.androidx.navigation3.ui)

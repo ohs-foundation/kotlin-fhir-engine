@@ -39,11 +39,11 @@ androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-te
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
-fhir-path = { module = "dev.ohs.fhir:fhir-path", version.ref = "kotlin-fhir-path" }
+fhir-model-r4 = { module = "dev.ohs.fhir:fhir-model-r4", version.ref = "kotlin-fhir" }
+fhir-path-r4 = { module = "dev.ohs.fhir:fhir-path-r4", version.ref = "kotlin-fhir-path" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kotest-assertions-core = {module = "io.kotest:kotest-assertions-core", version.ref="kotest"}
-kotlin-fhir = { module = "dev.ohs.fhir:fhir-model", version.ref = "kotlin-fhir" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
