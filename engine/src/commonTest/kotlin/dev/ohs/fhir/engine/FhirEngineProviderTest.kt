@@ -18,6 +18,7 @@ package dev.ohs.fhir.engine
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
@@ -26,7 +27,7 @@ class FhirEngineProviderTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.clearInstance()
+    FhirEngineProvider.reset()
   }
 
   @Test
@@ -38,12 +39,12 @@ class FhirEngineProviderTest {
   }
 
   @Test
-  fun getInstance_afterClearInstance_shouldReturnDifferentInstances() {
+  fun getInstance_afterReset_shouldReturnDifferentInstances() {
     FhirEngineProvider.init(
       FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
     )
     val engineOne = FhirEngineProvider.getInstance()
-    FhirEngineProvider.clearInstance()
+    FhirEngineProvider.reset()
     FhirEngineProvider.init(
       FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
     )
@@ -98,5 +99,17 @@ class FhirEngineProviderTest {
       assertEquals(50L * 1024L * 1024L, httpCache?.maxSize)
       assertEquals("sample-dir/http_cache", httpCache?.cacheDir)
     }
+  }
+
+  @Test
+  fun getFhirDataStore_afterReset_shouldThrow() {
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
+    )
+    FhirEngineProvider.getFhirDataStore()
+
+    FhirEngineProvider.reset()
+
+    assertFailsWith<IllegalStateException> { FhirEngineProvider.getFhirDataStore() }
   }
 }

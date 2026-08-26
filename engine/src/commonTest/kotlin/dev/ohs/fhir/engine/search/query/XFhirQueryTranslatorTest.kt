@@ -59,7 +59,7 @@ class XFhirQueryTranslatorTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.clearInstance()
+    FhirEngineProvider.reset()
   }
 
   @Test

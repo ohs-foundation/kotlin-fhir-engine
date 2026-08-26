@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <application
+      android:allowBackup="false"
+      android:label="FHIR Engine Benchmarks"
+      android:supportsRtl="true">
+
+    <!-- Macrobenchmark reads trace sections out of a Perfetto trace, which requires the app to be
+         profileable by shell and NOT debuggable. -->
+    <profileable
+        android:shell="true"
+        tools:ignore="ProfileableAttributeUnsupported"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <!-- A group run lasts hours with the screen held on. Without configChanges a rotation, a dock,
+         or a night-mode switch destroys the activity, which cancels the run and silently restarts
+         it from zero. -->
+    <activity
+        android:name="dev.ohs.fhir.engine.benchmark.app.BenchmarkActivity"
+        android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale"
+        android:exported="true"
+        android:launchMode="singleTop">
+      <intent-filter>
+        <action android:name="dev.ohs.fhir.engine.benchmark.RUN" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

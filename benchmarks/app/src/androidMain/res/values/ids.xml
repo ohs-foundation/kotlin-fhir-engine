@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Needed as a real resource id so UI Automator can select it with By.res(pkg, "benchmark_status"). -->
+  <item name="benchmark_status" type="id" />
+</resources>

@@ -381,3 +381,8 @@ The workflow requires the following GitHub organization or repository secrets (a
 ## License
 
 Licensed under the Apache License, Version 2.0.
+
+## Benchmarking
+
+CRUD, Search DSL and sync benchmarks across all targets live in [`benchmarks/`](benchmarks/).
+See [docs/benchmarking.md](docs/benchmarking.md). They are run manually and are not part of CI.

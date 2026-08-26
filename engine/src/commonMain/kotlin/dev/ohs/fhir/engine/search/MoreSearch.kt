@@ -165,7 +165,7 @@ internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       ${join.query}
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN ($uuidsString)
       ${if (filterQuery.isNotBlank()) "AND re.resourceUuid IN ($filterQuery)" else "AND re.resourceType = ?"}
