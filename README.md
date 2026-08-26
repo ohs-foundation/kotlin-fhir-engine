@@ -26,6 +26,13 @@ is listed in the following table:
 | iOS (Apple silicon simulator)      | `iosSimulatorArm64` | `-iossimulatorarm64` | ✅       |
 | iOS (device)                       | `iosArm64`          | `-iosarm64`          | ✅       |
 
+## Conformance
+
+The library targets FHIR R4 (v4.0.1). See [Conformance](docs/conformance.md) for feature by
+feature support of the [Search](https://hl7.org/fhir/R4/search.html) and
+[RESTful API](https://hl7.org/fhir/R4/http.html) specifications, per platform support, and parity
+with the original android-fhir engine. It documents what is supported and what is not.
+
 ## Demo app
 
 The `engine-app` module is a multiplatform demo application (Android, Desktop, iOS, and Web). Run it
