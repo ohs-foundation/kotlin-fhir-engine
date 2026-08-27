@@ -49,17 +49,17 @@ This table documents the parameter types defined in
 index table populated by
 [`ResourceIndexer.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/index/ResourceIndexer.kt).
 
-| Type | Specification | Code | Status | Notes |
-|:---|:---|:---|:---|:---|
-| number | [number](https://hl7.org/fhir/R4/search.html#number) | [`NumberParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/NumberParamFilterCriterion.kt) | ✅ | `eq` uses the value's implicit precision range per spec. |
-| date / dateTime | [date](https://hl7.org/fhir/R4/search.html#date) | [`DateParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/DateParamFilterCriterion.kt) | ✅ | Range based with precision widening. Indexes `Date`, `DateTime`, `Instant`, `Period` and `Timing`. |
-| string | [string](https://hl7.org/fhir/R4/search.html#string) | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt) | ⚠️ | Default matches starts with, case insensitive. Accent insensitivity required by the spec is not implemented. |
-| token | [token](https://hl7.org/fhir/R4/search.html#token) | [`TokenParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/TokenParamFilterCriterion.kt) | ⚠️ | Matches code and, when given, system. Accepts `Boolean`, `String`, `Uri`, `Code`, `Coding`, `CodeableConcept`, `Identifier` and `ContactPoint`. The `system\|` and `\|code` forms are not supported. |
-| reference | [reference](https://hl7.org/fhir/R4/search.html#reference) | [`ReferenceParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/ReferenceParamFilterCriterion.kt) | ⚠️ | Exact match on the stored reference string such as `Patient/123`. Full URL, bare id and versioned forms are not normalized. |
-| composite | [composite](https://hl7.org/fhir/R4/search.html#composite) | | ❌ | Not indexed and not filterable. |
-| quantity | [quantity](https://hl7.org/fhir/R4/search.html#quantity) | [`QuantityParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/QuantityParamFilterCriterion.kt) | ✅ | UCUM units are canonicalized on both index and query sides, so `1 m` matches `100 cm`. See [`UcumValue.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/UcumValue.kt). |
-| uri | [uri](https://hl7.org/fhir/R4/search.html#uri) | [`UriParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/UriParamFilterCriterion.kt) | ⚠️ | Exact match only. |
-| special (`near`) | [special](https://hl7.org/fhir/R4/search.html#special) | [`ResourceIndexer.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/index/ResourceIndexer.kt) | ❌ | `Location.position` is indexed but there is no filter to query it. |
+| Type             | Specification                                              | Code                                                                                                                                     | Status | Notes                                                                                                                                                                                                |
+|:-----------------|:-----------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------|:-------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| number           | [number](https://hl7.org/fhir/R4/search.html#number)       | [`NumberParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/NumberParamFilterCriterion.kt)       | ✅      | `eq` uses the value's implicit precision range per spec.                                                                                                                                             |
+| date / dateTime  | [date](https://hl7.org/fhir/R4/search.html#date)           | [`DateParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/DateParamFilterCriterion.kt)           | ✅      | Range based with precision widening. Indexes `Date`, `DateTime`, `Instant`, `Period` and `Timing`.                                                                                                   |
+| string           | [string](https://hl7.org/fhir/R4/search.html#string)       | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt)       | ⚠️     | Default matches starts with, case insensitive. Accent insensitivity required by the spec is not implemented.                                                                                         |
+| token            | [token](https://hl7.org/fhir/R4/search.html#token)         | [`TokenParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/TokenParamFilterCriterion.kt)         | ⚠️     | Matches code and, when given, system. Accepts `Boolean`, `String`, `Uri`, `Code`, `Coding`, `CodeableConcept`, `Identifier` and `ContactPoint`. The `system\|` and `\|code` forms are not supported. |
+| reference        | [reference](https://hl7.org/fhir/R4/search.html#reference) | [`ReferenceParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/ReferenceParamFilterCriterion.kt) | ⚠️     | Exact match on the stored reference string such as `Patient/123`. Full URL, bare id and versioned forms are not normalized.                                                                          |
+| composite        | [composite](https://hl7.org/fhir/R4/search.html#composite) |                                                                                                                                          | ❌      | Not indexed and not filterable.                                                                                                                                                                      |
+| quantity         | [quantity](https://hl7.org/fhir/R4/search.html#quantity)   | [`QuantityParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/QuantityParamFilterCriterion.kt)   | ✅      | UCUM units are canonicalized on both index and query sides, so `1 m` matches `100 cm`. See [`UcumValue.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/UcumValue.kt).                       |
+| uri              | [uri](https://hl7.org/fhir/R4/search.html#uri)             | [`UriParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/UriParamFilterCriterion.kt)             | ⚠️     | Exact match only.                                                                                                                                                                                    |
+| special (`near`) | [special](https://hl7.org/fhir/R4/search.html#special)     | [`ResourceIndexer.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/index/ResourceIndexer.kt)                                     | ❌      | `Location.position` is indexed but there is no filter to query it.                                                                                                                                   |
 
 ### Prefixes
 
@@ -68,13 +68,13 @@ This table documents the prefixes defined in
 quantity filters. Comparison logic lives in
 [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt).
 
-| Prefix | Specification | Code | Status | Notes |
-|:---|:---|:---|:---|:---|
-| `eq` (default) | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | |
-| `ne` | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | |
-| `gt` / `ge` / `lt` / `le` | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | |
-| `sa` / `eb` | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | Rejected for integer values per spec. |
-| `ap` | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | Numbers use ±10% of the value. Dates widen the range by 10% of the distance from now. |
+| Prefix                    | Specification                                        | Code                                                                                        | Status | Notes                                                                                 |
+|:--------------------------|:-----------------------------------------------------|:--------------------------------------------------------------------------------------------|:-------|:--------------------------------------------------------------------------------------|
+| `eq` (default)            | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅      |                                                                                       |
+| `ne`                      | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅      |                                                                                       |
+| `gt` / `ge` / `lt` / `le` | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅      |                                                                                       |
+| `sa` / `eb`               | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅      | Rejected for integer values per spec.                                                 |
+| `ap`                      | [prefix](https://hl7.org/fhir/R4/search.html#prefix) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅      | Numbers use ±10% of the value. Dates widen the range by 10% of the distance from now. |
 
 ### Modifiers
 
@@ -83,18 +83,18 @@ This table documents the modifiers defined in
 `StringFilterModifier` in
 [`Search.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/Search.kt).
 
-| Modifier | Specification | Code | Status | Notes |
-|:---|:---|:---|:---|:---|
-| `:exact` (string) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt) | ✅ | As `StringFilterModifier.MATCHES_EXACTLY`. |
-| `:contains` (string) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt) | ⚠️ | As `StringFilterModifier.CONTAINS`. Case insensitive but not accent insensitive. |
-| `:missing` | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:text` (token) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:not` (token) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:above` / `:below` (token, uri) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:in` / `:not-in` (token) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | Requires terminology support. |
-| `:of-type` (token) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:identifier` (reference) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | |
-| `:[type]` (reference) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | | ❌ | The type is written in the filter value instead, such as `Patient/123`. |
+| Modifier                         | Specification                                              | Code                                                                                                                               | Status | Notes                                                                            |
+|:---------------------------------|:-----------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------|:-------|:---------------------------------------------------------------------------------|
+| `:exact` (string)                | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt) | ✅      | As `StringFilterModifier.MATCHES_EXACTLY`.                                       |
+| `:contains` (string)             | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) | [`StringParamFilterCriterion.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/filter/StringParamFilterCriterion.kt) | ⚠️     | As `StringFilterModifier.CONTAINS`. Case insensitive but not accent insensitive. |
+| `:missing`                       | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:text` (token)                  | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:not` (token)                   | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:above` / `:below` (token, uri) | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:in` / `:not-in` (token)        | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      | Requires terminology support.                                                    |
+| `:of-type` (token)               | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:identifier` (reference)        | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      |                                                                                  |
+| `:[type]` (reference)            | [modifiers](https://hl7.org/fhir/R4/search.html#modifiers) |                                                                                                                                    | ❌      | The type is written in the filter value instead, such as `Patient/123`.          |
 
 ### Search result parameters
 
@@ -104,23 +104,23 @@ This table documents the result parameters defined in
 [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt) and
 [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt).
 
-| Parameter | Specification | Code | Status | Notes |
-|:---|:---|:---|:---|:---|
-| `_sort` | [sort](https://hl7.org/fhir/R4/search.html#sort) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ⚠️ | Single sort field only. String, number and date fields are sortable. Other types throw `NotImplementedError`. |
-| `_count` and offset | [count](https://hl7.org/fhir/R4/search.html#count) | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt) | ✅ | `Search.count` and `Search.from`. |
-| `_include` | [include](https://hl7.org/fhir/R4/search.html#include) | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt) | ⚠️ | No `:iterate` and no count on the included set. |
-| `_revinclude` | [revinclude](https://hl7.org/fhir/R4/search.html#revinclude) | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt) | ⚠️ | Same limitations as `_include`. |
-| `_has` | [has](https://hl7.org/fhir/R4/search.html#has) | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt) | ✅ | Supports multiple depths. |
-| Chained parameters | [chaining](https://hl7.org/fhir/R4/search.html#chaining) | | ❌ | Only reverse chaining via `has` is available. |
-| `_id` | [all resources](https://hl7.org/fhir/R4/search.html#all) | | ⚠️ | Query via `TokenClientParam("_id")`. No dedicated helper. |
-| `_lastUpdated` | [all resources](https://hl7.org/fhir/R4/search.html#all) | [`MoreClientParams.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreClientParams.kt) | ⚠️ | Query via `DateClientParam("_lastUpdated")`. No dedicated helper. |
-| `_tag` / `_security` | [all resources](https://hl7.org/fhir/R4/search.html#all) | | ⚠️ | Indexed as token parameters. No dedicated helpers. |
-| `_profile` / `_source` | [all resources](https://hl7.org/fhir/R4/search.html#all) | | ⚠️ | Indexed as uri parameters. No dedicated helpers. |
-| `_total` | [total](https://hl7.org/fhir/R4/search.html#total) | [`FhirEngine.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/FhirEngine.kt) | ⚠️ | Use `FhirEngine.count(search)` instead. |
-| `_text` / `_content` | [text search](https://hl7.org/fhir/R4/search.html#text) | | ❌ | No full text search. |
-| `_list` | [list](https://hl7.org/fhir/R4/search.html#list) | | ❌ | |
-| `_summary` / `_elements` | [summary](https://hl7.org/fhir/R4/search.html#summary) | | ❌ | Whole resources are always returned. |
-| `_contained` / `_containedType` | [contained](https://hl7.org/fhir/R4/search.html#contained) | | ❌ | |
+| Parameter                       | Specification                                                | Code                                                                                                    | Status | Notes                                                                                                         |
+|:--------------------------------|:-------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------|:-------|:--------------------------------------------------------------------------------------------------------------|
+| `_sort`                         | [sort](https://hl7.org/fhir/R4/search.html#sort)             | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt)             | ⚠️     | Single sort field only. String, number and date fields are sortable. Other types throw `NotImplementedError`. |
+| `_count` and offset             | [count](https://hl7.org/fhir/R4/search.html#count)           | [`MoreSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreSearch.kt)             | ✅      | `Search.count` and `Search.from`.                                                                             |
+| `_include`                      | [include](https://hl7.org/fhir/R4/search.html#include)       | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt)         | ⚠️     | No `:iterate` and no count on the included set.                                                               |
+| `_revinclude`                   | [revinclude](https://hl7.org/fhir/R4/search.html#revinclude) | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt)         | ⚠️     | Same limitations as `_include`.                                                                               |
+| `_has`                          | [has](https://hl7.org/fhir/R4/search.html#has)               | [`NestedSearch.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/NestedSearch.kt)         | ✅      | Supports multiple depths.                                                                                     |
+| Chained parameters              | [chaining](https://hl7.org/fhir/R4/search.html#chaining)     |                                                                                                         | ❌      | Only reverse chaining via `has` is available.                                                                 |
+| `_id`                           | [all resources](https://hl7.org/fhir/R4/search.html#all)     |                                                                                                         | ⚠️     | Query via `TokenClientParam("_id")`. No dedicated helper.                                                     |
+| `_lastUpdated`                  | [all resources](https://hl7.org/fhir/R4/search.html#all)     | [`MoreClientParams.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/MoreClientParams.kt) | ⚠️     | Query via `DateClientParam("_lastUpdated")`. No dedicated helper.                                             |
+| `_tag` / `_security`            | [all resources](https://hl7.org/fhir/R4/search.html#all)     |                                                                                                         | ⚠️     | Indexed as token parameters. No dedicated helpers.                                                            |
+| `_profile` / `_source`          | [all resources](https://hl7.org/fhir/R4/search.html#all)     |                                                                                                         | ⚠️     | Indexed as uri parameters. No dedicated helpers.                                                              |
+| `_total`                        | [total](https://hl7.org/fhir/R4/search.html#total)           | [`FhirEngine.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/FhirEngine.kt)                    | ⚠️     | Use `FhirEngine.count(search)` instead.                                                                       |
+| `_text` / `_content`            | [text search](https://hl7.org/fhir/R4/search.html#text)      |                                                                                                         | ❌      | No full text search.                                                                                          |
+| `_list`                         | [list](https://hl7.org/fhir/R4/search.html#list)             |                                                                                                         | ❌      |                                                                                                               |
+| `_summary` / `_elements`        | [summary](https://hl7.org/fhir/R4/search.html#summary)       |                                                                                                         | ❌      | Whole resources are always returned.                                                                          |
+| `_contained` / `_containedType` | [contained](https://hl7.org/fhir/R4/search.html#contained)   |                                                                                                         | ❌      |                                                                                                               |
 
 ### X-FHIR-Query
 
@@ -128,16 +128,16 @@ This table documents the result parameters defined in
 translates an x-fhir-query string such as `Patient?family=Smith&_sort=-name&_count=10` into a
 `Search`, exposed as `FhirEngine.search(xFhirQuery)`. It supports a subset of the DSL.
 
-| Feature | Code | Status | Notes |
-|:---|:---|:---|:---|
-| Filters for number, date, string, token, reference, uri and quantity | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ✅ | Token as `system\|code` or `code`. Quantity as `value\|system\|unit`, `value\|unit` or `value`. |
-| `_sort` with `-` for descending | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ⚠️ | Only the last field takes effect. |
-| `_count` | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ✅ | No offset parameter. |
-| Prefixes such as `gt2010-01-01` | | ❌ | |
-| Modifiers such as `name:exact` | | ❌ | |
-| Chained parameters and FHIRPath expressions | | ❌ | |
-| `_include` / `_revinclude` / `_has` | | ❌ | Use the Search DSL for these. |
-| Composite and special parameters | | ❌ | Rejected with `UnsupportedOperationException`. |
+| Feature                                                              | Code                                                                                                                  | Status | Notes                                                                                           |
+|:---------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------|:-------|:------------------------------------------------------------------------------------------------|
+| Filters for number, date, string, token, reference, uri and quantity | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ✅      | Token as `system\|code` or `code`. Quantity as `value\|system\|unit`, `value\|unit` or `value`. |
+| `_sort` with `-` for descending                                      | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ⚠️     | Only the last field takes effect.                                                               |
+| `_count`                                                             | [`XFhirQueryTranslator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/search/query/XFhirQueryTranslator.kt) | ✅      | No offset parameter.                                                                            |
+| Prefixes such as `gt2010-01-01`                                      |                                                                                                                       | ❌      |                                                                                                 |
+| Modifiers such as `name:exact`                                       |                                                                                                                       | ❌      |                                                                                                 |
+| Chained parameters and FHIRPath expressions                          |                                                                                                                       | ❌      |                                                                                                 |
+| `_include` / `_revinclude` / `_has`                                  |                                                                                                                       | ❌      | Use the Search DSL for these.                                                                   |
+| Composite and special parameters                                     |                                                                                                                       | ❌      | Rejected with `UnsupportedOperationException`.                                                  |
 
 ### Custom search parameters
 
@@ -162,29 +162,29 @@ Transport is
 and dispatch is
 [`FhirHttpDataSource.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/FhirHttpDataSource.kt).
 
-| Interaction | Specification | Code | Status | Notes |
-|:---|:---|:---|:---|:---|
-| read and search (GET) | [read](https://hl7.org/fhir/R4/http.html#read) | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt) | ✅ | |
-| create (POST or PUT) | [create](https://hl7.org/fhir/R4/http.html#create) | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt) | ✅ | Verb selected by `UploadStrategy.methodForCreate`. |
-| update (PUT) | [update](https://hl7.org/fhir/R4/http.html#update) | | ❌ | Updates are sent as PATCH only. PUT for update throws `NotImplementedError`. |
-| patch (PATCH) | [patch](https://hl7.org/fhir/R4/http.html#patch) | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt) | ✅ | JSON Patch with `Content-Type` `application/json-patch+json`. |
-| delete (DELETE) | [delete](https://hl7.org/fhir/R4/http.html#delete) | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt) | ✅ | |
-| transaction (POST Bundle) | [transaction](https://hl7.org/fhir/R4/http.html#transaction) | [`TransactionBundleGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/TransactionBundleGenerator.kt) | ✅ | Resources that reference each other cyclically are kept in the same bundle. |
-| paging with Bundle `next` links | [paging](https://hl7.org/fhir/R4/http.html#paging) | [`ResourceParamsBasedDownloadWorkManager.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/download/ResourceParamsBasedDownloadWorkManager.kt) | ✅ | |
+| Interaction                     | Specification                                                | Code                                                                                                                                                       | Status | Notes                                                                        |
+|:--------------------------------|:-------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------|:-------|:-----------------------------------------------------------------------------|
+| read and search (GET)           | [read](https://hl7.org/fhir/R4/http.html#read)               | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt)                                                 | ✅      |                                                                              |
+| create (POST or PUT)            | [create](https://hl7.org/fhir/R4/http.html#create)           | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt)                                                 | ✅      | Verb selected by `UploadStrategy.methodForCreate`.                           |
+| update (PUT)                    | [update](https://hl7.org/fhir/R4/http.html#update)           |                                                                                                                                                            | ❌      | Updates are sent as PATCH only. PUT for update throws `NotImplementedError`. |
+| patch (PATCH)                   | [patch](https://hl7.org/fhir/R4/http.html#patch)             | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt)                                                 | ✅      | JSON Patch with `Content-Type` `application/json-patch+json`.                |
+| delete (DELETE)                 | [delete](https://hl7.org/fhir/R4/http.html#delete)           | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt)                                                 | ✅      |                                                                              |
+| transaction (POST Bundle)       | [transaction](https://hl7.org/fhir/R4/http.html#transaction) | [`TransactionBundleGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/TransactionBundleGenerator.kt)                   | ✅      | Resources that reference each other cyclically are kept in the same bundle.  |
+| paging with Bundle `next` links | [paging](https://hl7.org/fhir/R4/http.html#paging)           | [`ResourceParamsBasedDownloadWorkManager.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/download/ResourceParamsBasedDownloadWorkManager.kt) | ✅      |                                                                              |
 
 ### Upload strategies
 
 [`UploadStrategy.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/UploadStrategy.kt)
 exposes two factories. All valid configurations send creates as PUT or POST and updates as PATCH.
 
-| Configuration | Status | Notes |
-|:---|:---|:---|
-| `forBundleRequest(create=PUT\|POST, update=PATCH, squash=true, bundleSize)` | ✅ | Transaction bundles with per resource squashed patches. |
-| `forBundleRequest(update=PUT, ...)` | ❌ | Throws `NotImplementedError`. |
-| `forBundleRequest(squash=false, ...)` | ❌ | Throws `NotImplementedError`. Bundles require squashing. |
-| `forIndividualRequest(create=PUT\|POST, update=PATCH, squash=true)` | ✅ | One HTTP request per resource. |
-| `forIndividualRequest(squash=false)` | ❌ | Constructs but fails at sync time in [`LocalChangeFetcher.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/LocalChangeFetcher.kt). |
-| `forIndividualRequest(update=PUT, ...)` | ❌ | Throws `NotImplementedError`. |
+| Configuration                                                               | Status | Notes                                                                                                                                                  |
+|:----------------------------------------------------------------------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `forBundleRequest(create=PUT\|POST, update=PATCH, squash=true, bundleSize)` | ✅      | Transaction bundles with per resource squashed patches.                                                                                                |
+| `forBundleRequest(update=PUT, ...)`                                         | ❌      | Throws `NotImplementedError`.                                                                                                                          |
+| `forBundleRequest(squash=false, ...)`                                       | ❌      | Throws `NotImplementedError`. Bundles require squashing.                                                                                               |
+| `forIndividualRequest(create=PUT\|POST, update=PATCH, squash=true)`         | ✅      | One HTTP request per resource.                                                                                                                         |
+| `forIndividualRequest(squash=false)`                                        | ❌      | Constructs but fails at sync time in [`LocalChangeFetcher.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/LocalChangeFetcher.kt). |
+| `forIndividualRequest(update=PUT, ...)`                                     | ❌      | Throws `NotImplementedError`.                                                                                                                          |
 
 Squashed JSON Patches generated by
 [`PerResourcePatchGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/patch/PerResourcePatchGenerator.kt)
@@ -198,23 +198,23 @@ drives downloads. A fully custom
 [`DownloadWorkManager`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/DownloadWorkManager.kt)
 can replace it.
 
-| Feature | Status | Notes |
-|:---|:---|:---|
-| Incremental download with `_lastUpdated=gt<timestamp>` and `_sort=_lastUpdated` | ✅ | Watermark persisted per resource type. |
-| Progress totals via `_summary=count` | ✅ | |
-| Follows Bundle `next` links | ✅ | |
-| `OperationOutcome` error detection | ✅ | Throws on error responses. Only `searchset` bundles are processed. |
+| Feature                                                                         | Status | Notes                                                              |
+|:--------------------------------------------------------------------------------|:-------|:-------------------------------------------------------------------|
+| Incremental download with `_lastUpdated=gt<timestamp>` and `_sort=_lastUpdated` | ✅      | Watermark persisted per resource type.                             |
+| Progress totals via `_summary=count`                                            | ✅      |                                                                    |
+| Follows Bundle `next` links                                                     | ✅      |                                                                    |
+| `OperationOutcome` error detection                                              | ✅      | Throws on error responses. Only `searchset` bundles are processed. |
 
 ### Concurrency with ETags
 
 The specification section is
 [Managing Resource Contention](https://hl7.org/fhir/R4/http.html#concurrency).
 
-| Feature | Code | Status | Notes |
-|:---|:---|:---|:---|
-| `If-Match` on bundle uploads | [`BundleEntryComponentGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/BundleEntryComponentGenerator.kt) | ✅ | On by default for update and delete entries. |
-| `If-Match` on individual uploads | | ❌ | [`UrlRequestGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/UrlRequestGenerator.kt) sets no `If-Match` header. |
-| Server ETag captured after upload | [`ResourceConsolidator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/ResourceConsolidator.kt) | ✅ | Version and lastUpdated stored locally. |
+| Feature                           | Code                                                                                                                                           | Status | Notes                                                                                                                                                 |
+|:----------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------|:-------|:------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `If-Match` on bundle uploads      | [`BundleEntryComponentGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/BundleEntryComponentGenerator.kt) | ✅      | On by default for update and delete entries.                                                                                                          |
+| `If-Match` on individual uploads  |                                                                                                                                                | ❌      | [`UrlRequestGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/UrlRequestGenerator.kt) sets no `If-Match` header. |
+| Server ETag captured after upload | [`ResourceConsolidator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/ResourceConsolidator.kt)                           | ✅      | Version and lastUpdated stored locally.                                                                                                               |
 
 ### Conflict resolution
 
@@ -225,17 +225,17 @@ defer outcome.
 
 ## Platform support
 
-| Feature | Android | Desktop (JVM) | iOS | js / wasmJs | Notes |
-|:---|:---|:---|:---|:---|:---|
-| CRUD, Search DSL, local changes | ✅ | ✅ | ✅ | ✅ | Room 3 with the bundled native SQLite driver. Web uses a SQLite WASM Web Worker with OPFS persistence. See the [README](../README.md) for the required web setup. |
-| Sync engine (`FhirSyncTask`, download and upload) | ✅ | ✅ | ✅ | ✅ | Platform neutral. |
-| OS level sync scheduler in the library | ✅ WorkManager | ❌ | ❌ | ❌ | Other platforms must schedule sync themselves. The demo app shows an iOS BGTask scheduler and a foreground scheduler for desktop and web. |
-| `uploadWithGzip` | ✅ | ✅ | ⚠️ | ⚠️ | Ktor compresses request bodies only on the JVM. On iOS and web the body is labeled gzip but sent uncompressed and servers reject it. Keep the flag off on those platforms. Tracked as [KTOR-8198](https://youtrack.jetbrains.com/issue/KTOR-8198). |
-| Response decompression on downloads | ✅ | ⚠️ | ✅ | ✅ | Handled by OkHttp, NSURLSession and the browser. The Desktop engine only negotiates gzip when `uploadWithGzip` is enabled. |
-| `storageDirectory` honored | ❌ by design | ✅ | ❌ by design | ✅ | Android and iOS use OS provided app scoped storage. Web namespaces the database and preferences. |
-| Database encryption | ❌ | ❌ | ❌ | ❌ | Not yet implemented. `enableEncryptionIfSupported = true` throws instead of silently storing plaintext. |
-| Schema migrations | ⚠️ | ⚠️ | ⚠️ | ⚠️ | Alpha policy. Schema changes recreate the database and all local data is lost, so sync first. Schema history is exported for future migrations. |
-| Tests executed in CI | ❌ compile only | ✅ | ❌ compile only | ❌ compile only | As of this revision CI runs `:engine:desktopTest`. |
+| Feature                                           | Android        | Desktop (JVM) | iOS            | js / wasmJs    | Notes                                                                                                                                                                                                                                              |
+|:--------------------------------------------------|:---------------|:--------------|:---------------|:---------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CRUD, Search DSL, local changes                   | ✅              | ✅             | ✅              | ✅              | Room 3 with the bundled native SQLite driver. Web uses a SQLite WASM Web Worker with OPFS persistence. See the [README](../README.md) for the required web setup.                                                                                  |
+| Sync engine (`FhirSyncTask`, download and upload) | ✅              | ✅             | ✅              | ✅              | Platform neutral.                                                                                                                                                                                                                                  |
+| OS level sync scheduler in the library            | ✅ WorkManager  | ❌             | ❌              | ❌              | Other platforms must schedule sync themselves. The demo app shows an iOS BGTask scheduler and a foreground scheduler for desktop and web.                                                                                                          |
+| `uploadWithGzip`                                  | ✅              | ✅             | ⚠️             | ⚠️             | Ktor compresses request bodies only on the JVM. On iOS and web the body is labeled gzip but sent uncompressed and servers reject it. Keep the flag off on those platforms. Tracked as [KTOR-8198](https://youtrack.jetbrains.com/issue/KTOR-8198). |
+| Response decompression on downloads               | ✅              | ⚠️            | ✅              | ✅              | Handled by OkHttp, NSURLSession and the browser. The Desktop engine only negotiates gzip when `uploadWithGzip` is enabled.                                                                                                                         |
+| `storageDirectory` honored                        | ❌ by design    | ✅             | ❌ by design    | ✅              | Android and iOS use OS provided app scoped storage. Web namespaces the database and preferences.                                                                                                                                                   |
+| Database encryption                               | ❌              | ❌             | ❌              | ❌              | Not yet implemented. `enableEncryptionIfSupported = true` throws instead of silently storing plaintext.                                                                                                                                            |
+| Schema migrations                                 | ⚠️             | ⚠️            | ⚠️             | ⚠️             | Alpha policy. Schema changes recreate the database and all local data is lost, so sync first. Schema history is exported for future migrations.                                                                                                    |
+| Tests executed in CI                              | ❌ compile only | ✅             | ❌ compile only | ❌ compile only | As of this revision CI runs `:engine:desktopTest`.                                                                                                                                                                                                 |
 
 ## Parity with the android-fhir engine
 
@@ -260,14 +260,14 @@ instead of `java.time.OffsetDateTime`.
 [`FhirEngineConfiguration.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/FhirEngineConfiguration.kt)
 keeps the original's shape for source compatibility but not every knob is functional yet.
 
-| Knob | Status | Notes |
-|:---|:---|:---|
-| `serverConfiguration` (baseUrl, authenticator, httpLogger) | ✅ | |
-| `NetworkConfiguration` timeouts | ✅ | `writeTimeOut` maps to the socket timeout. |
-| `customSearchParameters` | ✅ | See [Custom search parameters](#custom-search-parameters). |
-| `storageDirectory` | ✅ | Desktop and web only. See [Platform support](#platform-support). |
-| `uploadWithGzip` | ⚠️ | Works on Android and Desktop. Broken labeling on iOS and web. See [Platform support](#platform-support). |
-| `httpCache` | ⚠️ | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored. |
-| `enableEncryptionIfSupported` | ❌ | Throws `IllegalArgumentException`. Encryption is not yet implemented. |
-| `databaseErrorStrategy` | ❌ | Accepted but never read. `RECREATE_AT_OPEN` has no effect. |
-| `testMode` | ❌ | Accepted but never read. There is no in-memory database path. |
+| Knob                                                       | Status | Notes                                                                                                    |
+|:-----------------------------------------------------------|:-------|:---------------------------------------------------------------------------------------------------------|
+| `serverConfiguration` (baseUrl, authenticator, httpLogger) | ✅      |                                                                                                          |
+| `NetworkConfiguration` timeouts                            | ✅      | `writeTimeOut` maps to the socket timeout.                                                               |
+| `customSearchParameters`                                   | ✅      | See [Custom search parameters](#custom-search-parameters).                                               |
+| `storageDirectory`                                         | ✅      | Desktop and web only. See [Platform support](#platform-support).                                         |
+| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. Broken labeling on iOS and web. See [Platform support](#platform-support). |
+| `httpCache`                                                | ⚠️     | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored.         |
+| `enableEncryptionIfSupported`                              | ❌      | Throws `IllegalArgumentException`. Encryption is not yet implemented.                                    |
+| `databaseErrorStrategy`                                    | ❌      | Accepted but never read. `RECREATE_AT_OPEN` has no effect.                                               |
+| `testMode`                                                 | ❌      | Accepted but never read. There is no in-memory database path.                                            |
