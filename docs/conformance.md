@@ -4,8 +4,8 @@ This page documents the conformance of the Kotlin FHIR Engine against the offici
 specifications it implements. The library targets **FHIR R4 (v4.0.1)**. The Search DSL is measured
 against the [FHIR R4 Search specification](https://hl7.org/fhir/R4/search.html) and synchronization
 is measured against the [FHIR R4 RESTful API specification](https://hl7.org/fhir/R4/http.html).
-This page also documents per platform support and parity with the original
-[android-fhir engine](https://github.com/google/android-fhir).
+This page also documents per platform support. Parity with the original android-fhir engine is
+documented separately in [android-fhir parity](android-fhir-parity.md).
 
 ## Table of Contents
 
@@ -19,14 +19,10 @@ This page also documents per platform support and parity with the original
   - [Custom search parameters](#custom-search-parameters)
 - [FHIR RESTful API](#fhir-restful-api)
   - [HTTP interactions](#http-interactions)
-  - [Upload strategies](#upload-strategies)
   - [Download](#download)
   - [Concurrency with ETags](#concurrency-with-etags)
   - [Conflict resolution](#conflict-resolution)
 - [Platform support](#platform-support)
-- [Parity with the android-fhir engine](#parity-with-the-android-fhir-engine)
-  - [FhirEngine API](#fhirengine-api)
-  - [Configuration](#configuration)
 
 ## Status legend
 
@@ -153,7 +149,8 @@ registered are not re-indexed automatically. Update them to re-index.
 
 Synchronization implements the client side of the
 [FHIR R4 (v4.0.1) RESTful API](https://hl7.org/fhir/R4/http.html). It downloads changed resources
-from the server and then uploads local changes.
+from the server and then uploads local changes. The supported upload strategy configurations are
+documented in the [README](../README.md#supported-upload-strategies).
 
 ### HTTP interactions
 
@@ -171,25 +168,6 @@ and dispatch is
 | delete (DELETE)                 | [delete](https://hl7.org/fhir/R4/http.html#delete)           | [`KtorHttpService.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/remote/KtorHttpService.kt)                                                 | ✅      |                                                                              |
 | transaction (POST Bundle)       | [transaction](https://hl7.org/fhir/R4/http.html#transaction) | [`TransactionBundleGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/request/TransactionBundleGenerator.kt)                   | ✅      | Resources that reference each other cyclically are kept in the same bundle.  |
 | paging with Bundle `next` links | [paging](https://hl7.org/fhir/R4/http.html#paging)           | [`ResourceParamsBasedDownloadWorkManager.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/download/ResourceParamsBasedDownloadWorkManager.kt) | ✅      |                                                                              |
-
-### Upload strategies
-
-[`UploadStrategy.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/UploadStrategy.kt)
-exposes two factories. All valid configurations send creates as PUT or POST and updates as PATCH.
-
-| Configuration                                                               | Status | Notes                                                                                                                                                  |
-|:----------------------------------------------------------------------------|:-------|:-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `forBundleRequest(create=PUT\|POST, update=PATCH, squash=true, bundleSize)` | ✅      | Transaction bundles with per resource squashed patches.                                                                                                |
-| `forBundleRequest(update=PUT, ...)`                                         | ❌      | Throws `NotImplementedError`.                                                                                                                          |
-| `forBundleRequest(squash=false, ...)`                                       | ❌      | Throws `NotImplementedError`. Bundles require squashing.                                                                                               |
-| `forIndividualRequest(create=PUT\|POST, update=PATCH, squash=true)`         | ✅      | One HTTP request per resource.                                                                                                                         |
-| `forIndividualRequest(squash=false)`                                        | ❌      | Constructs but fails at sync time in [`LocalChangeFetcher.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/LocalChangeFetcher.kt). |
-| `forIndividualRequest(update=PUT, ...)`                                     | ❌      | Throws `NotImplementedError`.                                                                                                                          |
-
-Squashed JSON Patches generated by
-[`PerResourcePatchGenerator.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/sync/upload/patch/PerResourcePatchGenerator.kt)
-use the `add`, `replace` and `remove` operations. The `move`, `copy` and `test` operations are not
-generated. ⚠️
 
 ### Download
 
@@ -236,38 +214,3 @@ defer outcome.
 | Database encryption                               | ❌              | ❌             | ❌              | ❌              | Not yet implemented. `enableEncryptionIfSupported = true` throws instead of silently storing plaintext.                                                                                                                                            |
 | Schema migrations                                 | ⚠️             | ⚠️            | ⚠️             | ⚠️             | Alpha policy. Schema changes recreate the database and all local data is lost, so sync first. Schema history is exported for future migrations.                                                                                                    |
 | Tests executed in CI                              | ❌ compile only | ✅             | ❌ compile only | ❌ compile only | As of this revision CI runs `:engine:desktopTest`.                                                                                                                                                                                                 |
-
-## Parity with the android-fhir engine
-
-The engine is a Kotlin Multiplatform port of the android-fhir `engine` module. The FHIR model is
-[kotlin-fhir](https://github.com/ohs-foundation/kotlin-fhir) instead of HAPI and the HTTP client is
-Ktor instead of Retrofit.
-
-### FhirEngine API
-
-All 14 methods of the original `FhirEngine` interface are present with identical signatures in
-[`FhirEngine.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/FhirEngine.kt). ✅
-These are `create`, `get`, `update`, `delete`, `search`, `count`, `syncUpload` (deprecated upstream
-too), `syncDownload` (deprecated), `getLastSyncTimeStamp`, `clearDatabase`, `getLocalChanges`,
-`purge` (single and bulk) and `withTransaction`.
-
-Resource types come from the kotlin-fhir model. `getLastSyncTimeStamp` returns the engine's own
-multiplatform [`OffsetDateTime`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/OffsetDateTime.kt)
-instead of `java.time.OffsetDateTime`.
-
-### Configuration
-
-[`FhirEngineConfiguration.kt`](../engine/src/commonMain/kotlin/dev/ohs/fhir/engine/FhirEngineConfiguration.kt)
-keeps the original's shape for source compatibility but not every knob is functional yet.
-
-| Knob                                                       | Status | Notes                                                                                                    |
-|:-----------------------------------------------------------|:-------|:---------------------------------------------------------------------------------------------------------|
-| `serverConfiguration` (baseUrl, authenticator, httpLogger) | ✅      |                                                                                                          |
-| `NetworkConfiguration` timeouts                            | ✅      | `writeTimeOut` maps to the socket timeout.                                                               |
-| `customSearchParameters`                                   | ✅      | See [Custom search parameters](#custom-search-parameters).                                               |
-| `storageDirectory`                                         | ✅      | Desktop and web only. See [Platform support](#platform-support).                                         |
-| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. Broken labeling on iOS and web. See [Platform support](#platform-support). |
-| `httpCache`                                                | ⚠️     | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored.         |
-| `enableEncryptionIfSupported`                              | ❌      | Throws `IllegalArgumentException`. Encryption is not yet implemented.                                    |
-| `databaseErrorStrategy`                                    | ❌      | Accepted but never read. `RECREATE_AT_OPEN` has no effect.                                               |
-| `testMode`                                                 | ❌      | Accepted but never read. There is no in-memory database path.                                            |
