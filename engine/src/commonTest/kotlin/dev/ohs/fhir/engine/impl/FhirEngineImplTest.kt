@@ -23,6 +23,7 @@ import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.get
 import dev.ohs.fhir.engine.search.count
 import dev.ohs.fhir.engine.search.search
+import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
@@ -49,8 +50,11 @@ class FhirEngineImplTest {
    * time.
    */
   private suspend fun setUpEngine(): FhirEngine {
-    FhirEngineProvider.init(FhirEngineConfiguration(storageDirectory = testStorageDirectory()))
-    return FhirEngineProvider.getInstance().apply {
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(storageDirectory = testStorageDirectory()),
+      testPlatformContext(),
+    )
+    return FhirEngineProvider.getInstance(testPlatformContext()).apply {
       clearDatabase()
       create(TEST_PATIENT_1)
     }

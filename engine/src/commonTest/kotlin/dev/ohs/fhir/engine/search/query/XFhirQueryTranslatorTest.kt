@@ -25,6 +25,7 @@ import dev.ohs.fhir.engine.search.Search
 import dev.ohs.fhir.engine.search.query.XFhirQueryTranslator.applyFilterParam
 import dev.ohs.fhir.engine.search.query.XFhirQueryTranslator.applySortParam
 import dev.ohs.fhir.engine.search.query.XFhirQueryTranslator.translate
+import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
@@ -53,8 +54,9 @@ class XFhirQueryTranslatorTest {
             ),
           ),
       ),
+      testPlatformContext(),
     )
-    FhirEngineProvider.getInstance()
+    FhirEngineProvider.getInstance(testPlatformContext())
   }
 
   @AfterTest

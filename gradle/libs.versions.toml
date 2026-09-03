@@ -7,6 +7,7 @@ androidx-navigation3 = "1.1.1"
 androidx-room3 = "3.0.0-alpha06"
 androidx-sqlite = "2.7.0-alpha06"
 androidx-test-core = "1.6.1"
+androidx-test-runner = "1.6.2"
 androidx-work = "2.8.1"
 compose-multiplatform = "1.11.1"
 junit = "4.13.2"
@@ -36,6 +37,7 @@ androidx-sqlite-async = { module = "androidx.sqlite:sqlite-async", version.ref =
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "androidx-sqlite" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }
 androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "androidx-work" }

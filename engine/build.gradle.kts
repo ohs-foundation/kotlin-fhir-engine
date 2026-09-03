@@ -127,6 +127,13 @@ kotlin {
       // the codegen consumes at build time, so the test classpath needs access to it.
       resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
     }
+    getByName("androidDeviceTest") {
+      dependencies {
+        implementation(libs.androidx.test.core)
+        implementation(libs.androidx.test.runner)
+        implementation(libs.kotlin.test.junit)
+      }
+    }
     getByName("androidHostTest") {
       dependencies {
         implementation(libs.junit)
@@ -158,7 +165,7 @@ tasks
   .configureEach {
     filter {
       // These tests need an Android Context, which host tests cannot provide. They run on every
-      // other target and belong in androidDeviceTest once it is wired.
+      // other target and on Android in connectedAndroidDeviceTest.
       excludeTestsMatching("dev.ohs.fhir.engine.FhirEngineProviderTest")
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
