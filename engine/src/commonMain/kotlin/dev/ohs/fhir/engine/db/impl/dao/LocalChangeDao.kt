@@ -23,6 +23,7 @@ import androidx.room3.Transaction
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.engine.LocalChangeToken
 import dev.ohs.fhir.engine.db.impl.JsonDiff
+import dev.ohs.fhir.engine.db.impl.ResourceSerializer
 import dev.ohs.fhir.engine.db.impl.addUpdatedReferenceToResource
 import dev.ohs.fhir.engine.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.engine.db.impl.entities.LocalChangeEntity.Type
@@ -50,6 +51,7 @@ import kotlinx.serialization.json.jsonArray
  */
 @Dao
 internal abstract class LocalChangeDao {
+  lateinit var resourceSerializer: ResourceSerializer
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun addLocalChange(localChangeEntity: LocalChangeEntity): Long
@@ -122,7 +124,8 @@ internal abstract class LocalChangeDao {
       )
     }
     val newSerializedResource = fhirJsonParser.encodeToString(updatedResource)
-    val jsonDiff = diff(oldEntity.serializedResource, newSerializedResource)
+    val jsonDiff =
+      diff(resourceSerializer.decodeToJson(oldEntity.serializedResource), newSerializedResource)
     if (jsonDiff == EMPTY_JSON_ARRAY) {
       Logger.i {
         "New resource ${resourceType.name}/$resourceId is same as old resource. " +
@@ -142,7 +145,7 @@ internal abstract class LocalChangeDao {
         versionId = oldEntity.versionId,
       )
 
-    val oldResource = fhirJsonParser.decodeFromString<Resource>(oldEntity.serializedResource)
+    val oldResource = resourceSerializer.decode(oldEntity.serializedResource)
     val localChangeReferences =
       extractReferencesDiff(oldResource, updatedResource).map { resourceReferenceInfo ->
         LocalChangeResourceReferenceEntity(

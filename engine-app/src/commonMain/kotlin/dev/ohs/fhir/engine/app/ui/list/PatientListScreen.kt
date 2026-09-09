@@ -142,7 +142,7 @@ private fun PatientRow(patient: PatientUiModel, onClick: () -> Unit) {
         )
         val sub =
           listOfNotNull(
-              patient.gender?.getDisplay(),
+              patient.gender?.display,
               patient.birthDate?.toString(),
             )
             .joinToString(" • ")

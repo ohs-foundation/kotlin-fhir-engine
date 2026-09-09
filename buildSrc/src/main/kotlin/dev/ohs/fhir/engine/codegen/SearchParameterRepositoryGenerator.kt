@@ -187,7 +187,7 @@ internal object SearchParameterRepositoryGenerator {
   private fun getResourceToPathMap(searchParam: SearchParameter): Map<String, String> {
     val expression = searchParam.expression!!.value!!
     return if (searchParam.base.size == 1) {
-      mapOf(searchParam.base.single().value!!.getCode() to expression)
+      mapOf(searchParam.base.single().value!!.code to expression)
     } else {
       expression
         .split("|")
