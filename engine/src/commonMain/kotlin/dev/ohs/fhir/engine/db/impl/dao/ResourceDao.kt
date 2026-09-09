@@ -23,6 +23,7 @@ import androidx.room3.Query
 import androidx.room3.RawQuery
 import androidx.room3.RoomRawQuery
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
+import dev.ohs.fhir.engine.db.impl.ResourceSerializer
 import dev.ohs.fhir.engine.db.impl.entities.DateIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.DateTimeIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.NumberIndexEntity
@@ -33,7 +34,6 @@ import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.engine.db.impl.entities.StringIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.TokenIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
-import dev.ohs.fhir.engine.db.impl.fhirJsonParser
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.ResourceIndexer.Companion.createLocalLastUpdatedIndex
 import dev.ohs.fhir.engine.index.ResourceIndices
@@ -59,6 +59,8 @@ internal abstract class ResourceDao {
    */
   lateinit var resourceIndexer: ResourceIndexer
 
+  lateinit var resourceSerializer: ResourceSerializer
+
   /**
    * Updates the resource in the [ResourceEntity] and adds indexes as a result of changes made on
    * device.
@@ -70,7 +72,7 @@ internal abstract class ResourceDao {
     getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
-          serializedResource = fhirJsonParser.encodeToString(resource),
+          serializedResource = resourceSerializer.encode(resource),
           lastUpdatedLocal = timeOfLocalChange,
           lastUpdatedRemote = resource.lastUpdated ?: it.lastUpdatedRemote,
         )
@@ -84,7 +86,7 @@ internal abstract class ResourceDao {
       val entity =
         it.copy(
           resourceId = updatedResource.id.orEmpty(),
-          serializedResource = fhirJsonParser.encodeToString(updatedResource),
+          serializedResource = resourceSerializer.encode(updatedResource),
           lastUpdatedRemote = updatedResource.lastUpdated ?: it.lastUpdatedRemote,
           versionId = updatedResource.versionId ?: it.versionId,
         )
@@ -103,7 +105,7 @@ internal abstract class ResourceDao {
     getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
       val entity =
         it.copy(
-          serializedResource = fhirJsonParser.encodeToString(resource),
+          serializedResource = resourceSerializer.encode(resource),
           lastUpdatedRemote = resource.lastUpdated,
           versionId = resource.versionId,
         )
@@ -197,7 +199,7 @@ internal abstract class ResourceDao {
         FROM ResourceEntity
         WHERE resourceId = :resourceId AND resourceType = :resourceType""",
   )
-  abstract suspend fun getResource(resourceId: String, resourceType: ResourceType): String?
+  abstract suspend fun getResource(resourceId: String, resourceType: ResourceType): ByteArray?
 
   @Query(
     """
@@ -259,7 +261,7 @@ internal abstract class ResourceDao {
         resourceType = resourceWithId.resourceTypeEnum,
         resourceUuid = resourceUuid,
         resourceId = resourceWithId.id.orEmpty(),
-        serializedResource = fhirJsonParser.encodeToString(resourceWithId),
+        serializedResource = resourceSerializer.encode(resourceWithId),
         versionId = resourceWithId.versionId,
         lastUpdatedRemote = resourceWithId.lastUpdated,
         lastUpdatedLocal = lastUpdatedLocal,
@@ -292,7 +294,7 @@ internal abstract class ResourceDao {
     lastUpdatedRemote: Instant?,
   ) {
     getResourceEntity(resourceId, resourceType)?.let { oldResourceEntity ->
-      val resource = fhirJsonParser.decodeFromString<Resource>(oldResourceEntity.serializedResource)
+      val resource = resourceSerializer.decode(oldResourceEntity.serializedResource)
       val updated = resource.updateMeta(versionId, lastUpdatedRemote)
       updateResourceWithUuid(oldResourceEntity.resourceUuid, updated)
     }
@@ -404,13 +406,13 @@ internal abstract class ResourceDao {
 internal class ForwardIncludeSearchResponse(
   @ColumnInfo(name = "index_name") val matchingIndex: String,
   @ColumnInfo(name = "resourceUuid") val baseResourceUUID: Uuid,
-  val serializedResource: String,
+  val serializedResource: ByteArray,
 )
 
 internal class ReverseIncludeSearchResponse(
   @ColumnInfo(name = "index_name") val matchingIndex: String,
   @ColumnInfo(name = "index_value") val baseResourceTypeAndId: String,
-  val serializedResource: String,
+  val serializedResource: ByteArray,
 )
 
 /**
@@ -435,5 +437,5 @@ internal data class ReverseIncludeSearchResult(
 
 internal data class SerializedResourceWithUuid(
   @ColumnInfo(name = "resourceUuid") val uuid: Uuid,
-  val serializedResource: String,
+  val serializedResource: ByteArray,
 )

@@ -140,7 +140,7 @@ internal class ResourceIndexer(
           value.value?.let {
             NumberIndex(searchParam.name, searchParam.path, BigDecimal.fromInt(it))
           }
-        is Decimal -> value.value?.let { NumberIndex(searchParam.name, searchParam.path, it) }
+        is Decimal -> value.value?.let { NumberIndex(searchParam.name, searchParam.path, it.asBigDecimal()) }
         else -> null
       }
 
@@ -426,7 +426,7 @@ internal class ResourceIndexer(
                 searchParam.path,
                 FHIR_CURRENCY_CODE_SYSTEM,
                 currency,
-                amount,
+                amount.asBigDecimal(),
               ),
             )
           } else {
@@ -435,7 +435,7 @@ internal class ResourceIndexer(
         }
         is Quantity -> {
           val quantityIndices = mutableListOf<QuantityIndex>()
-          val numericValue = value.value?.value ?: return emptyList()
+          val numericValue = value.value?.value?.asBigDecimal() ?: return emptyList()
 
           // Add quantity indexing record for the human-readable unit.
           val unit = value.unit?.value
@@ -481,8 +481,8 @@ internal class ResourceIndexer(
 
     private fun specialIndex(value: Any): PositionIndex? {
       if (value !is Location.Position) return null
-      val lat = value.latitude.value?.doubleValue(exactRequired = false) ?: return null
-      val lon = value.longitude.value?.doubleValue(exactRequired = false) ?: return null
+      val lat = value.latitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
+      val lon = value.longitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
       return PositionIndex(lat, lon)
     }
 

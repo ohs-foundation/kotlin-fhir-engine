@@ -456,7 +456,7 @@ class SearchTest {
         ResourceType.Patient.name,
         "telecom",
         "test@gmail.com",
-        ContactPoint.ContactPointUse.Home.getCode(),
+        ContactPoint.ContactPointUse.Home.code,
       ),
       query.args,
     )

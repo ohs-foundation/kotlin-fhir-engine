@@ -51,7 +51,7 @@ import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
       LocalChangeEntity::class,
       LocalChangeResourceReferenceEntity::class,
     ],
-  version = 2,
+  version = 3,
   exportSchema = true,
 )
 @ColumnTypeConverters(DbTypeConverters::class)

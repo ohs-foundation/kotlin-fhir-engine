@@ -34,7 +34,7 @@ internal data class ResourceEntity(
   val resourceUuid: Uuid,
   val resourceType: ResourceType,
   val resourceId: String,
-  val serializedResource: String,
+  val serializedResource: ByteArray,
   val versionId: String?,
   val lastUpdatedRemote: Instant?,
   val lastUpdatedLocal: Instant?,

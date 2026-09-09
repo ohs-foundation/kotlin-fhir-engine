@@ -66,6 +66,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
+        implementation(libs.kotlinx.serialization.protobuf)
         implementation(libs.fhir.model.r4)
         implementation(libs.fhir.path.r4)
         implementation(libs.kermit)

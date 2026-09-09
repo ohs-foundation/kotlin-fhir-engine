@@ -385,7 +385,7 @@ class ResourceIndexerTest {
               repeat =
                 Timing.Repeat(
                   frequency = PositiveInt(value = 1),
-                  period = FhirDecimal(value = BigDecimal.ONE),
+                  period = FhirDecimal.of(value = BigDecimal.ONE),
                   periodUnit = Enumeration(value = Timing.UnitsOfTime.D),
                 ),
             ),
