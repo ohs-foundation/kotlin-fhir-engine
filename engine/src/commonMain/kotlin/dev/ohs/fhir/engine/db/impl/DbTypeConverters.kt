@@ -15,7 +15,7 @@
  */
 package dev.ohs.fhir.engine.db.impl
 
-import androidx.room3.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Instant
@@ -30,26 +30,28 @@ internal object DbTypeConverters {
    * Since we're narrowing BigDecimal to double, search/sort precision is limited. Search/sort for
    * values that are close enough to resolve to the same double will be undefined.
    */
-  @TypeConverter fun bigDecimalToDouble(value: BigDecimal): Double = value.doubleValue(false)
+  @ColumnTypeConverter fun bigDecimalToDouble(value: BigDecimal): Double = value.doubleValue(false)
 
-  @TypeConverter fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)
+  @ColumnTypeConverter
+  fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)
 
-  @TypeConverter fun uuidToString(uuid: Uuid?): String? = uuid?.toString()
+  @ColumnTypeConverter fun uuidToString(uuid: Uuid?): String? = uuid?.toString()
 
-  @TypeConverter fun stringToUuid(value: String?): Uuid? = value?.let(Uuid::parse)
+  @ColumnTypeConverter fun stringToUuid(value: String?): Uuid? = value?.let(Uuid::parse)
 
-  @TypeConverter fun instantToEpochMillis(instant: Instant?): Long? = instant?.toEpochMilliseconds()
+  @ColumnTypeConverter
+  fun instantToEpochMillis(instant: Instant?): Long? = instant?.toEpochMilliseconds()
 
-  @TypeConverter
+  @ColumnTypeConverter
   fun epochMillisToInstant(value: Long?): Instant? = value?.let(Instant::fromEpochMilliseconds)
 
   /**
    * Converts a [ResourceType] into a String to be persisted in the database. This allows us to save
    * [ResourceType] into the database while keeping it as the real type in entities.
    */
-  @TypeConverter fun resourceTypeToString(type: ResourceType?): String? = type?.name
+  @ColumnTypeConverter fun resourceTypeToString(type: ResourceType?): String? = type?.name
 
   /** Converts a String into a [ResourceType]. Called when a query returns a [ResourceType]. */
-  @TypeConverter
+  @ColumnTypeConverter
   fun stringToResourceType(value: String?): ResourceType? = value?.let(ResourceType::valueOf)
 }

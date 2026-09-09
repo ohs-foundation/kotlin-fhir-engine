@@ -15,11 +15,11 @@
  */
 package dev.ohs.fhir.engine.db.impl
 
+import androidx.room3.ColumnTypeConverters
 import androidx.room3.ConstructedBy
 import androidx.room3.Database
 import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
-import androidx.room3.TypeConverters
 import dev.ohs.fhir.engine.db.impl.dao.LocalChangeDao
 import dev.ohs.fhir.engine.db.impl.dao.ResourceDao
 import dev.ohs.fhir.engine.db.impl.entities.DateIndexEntity
@@ -54,7 +54,7 @@ import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
   version = 2,
   exportSchema = true,
 )
-@TypeConverters(DbTypeConverters::class)
+@ColumnTypeConverters(DbTypeConverters::class)
 @ConstructedBy(ResourceDatabaseConstructor::class)
 internal abstract class ResourceDatabase : RoomDatabase() {
   abstract fun resourceDao(): ResourceDao
