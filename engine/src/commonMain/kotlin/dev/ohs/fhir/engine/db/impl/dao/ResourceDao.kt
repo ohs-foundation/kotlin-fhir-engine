@@ -168,6 +168,36 @@ internal abstract class ResourceDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun insertPositionIndex(positionIndexEntity: PositionIndexEntity)
 
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertResources(resources: List<ResourceEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertStringIndices(entities: List<StringIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertReferenceIndices(entities: List<ReferenceIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertCodeIndices(entities: List<TokenIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertQuantityIndices(entities: List<QuantityIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertUriIndices(entities: List<UriIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertDateIndices(entities: List<DateIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertDateTimeIndices(entities: List<DateTimeIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertNumberIndices(entities: List<NumberIndexEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertPositionIndices(entities: List<PositionIndexEntity>)
+
   @Query(
     """
         UPDATE ResourceEntity

@@ -52,6 +52,10 @@ import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
  * The implementation for the persistence layer using Room KMP. See docs for
@@ -66,9 +70,19 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
+  private val indexerFactory: (() -> ResourceIndexer)? = null,
 ) : Database {
 
+  /**
+   * One indexer per worker: a [ResourceIndexer]'s FHIRPath engine holds mutable evaluation state
+   * and is not safe for concurrent use, and the indexers persist across batches so their parsed
+   * expression caches stay warm.
+   */
+  private val workerIndexers by lazy { List(STORE_WORKERS) { indexerFactory!!.invoke() } }
+
   private companion object {
+    private const val STORE_WORKERS = 6
+
     private val USER_TABLES_QUERY =
       """
       SELECT name FROM sqlite_master
@@ -128,30 +142,103 @@ internal class DatabaseImpl(
   }
 
   override suspend fun <R : Resource> insertRemote(vararg resource: R) {
-    inTransaction {
-      resource.forEach { res ->
-        val resourceId = res.id ?: error("Remote resource must have an id")
-        val resourceUuid = Uuid.random()
-        val resourceTypeEnum = res.resourceTypeEnum
-        val now = Clock.System.now()
+    val prepared =
+      if (indexerFactory == null) {
+        resource.map { prepareRemote(it, resourceIndexer) }
+      } else {
+        prepareInParallel(resource.toList())
+      }
+    inTransaction { insertPrepared(prepared) }
+  }
 
-        val entity =
-          ResourceEntity(
-            id = 0,
-            resourceUuid = resourceUuid,
-            resourceType = resourceTypeEnum,
-            resourceId = resourceId,
-            serializedResource = serializeResource(res),
-            versionId = null,
-            lastUpdatedRemote = now,
-            lastUpdatedLocal = now,
-          )
-        resourceDao.insertResource(entity)
+  private class PreparedRemote(val entity: ResourceEntity, val indices: ResourceIndices)
 
-        val indices = resourceIndexer.index(res)
-        insertIndices(resourceUuid, resourceTypeEnum, indices)
+  private fun prepareRemote(res: Resource, indexer: ResourceIndexer): PreparedRemote {
+    val resourceId = res.id ?: error("Remote resource must have an id")
+    val now = Clock.System.now()
+    return PreparedRemote(
+      entity =
+        ResourceEntity(
+          id = 0,
+          resourceUuid = Uuid.random(),
+          resourceType = res.resourceTypeEnum,
+          resourceId = resourceId,
+          serializedResource = serializeResource(res),
+          versionId = null,
+          lastUpdatedRemote = now,
+          lastUpdatedLocal = now,
+        ),
+      indices = indexer.index(res),
+    )
+  }
+
+  private suspend fun prepareInParallel(resources: List<Resource>): List<PreparedRemote> {
+    val chunkSize = ((resources.size + STORE_WORKERS - 1) / STORE_WORKERS).coerceAtLeast(1)
+    return coroutineScope {
+      resources
+        .chunked(chunkSize)
+        .mapIndexed { worker, chunk ->
+          async(Dispatchers.Default) { chunk.map { prepareRemote(it, workerIndexers[worker]) } }
+        }
+        .awaitAll()
+        .flatten()
+    }
+  }
+
+  private suspend fun insertPrepared(prepared: List<PreparedRemote>) {
+    val entities = ArrayList<ResourceEntity>(prepared.size)
+    val stringIdx = ArrayList<StringIndexEntity>()
+    val referenceIdx = ArrayList<ReferenceIndexEntity>()
+    val tokenIdx = ArrayList<TokenIndexEntity>()
+    val quantityIdx = ArrayList<QuantityIndexEntity>()
+    val uriIdx = ArrayList<UriIndexEntity>()
+    val dateIdx = ArrayList<DateIndexEntity>()
+    val dateTimeIdx = ArrayList<DateTimeIndexEntity>()
+    val numberIdx = ArrayList<NumberIndexEntity>()
+    val positionIdx = ArrayList<PositionIndexEntity>()
+
+    prepared.forEach { item ->
+      val resourceUuid = item.entity.resourceUuid
+      val resourceType = item.entity.resourceType
+      entities.add(item.entity)
+      val indices = item.indices
+      indices.stringIndices.forEach {
+        stringIdx.add(StringIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.referenceIndices.forEach {
+        referenceIdx.add(ReferenceIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.tokenIndices.forEach {
+        tokenIdx.add(TokenIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.quantityIndices.forEach {
+        quantityIdx.add(QuantityIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.uriIndices.forEach { uriIdx.add(UriIndexEntity(0, resourceUuid, resourceType, it)) }
+      indices.dateIndices.forEach {
+        dateIdx.add(DateIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.dateTimeIndices.forEach {
+        dateTimeIdx.add(DateTimeIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.numberIndices.forEach {
+        numberIdx.add(NumberIndexEntity(0, resourceUuid, resourceType, it))
+      }
+      indices.positionIndices.forEach {
+        positionIdx.add(PositionIndexEntity(0, resourceUuid, resourceType, it))
       }
     }
+
+    resourceDao.insertResources(entities)
+    if (stringIdx.isNotEmpty()) resourceDao.insertStringIndices(stringIdx)
+    if (referenceIdx.isNotEmpty()) resourceDao.insertReferenceIndices(referenceIdx)
+    if (tokenIdx.isNotEmpty()) resourceDao.insertCodeIndices(tokenIdx)
+    if (quantityIdx.isNotEmpty()) resourceDao.insertQuantityIndices(quantityIdx)
+    if (uriIdx.isNotEmpty()) resourceDao.insertUriIndices(uriIdx)
+    if (dateIdx.isNotEmpty()) resourceDao.insertDateIndices(dateIdx)
+    if (dateTimeIdx.isNotEmpty()) resourceDao.insertDateTimeIndices(dateTimeIdx)
+    if (numberIdx.isNotEmpty()) resourceDao.insertNumberIndices(numberIdx)
+    if (positionIdx.isNotEmpty()) resourceDao.insertPositionIndices(positionIdx)
   }
 
   override suspend fun select(type: ResourceType, id: String): Resource {
@@ -168,7 +255,8 @@ internal class DatabaseImpl(
       ?: throw ResourceNotFoundException(type.name, id)
 
   override suspend fun insertSyncedResources(resources: List<Resource>) {
-    inTransaction { insertRemote(*resources.toTypedArray()) }
+    // insertRemote already opens a writer transaction; wrapping it again just adds a savepoint.
+    insertRemote(*resources.toTypedArray())
   }
 
   override suspend fun withTransaction(block: suspend () -> Unit) {
@@ -260,7 +348,7 @@ internal class DatabaseImpl(
             .decodeFromString<Resource>(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
-        updateResourceAndReferences(oldResourceId, updatedResource)
+        rename(oldResourceId, updatedResource)
       }
     }
   }
@@ -368,33 +456,34 @@ internal class DatabaseImpl(
     currentResourceId: String,
     updatedResource: Resource,
   ) {
-    withTransaction {
-      val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource =
-        fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
-      val resourceUuid = currentResourceEntity.resourceUuid
-      updateResourceEntity(resourceUuid, updatedResource)
+    withTransaction { rename(currentResourceId, updatedResource) }
+  }
 
-      if (currentResourceId == updatedResource.id.orEmpty()) {
-        return@withTransaction
-      }
+  /** As [updateResourceAndReferences], on a transaction the caller already opened. */
+  private suspend fun rename(currentResourceId: String, updatedResource: Resource) {
+    val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
+    val oldResource =
+      fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
+    val resourceUuid = currentResourceEntity.resourceUuid
+    updateResourceEntity(resourceUuid, updatedResource)
 
-      // Update LocalChange records and identify referring resources. We update LocalChange records
-      // first because they may contain references to the old resource ID that aren't present in the
-      // latest ResourceEntity; the LocalChangeResourceReferenceEntity table lets us find them.
-      val uuidsOfReferringResources =
-        localChangeDao.updateResourceIdAndReferences(
-          resourceUuid = resourceUuid,
-          oldResource = oldResource,
-          updatedResourceId = updatedResource.id.orEmpty(),
-        )
+    if (currentResourceId == updatedResource.id.orEmpty()) return
 
-      updateReferringResources(
-        referringResourcesUuids = uuidsOfReferringResources,
+    // Update LocalChange records and identify referring resources. We update LocalChange records
+    // first because they may contain references to the old resource ID that aren't present in the
+    // latest ResourceEntity; the LocalChangeResourceReferenceEntity table lets us find them.
+    val uuidsOfReferringResources =
+      localChangeDao.updateResourceIdAndReferences(
+        resourceUuid = resourceUuid,
         oldResource = oldResource,
-        updatedResource = updatedResource,
+        updatedResourceId = updatedResource.id.orEmpty(),
       )
-    }
+
+    updateReferringResources(
+      referringResourcesUuids = uuidsOfReferringResources,
+      oldResource = oldResource,
+      updatedResource = updatedResource,
+    )
   }
 
   /** Updates the [ResourceEntity] (resource + resourceId) associated with [resourceUuid]. */

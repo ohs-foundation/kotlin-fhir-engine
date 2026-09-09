@@ -644,6 +644,29 @@ class SearchTest {
   }
 
   @Test
+  fun search_count_ignores_sort_and_pagination() {
+    val query =
+      Search(ResourceType.Patient)
+        .apply {
+          sort(StringClientParam("given"), Order.ASCENDING)
+          count = 10
+          from = 20
+        }
+        .getQuery(isCount = true)
+
+    assertEquals(
+      """
+      SELECT COUNT(*)
+      FROM ResourceEntity a
+      WHERE a.resourceType = ?
+      """
+        .trimIndent(),
+      query.query,
+    )
+    assertEquals(listOf(ResourceType.Patient.name), query.args)
+  }
+
+  @Test
   fun search_sort_string_ascending() {
     val query =
       Search(ResourceType.Patient)

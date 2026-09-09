@@ -42,6 +42,10 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  *   Desktop has no such per-application directory, so without an explicit value every application
  *   embedding this library on the same machine would default to sharing the same `~/.fhir-engine`
  *   directory, and could read or corrupt each other's data. Defaults to `~/.fhir-engine` when null.
+ * @property parallelRemoteInserts Prepare downloaded resources (serialization and search-parameter
+ *   extraction) on parallel workers before the writer transaction, which then only executes
+ *   inserts. Extraction is the bulk of a store and is otherwise single-threaded; measured at three
+ *   times faster on a mid-range device. Set false to keep the store on one thread.
  * @throws IllegalArgumentException if [enableEncryptionIfSupported] is true.
  */
 data class FhirEngineConfiguration
@@ -53,6 +57,7 @@ constructor(
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
   val storageDirectory: String? = null,
+  val parallelRemoteInserts: Boolean = true,
 ) {
   init {
     require(!enableEncryptionIfSupported) {

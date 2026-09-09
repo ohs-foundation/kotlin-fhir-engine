@@ -428,10 +428,7 @@ internal fun Search.getQuery(
           """
           SELECT COUNT(*)
           FROM ResourceEntity a
-          $sortJoinStatement
           WHERE $filterStatement
-          $sortOrderStatement
-          $limitStatement
           """
         }
         nestedContext != null -> {
@@ -466,7 +463,11 @@ internal fun Search.getQuery(
 
   return SearchQuery(
     query,
-    nestedArgs + sortArgs + whereArgs + filterArgs + limitArgs,
+    if (isCount) {
+      nestedArgs + whereArgs + filterArgs
+    } else {
+      nestedArgs + sortArgs + whereArgs + filterArgs + limitArgs
+    },
   )
 }
 
