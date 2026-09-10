@@ -35,9 +35,9 @@ internal object DbTypeConverters {
   @ColumnTypeConverter
   fun doubleToBigDecimal(value: Double): BigDecimal = BigDecimal.fromDouble(value)
 
-  @ColumnTypeConverter fun uuidToString(uuid: Uuid?): String? = uuid?.toString()
+  @ColumnTypeConverter fun uuidToBytes(uuid: Uuid?): ByteArray? = uuid?.toByteArray()
 
-  @ColumnTypeConverter fun stringToUuid(value: String?): Uuid? = value?.let(Uuid::parse)
+  @ColumnTypeConverter fun bytesToUuid(value: ByteArray?): Uuid? = value?.let(Uuid::fromByteArray)
 
   @ColumnTypeConverter
   fun instantToEpochMillis(instant: Instant?): Long? = instant?.toEpochMilliseconds()

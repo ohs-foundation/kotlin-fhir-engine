@@ -31,6 +31,7 @@ import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.math.absoluteValue
 import kotlin.math.roundToLong
 import kotlin.time.Clock
+import kotlin.uuid.Uuid
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -64,7 +65,7 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
     if (forwardIncludes.isEmpty() || baseResources.isEmpty()) {
       null
     } else {
-      val uuids = baseResources.map { it.uuid.toString() }
+      val uuids = baseResources.map { it.uuid }
       database.searchForwardReferencedResources(getIncludeQuery(uuids))
     }
 
@@ -150,7 +151,7 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
  * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include` (one
  * `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
  */
-internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
+internal fun Search.getIncludeQuery(includeIds: List<Uuid>): SearchQuery {
   val args = mutableListOf<Any>()
   val baseResourceType = type
   val uuidsString = CharArray(includeIds.size) { '?' }.joinToString()
@@ -221,7 +222,7 @@ private fun generateIncludeFilterQuery(
   nestedSearch: NestedSearch,
   args: MutableList<Any>,
   baseResourceType: ResourceType,
-  includeIds: List<String>,
+  includeIds: List<Uuid>,
 ): String {
   val (param, search) = nestedSearch
   val resourceToInclude = search.type

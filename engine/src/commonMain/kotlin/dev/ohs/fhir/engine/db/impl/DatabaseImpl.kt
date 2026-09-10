@@ -288,10 +288,10 @@ internal class DatabaseImpl(
         bindArgs(statement, query.args)
         val results = mutableListOf<ResourceWithUUID<R>>()
         while (statement.step()) {
-          val uuid = statement.getText(0)
+          val uuid = Uuid.fromByteArray(statement.getBlob(0))
           val json = statement.getText(1)
           val resource = deserializeResource(json) as R
-          results.add(ResourceWithUUID(Uuid.parse(uuid), resource))
+          results.add(ResourceWithUUID(uuid, resource))
         }
         results
       }
@@ -320,7 +320,7 @@ internal class DatabaseImpl(
         val results = mutableListOf<ForwardIncludeSearchResult>()
         while (statement.step()) {
           val searchIndex = statement.getText(0)
-          val baseResourceUUID = Uuid.parse(statement.getText(1))
+          val baseResourceUUID = Uuid.fromByteArray(statement.getBlob(1))
           val json = statement.getText(2)
           val resource = deserializeResource(json)
           results.add(ForwardIncludeSearchResult(searchIndex, baseResourceUUID, resource))
@@ -475,6 +475,7 @@ internal class DatabaseImpl(
         is Long -> statement.bindLong(i + 1, arg)
         is Double -> statement.bindDouble(i + 1, arg)
         is Int -> statement.bindLong(i + 1, arg.toLong())
+        is Uuid -> statement.bindBlob(i + 1, arg.toByteArray())
         else -> statement.bindText(i + 1, arg.toString())
       }
     }
