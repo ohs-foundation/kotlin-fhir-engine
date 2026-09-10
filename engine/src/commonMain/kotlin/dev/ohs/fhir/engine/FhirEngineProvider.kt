@@ -125,7 +125,13 @@ object FhirEngineProvider {
       SearchParamDefinitionsProviderImpl(customParams = buildCustomParamsMap(config))
     searchParamProvider = searchParamDefinitionsProvider
     val resourceIndexer = ResourceIndexer(searchParamDefinitionsProvider)
-    val database = DatabaseImpl(platformContext, resourceIndexer, config.storageDirectory)
+    val database =
+      DatabaseImpl(
+        platformContext,
+        resourceIndexer,
+        config.storageDirectory,
+        inMemory = config.testMode,
+      )
 
     config.serverConfiguration?.let { serverConfig ->
       dataSource =

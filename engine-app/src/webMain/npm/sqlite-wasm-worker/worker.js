@@ -13,7 +13,10 @@ let nextStatementId = 0;
 function openRequest(id, requestData) {
     try {
         const newDatabaseId = nextDatabaseId++;
-        const newDatabase = new sqlite3.oo1.OpfsDb(requestData.fileName);
+        // Room asks for ":memory:" when built with inMemoryDatabaseBuilder.
+        const newDatabase = requestData.fileName === ':memory:'
+            ? new sqlite3.oo1.DB(':memory:')
+            : new sqlite3.oo1.OpfsDb(requestData.fileName);
         databases.set(newDatabaseId, newDatabase);
         postMessage({'id': id, data: {'databaseId': newDatabaseId}});
     } catch (error) {

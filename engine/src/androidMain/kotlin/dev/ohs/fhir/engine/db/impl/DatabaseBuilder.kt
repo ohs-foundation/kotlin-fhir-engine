@@ -24,12 +24,19 @@ import kotlinx.coroutines.Dispatchers
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val context = platformContext as Context
-  val dbFile = context.getDatabasePath(DATABASE_NAME)
-  return Room.databaseBuilder<ResourceDatabase>(context, dbFile.absolutePath)
-    .setDriver(BundledSQLiteDriver())
-    .setQueryCoroutineContext(Dispatchers.IO)
+  val builder =
+    if (inMemory) {
+      Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+    } else {
+      val context = platformContext as Context
+      Room.databaseBuilder<ResourceDatabase>(
+        context,
+        context.getDatabasePath(DATABASE_NAME).absolutePath,
+      )
+    }
+  return builder.setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO)
 }
 
 private const val DATABASE_NAME = "resources.db"

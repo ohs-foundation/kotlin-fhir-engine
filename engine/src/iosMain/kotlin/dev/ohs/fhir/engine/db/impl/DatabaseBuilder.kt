@@ -26,11 +26,17 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 
-@ExperimentalForeignApi
+@OptIn(ExperimentalForeignApi::class)
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
+  if (inMemory) {
+    return Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+      .setDriver(BundledSQLiteDriver())
+      .setQueryCoroutineContext(Dispatchers.IO)
+  }
   val appSupportDir =
     NSSearchPathForDirectoriesInDomains(
         NSApplicationSupportDirectory,
@@ -44,8 +50,7 @@ internal actual fun getDatabaseBuilder(
     attributes = null,
     error = null,
   )
-  val dbPath = "$appSupportDir/$DATABASE_NAME"
-  return Room.databaseBuilder<ResourceDatabase>(dbPath)
+  return Room.databaseBuilder<ResourceDatabase>("$appSupportDir/$DATABASE_NAME")
     .setDriver(BundledSQLiteDriver())
     .setQueryCoroutineContext(Dispatchers.IO)
 }

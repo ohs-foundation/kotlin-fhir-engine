@@ -66,6 +66,7 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
+  inMemory: Boolean = false,
 ) : Database {
 
   private companion object {
@@ -84,7 +85,7 @@ internal class DatabaseImpl(
   // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
   // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory)
+    getDatabaseBuilder(platformContext, storageDirectory, inMemory)
       .fallbackToDestructiveMigration(dropAllTables = true)
       .build()
 

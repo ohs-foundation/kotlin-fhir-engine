@@ -26,13 +26,17 @@ import kotlinx.coroutines.IO
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val dbDir = File(storageDirectory ?: defaultDesktopStorageDirectory)
-  dbDir.mkdirs()
-  val dbFile = File(dbDir, DATABASE_NAME)
-  return Room.databaseBuilder<ResourceDatabase>(dbFile.absolutePath)
-    .setDriver(BundledSQLiteDriver())
-    .setQueryCoroutineContext(Dispatchers.IO)
+  val builder =
+    if (inMemory) {
+      Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+    } else {
+      val dbDir = File(storageDirectory ?: defaultDesktopStorageDirectory)
+      dbDir.mkdirs()
+      Room.databaseBuilder<ResourceDatabase>(File(dbDir, DATABASE_NAME).absolutePath)
+    }
+  return builder.setDriver(BundledSQLiteDriver()).setQueryCoroutineContext(Dispatchers.IO)
 }
 
 private const val DATABASE_NAME = "resources.db"

@@ -25,8 +25,11 @@ import androidx.room3.RoomDatabase
  * @param storageDirectory Directory for the database file. Only honored on Desktop; ignored on
  *   Android/iOS which have an OS-provided app-scoped storage location. See
  *   [dev.ohs.fhir.engine.FhirEngineConfiguration.storageDirectory].
+ * @param inMemory Use an in-memory database that is discarded when closed, see
+ *   [dev.ohs.fhir.engine.FhirEngineConfiguration.testMode]. [storageDirectory] is then ignored.
  */
 internal expect fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase>

@@ -28,11 +28,13 @@ import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
@@ -63,6 +65,25 @@ class DatabaseImplTest {
       )
     database.clearDatabase()
     database.insert(TEST_PATIENT_1)
+  }
+
+  @Test
+  fun inMemory_createsNoDatabaseFile() = runTest {
+    val directory = testStorageDirectory()!!
+    val inMemoryDatabase =
+      DatabaseImpl(
+        platformContext = Unit,
+        resourceIndexer = ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory = directory,
+        inMemory = true,
+      )
+    try {
+      inMemoryDatabase.insert(Patient(id = "in-memory"))
+      assertEquals("in-memory", inMemoryDatabase.select(ResourceType.Patient, "in-memory").id)
+    } finally {
+      inMemoryDatabase.close()
+    }
+    assertFalse(File(directory, "resources.db").exists())
   }
 
   @AfterTest
