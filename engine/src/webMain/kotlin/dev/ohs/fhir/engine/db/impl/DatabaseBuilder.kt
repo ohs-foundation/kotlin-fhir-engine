@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteDriver
 import dev.ohs.fhir.engine.wasm.worker.createSqliteWasmDriver
 
 /**
@@ -39,11 +40,16 @@ internal actual fun getDatabaseBuilder(
     if (inMemory) {
       Room.inMemoryDatabaseBuilder<ResourceDatabase>()
     } else {
-      Room.databaseBuilder<ResourceDatabase>(
-        storageDirectory?.let { "$it-$DATABASE_NAME" } ?: DATABASE_NAME,
-      )
+      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
     }
-  return builder.setDriver(createSqliteWasmDriver())
+  return builder.setDriver(databaseDriver())
 }
+
+internal actual fun databaseDriver(): SQLiteDriver = createSqliteWasmDriver()
+
+internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
+  storageDirectory?.let { "$it-$DATABASE_NAME" } ?: DATABASE_NAME
+
+internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {}
 
 private const val DATABASE_NAME = "resources.db"

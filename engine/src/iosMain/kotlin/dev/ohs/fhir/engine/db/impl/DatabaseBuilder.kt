@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
@@ -26,33 +27,38 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSUserDomainMask
 
-@OptIn(ExperimentalForeignApi::class)
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
   inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  if (inMemory) {
-    return Room.inMemoryDatabaseBuilder<ResourceDatabase>()
-      .setDriver(BundledSQLiteDriver())
-      .setQueryCoroutineContext(Dispatchers.IO)
-  }
-  val appSupportDir =
-    NSSearchPathForDirectoriesInDomains(
-        NSApplicationSupportDirectory,
-        NSUserDomainMask,
-        true,
-      )
-      .first() as String
+  val builder =
+    if (inMemory) {
+      Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+    } else {
+      createDatabaseDirectory(platformContext, storageDirectory)
+      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
+    }
+  return builder.setDriver(databaseDriver()).setQueryCoroutineContext(Dispatchers.IO)
+}
+
+internal actual fun databaseDriver(): SQLiteDriver = BundledSQLiteDriver()
+
+internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
+  "${applicationSupportDirectory()}/$DATABASE_NAME"
+
+@OptIn(ExperimentalForeignApi::class)
+internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {
   NSFileManager.defaultManager.createDirectoryAtPath(
-    appSupportDir,
+    applicationSupportDirectory(),
     withIntermediateDirectories = true,
     attributes = null,
     error = null,
   )
-  return Room.databaseBuilder<ResourceDatabase>("$appSupportDir/$DATABASE_NAME")
-    .setDriver(BundledSQLiteDriver())
-    .setQueryCoroutineContext(Dispatchers.IO)
 }
+
+private fun applicationSupportDirectory(): String =
+  NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, true).first()
+    as String
 
 private const val DATABASE_NAME = "resources.db"
