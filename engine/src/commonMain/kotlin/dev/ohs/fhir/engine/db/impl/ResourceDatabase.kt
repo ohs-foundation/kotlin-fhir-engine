@@ -76,6 +76,15 @@ internal abstract class ResourceDatabase : RoomDatabase() {
 
     val MIGRATION_2_3 =
       Migration(2, 3) { c ->
+        // KMP engine 2.0.0-alpha01 to alpha03 also used version 2, with a TEXT resourceUuid.
+        // Without this check the failure surfaces in migration 4 to 5 as a duplicate column.
+        c.prepare("PRAGMA table_info(ResourceEntity)").use { column ->
+          while (column.step()) {
+            check(column.getText(1) != "resourceUuid" || column.getText(2) != "TEXT") {
+              "This database was written by release 2.0.0-alpha01, alpha02 or alpha03 of the KMP engine and cannot be migrated. Clear the app's data to start over."
+            }
+          }
+        }
         c.executeSQL(
           "CREATE INDEX IF NOT EXISTS `index_DateTimeIndexEntity_index_from` ON `DateTimeIndexEntity` (`index_from`)",
         )

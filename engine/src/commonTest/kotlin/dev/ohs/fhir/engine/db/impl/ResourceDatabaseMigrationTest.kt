@@ -19,10 +19,13 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.async.executeSQL
 import androidx.sqlite.async.prepare
 import androidx.sqlite.async.step
+import dev.ohs.fhir.engine.index.ResourceIndexer
+import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -209,6 +212,28 @@ class ResourceDatabaseMigrationTest {
       assertEquals(PATIENT_JSON, it.single("SELECT serializedResource FROM ResourceEntity"))
       assertEquals("Jones", it.single("SELECT index_value FROM StringIndexEntity"))
       assertEquals(PATIENT_JSON, it.single("SELECT payload FROM LocalChangeEntity"))
+    }
+  }
+
+  @Test
+  fun alphaDatabase_failsWithAClearMessage() = runTest {
+    // KMP engine 2.0.0-alpha01 to alpha03 stored resourceUuid as TEXT at version 2.
+    val alphaSchema =
+      ExportedSchemas.ddl(11).map { it.replace("`resourceUuid` BLOB", "`resourceUuid` TEXT") }
+    tester.createDatabase(2, alphaSchema).close()
+    val database =
+      DatabaseImpl(
+        platformContext,
+        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory,
+      )
+    try {
+      val failure = assertFailsWith<IllegalStateException> { database.getLocalChangesCount() }
+      assertTrue(failure.message!!.contains("2.0.0-alpha01, alpha02 or alpha03"))
+    } finally {
+      database.close()
+      // Leave a database later tests can open, since some platforms share one file.
+      tester.createDatabase(ResourceDatabase.VERSION).close()
     }
   }
 
