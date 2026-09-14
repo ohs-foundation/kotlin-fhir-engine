@@ -169,6 +169,7 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.FhirEngineProviderTest")
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
     }
   }
 

@@ -86,7 +86,7 @@ internal class DatabaseImpl(
   // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
     getDatabaseBuilder(platformContext, storageDirectory, inMemory)
-      .fallbackToDestructiveMigration(dropAllTables = true)
+      .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 
   private val resourceDao by lazy { db.resourceDao().also { it.resourceIndexer = resourceIndexer } }
