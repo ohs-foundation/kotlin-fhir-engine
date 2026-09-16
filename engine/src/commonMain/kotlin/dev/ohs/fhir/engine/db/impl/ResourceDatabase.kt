@@ -51,7 +51,11 @@ import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
       LocalChangeEntity::class,
       LocalChangeResourceReferenceEntity::class,
     ],
-  version = 2,
+  // 3: `StringIndexEntity.index_value` is NOCASE so prefix search can use its index. An index and
+  // collation change only; no column was added or removed. [DatabaseImpl] opens with
+  // fallbackToDestructiveMigration, so a client upgrading across this version rebuilds its
+  // database and re-syncs rather than migrating in place.
+  version = 3,
   exportSchema = true,
 )
 @ColumnTypeConverters(DbTypeConverters::class)

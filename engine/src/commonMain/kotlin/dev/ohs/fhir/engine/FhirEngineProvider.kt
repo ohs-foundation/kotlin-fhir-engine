@@ -108,13 +108,26 @@ object FhirEngineProvider {
    */
   internal fun getSearchParamProvider(): SearchParamDefinitionsProviderImpl? = searchParamProvider
 
-  /** Clears the singleton instance. Intended for testing only. */
-  internal fun clearInstance() {
+  /**
+   * Closes the database and returns the provider to its uninitialized state.
+   *
+   * [init] must be called again before the next [getInstance], and any [FhirEngine] held from
+   * before the reset must be discarded.
+   *
+   * The database is closed on Android, Desktop and iOS, so a held engine fails once reset. Web
+   * keeps it open, because closing there wedges the SQLite Web Worker; see
+   * [canCloseDatabaseOnReset].
+   *
+   * Intended for tests and benchmarks, which need each run to start from a known state.
+   */
+  fun reset() {
+    if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
     fhirEngine = null
     dataSource = null
     configuration = null
     platformContext = Unit
     searchParamProvider = null
+    fhirDataStore = null
   }
 
   private fun buildFhirEngine(

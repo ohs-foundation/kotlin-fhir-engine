@@ -35,11 +35,21 @@ data class StringParamFilterCriterion(
   override fun getConditionalParams(): List<ConditionParam<out Any>> {
     return listOf(
       when (modifier) {
-        StringFilterModifier.STARTS_WITH ->
-          ConditionParam("index_value LIKE ? || '%' COLLATE NOCASE", value!!)
-        StringFilterModifier.MATCHES_EXACTLY -> ConditionParam("index_value = ?", value!!)
-        StringFilterModifier.CONTAINS ->
-          ConditionParam("index_value LIKE '%' || ? || '%' COLLATE NOCASE", value!!)
+        // The wildcard is appended to the bound argument rather than concatenated in SQL. SQLite
+        // only applies its LIKE optimisation when the pattern is a literal or a plain parameter,
+        // so `LIKE ? || '%'` was an expression the planner could not see into and every prefix
+        // search scanned. `index_value` is NOCASE, which the optimisation also requires, and LIKE
+        // is case-insensitive for ASCII regardless — so dropping the explicit COLLATE changes
+        // which index is used, not which rows match.
+        StringFilterModifier.STARTS_WITH -> ConditionParam("index_value LIKE ?", "${value!!}%")
+        // FHIR's `:exact` is case- and accent-sensitive, so it must not inherit the column's
+        // NOCASE collation. The explicit BINARY keeps the semantics and costs the index: a NOCASE
+        // index cannot serve a BINARY comparison, so `:exact` narrows on
+        // `(resourceType, index_name)`. Indexing both would need a second, BINARY column.
+        StringFilterModifier.MATCHES_EXACTLY ->
+          ConditionParam("index_value = ? COLLATE BINARY", value!!)
+        // A leading wildcard can never use an index, whatever the collation.
+        StringFilterModifier.CONTAINS -> ConditionParam("index_value LIKE ?", "%${value!!}%")
       },
     )
   }

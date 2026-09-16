@@ -15,6 +15,8 @@
  */
 package dev.ohs.fhir.engine.index.entities
 
+import androidx.room3.ColumnInfo
+
 /**
  * An index record for a string value in a resource.
  *
@@ -25,6 +27,17 @@ internal data class StringIndex(
   val name: String,
   /** The path of the string index, e.g. "Patient.name.given". */
   val path: String,
-  /** The value of the string index, e.g. "Tom". */
-  val value: String,
+  /**
+   * The value of the string index, e.g. "Tom".
+   *
+   * Stored NOCASE so the index over it is NOCASE too. FHIR string search is case-insensitive and
+   * compiles to a `LIKE` comparison; SQLite only uses an index whose collation matches the
+   * comparison's, so a BINARY column here left every prefix search narrowing on `(resourceType,
+   * index_name)` and examining the rest. Measured at 38x on a 50,000-row table by
+   * `StringIndexCollationBenchmark`.
+   *
+   * This is only half the fix — see `StringParamFilterCriterion`, which binds the pattern whole.
+   * Either half alone leaves the optimisation off.
+   */
+  @ColumnInfo(collate = ColumnInfo.NOCASE) val value: String,
 )

@@ -1,4 +1,6 @@
 import dev.ohs.fhir.engine.codegen.GenerateSearchParamsTask
+import java.io.ByteArrayOutputStream
+import org.apache.tools.ant.util.TeeOutputStream
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -6,6 +8,8 @@ plugins {
   id("com.android.kotlin.multiplatform.library")
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.kotlin.allopen)
+  alias(libs.plugins.kotlinx.benchmark)
   alias(libs.plugins.maven.publish)
 }
 
@@ -30,7 +34,13 @@ kotlin {
       .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
   }
 
-  jvm("desktop")
+  // Micro-benchmarks live in their own compilation associated with `main`, which is what grants
+  // them access to the engine's `internal` declarations — the same mechanism test compilations
+  // use. Its default source set is `desktopBenchmark`. See docs/benchmarking.md.
+  jvm("desktop") {
+    val mainCompilation = compilations.getByName("main")
+    compilations.create("benchmark") { associateWith(mainCompilation) }
+  }
 
   // Note: iosX64 (Intel iOS simulator) is omitted because Room 3 (androidx.room3) does not publish
   // iosX64 artifacts; including it breaks dependency resolution.
@@ -122,6 +132,13 @@ kotlin {
         ),
       )
     }
+    val desktopBenchmark by getting {
+      dependencies {
+        implementation(libs.kotlinx.benchmark.runtime)
+        // Benchmark-only: used to ask whether a binary payload is even representable here.
+        implementation(libs.kotlinx.serialization.protobuf)
+      }
+    }
     val desktopTest by getting {
       // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
       // the codegen consumes at build time, so the test classpath needs access to it.
@@ -142,6 +159,108 @@ kotlin {
         implementation(libs.androidx.work.testing)
         implementation(libs.kotlin.test.junit)
         implementation(libs.kotlinx.coroutines.test)
+      }
+    }
+  }
+}
+
+// JMH subclasses the @State class to generate its harness, and Kotlin classes are final by default.
+allOpen { annotation("org.openjdk.jmh.annotations.State") }
+
+// -Pbenchmark.tmpdir moves benchmark databases, e.g. onto tmpfs in CI to take disk jitter out.
+// JMH forks inherit the host JVM's arguments, so setting it on the exec task reaches them.
+tasks
+  .withType<JavaExec>()
+  .matching { it.name.startsWith("desktopBenchmark") }
+  .configureEach {
+    providers.gradleProperty("benchmark.tmpdir").orNull?.let { jvmArgs("-Djava.io.tmpdir=$it") }
+  }
+
+/** Benchmarks whose error on a shared CI runner needs more samples than the rest of the tier. */
+val NOISY_ON_CI =
+  "dev\\.ohs\\.fhir\\.engine\\.microbenchmark\\.(MoreResources|Resource(Insert|Update|Delete|Read))Benchmark"
+
+benchmark {
+  targets { register("desktopBenchmark") }
+  configurations {
+    named("main") {
+      warmups = 5
+      iterations = 10
+      iterationTime = 1
+      iterationTimeUnit = "s"
+    }
+    // The per-pull-request tier. CI runs it twice in one job, against the base branch and then the
+    // head, and comments with the difference — so it has to fit in a few minutes a side. Every
+    // class runs, but the scaling sweeps are pinned to their smallest size: the shape of the curve
+    // is a question for the full tier, and a regression at 1,000 rows is a regression at 50,000.
+    register("pr") {
+      exclude(NOISY_ON_CI)
+      // Journal and fsync settings mean nothing on the tmpfs CI uses, and their question is
+      // settled.
+      exclude("dev\\.ohs\\.fhir\\.engine\\.microbenchmark\\.SqliteTuningBenchmark")
+      param("rows", 1000)
+      param("changeCount", 50)
+      // Five warmups: at three, CI still showed JIT drift in the first measured iterations.
+      // Ten iterations: at five, Student's t (8.47) left most intervals too wide to see a 5%
+      // change.
+      warmups = 5
+      iterations = 10
+      iterationTime = 500
+      iterationTimeUnit = "ms"
+    }
+    // The pull-request tier's other half: benchmarks whose single invocation is so slow that a
+    // half-second iteration holds only one or two samples. An indexed update takes about 300 ms on
+    // a CI runner, so its per-iteration score is essentially one measurement of a disk write, and
+    // the CRUD and MoreResources rows came back at 30-60% error on the first run. Longer iterations
+    // average more invocations into each score, which is what narrows that spread.
+    register("prNoisy") {
+      include(NOISY_ON_CI)
+      // Five warmups: at three, insertIndexed's first measured iterations were still settling.
+      warmups = 5
+      iterations = 10
+      iterationTime = 1
+      iterationTimeUnit = "s"
+    }
+    // Just the index-shape sweeps. They carry their own @Param grid, so running them apart from
+    // the pure-CPU benchmarks keeps an A/B to about a minute instead of the full suite.
+    register("index") {
+      include(
+        "dev\\.ohs\\.fhir\\.engine\\.microbenchmark\\.(DateIndexShape|StringIndexCollation|SqliteTuning|PayloadRepresentation|Resource(Insert|Update|Delete|Read))Benchmark",
+      )
+      warmups = 3
+      iterations = 5
+      iterationTime = 500
+      iterationTimeUnit = "ms"
+    }
+  }
+}
+
+// kotlinx-benchmark builds its JMH Runner with shouldFailOnError left at JMH's default of false,
+// and exposes no setting to change it. A benchmark whose @Setup throws is printed as `<failure>`,
+// dropped from the JSON report — which carries no error field at all — and the process still exits
+// 0, so a run that lost three of twenty benchmarks looks exactly like a green one. Watch the
+// runner's own output instead, and fail the task on the markers it prints. See
+// docs/benchmarking.md.
+tasks.withType<JavaExec>().configureEach {
+  // The plugin sets `group` after this action runs, so filter on the name instead.
+  if (name.endsWith("Benchmark")) {
+    val transcript = ByteArrayOutputStream()
+    standardOutput = TeeOutputStream(System.out, transcript)
+    doLast {
+      val lines = transcript.toString().lineSequence().map { it.trim() }.toList()
+      // A failed benchmark emits several markers, so the largest count is the number lost, not
+      // their sum. "Failure:" alone is the runner itself failing before any benchmark ran.
+      val count =
+        maxOf(
+          lines.count { it == "<failure>" },
+          lines.count { it.startsWith("EXCEPTION:") },
+          lines.count { it.startsWith("Failure:") },
+        )
+      if (count > 0) {
+        throw GradleException(
+          "$count benchmark(s) failed to run. kotlinx-benchmark omits them from the report and " +
+            "exits 0, so this check is the only thing failing the build. See the output above.",
+        )
       }
     }
   }

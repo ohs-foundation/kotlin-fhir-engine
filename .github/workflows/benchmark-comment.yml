@@ -1,0 +1,100 @@
+# Posts the micro-benchmark table onto the pull request that produced it.
+#
+# Separate from CI on purpose. A pull request raised from a fork — which is how this repository
+# receives them — gets a read-only token, so the job that runs the benchmarks cannot comment however
+# its permissions are declared. `workflow_run` fires afterwards in the base repository's context
+# with a writable one.
+#
+# The alternative, `pull_request_target`, would give a single workflow a writable token, but it would
+# then be running the pull request's own Gradle build with that token and the repository's secrets
+# in scope. Nothing here checks out or executes pull request code: it downloads an artifact, renders
+# it with a script from the base branch, and posts the result.
+name: Benchmark comment
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Post benchmark results
+    runs-on: ubuntu-latest
+    # Only for pull requests. A push to main produces the same artifact with nothing to comment on.
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      # The base branch's copy, never the pull request's — this job holds a writable token.
+      - uses: actions/checkout@v4
+
+      - name: Download benchmark reports
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-reports
+          path: reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        # A failed benchmark job uploads whatever it had, and a cancelled one may upload nothing.
+        continue-on-error: true
+
+      - name: Resolve the pull request
+        id: pr
+        run: |
+          if [ -f reports/pr-number.txt ]; then
+            echo "number=$(cat reports/pr-number.txt)" >> "$GITHUB_OUTPUT"
+          else
+            echo "No pr-number.txt in the artifact; nothing to comment on."
+            echo "number=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Render the table
+        id: table
+        if: steps.pr.outputs.number != ''
+        run: |
+          # The base run may have produced nothing — a base branch that predates the benchmarks,
+          # or a failed run — and the script then renders the head alone.
+          BASE=""
+          if [ -n "$(find reports/base -name '*.json' -print -quit 2>/dev/null)" ]; then
+            BASE="--base reports/base"
+          fi
+          {
+            echo 'body<<BENCHMARK_TABLE_EOF'
+            python3 .github/scripts/benchmark_table.py reports/head $BASE
+            echo ''
+            echo "[Full report](${{ github.event.workflow_run.html_url }})"
+            echo 'BENCHMARK_TABLE_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post or update the comment
+        if: steps.pr.outputs.number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- micro-benchmarks -->';
+            const body = process.env.BODY;
+            const issue_number = Number('${{ steps.pr.outputs.number }}');
+            const { owner, repo } = context.repo;
+
+            // Update in place rather than adding a comment per push, which on a long-running
+            // pull request buries the conversation under a wall of near-identical tables.
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            // Matched on the marker alone, so a table someone posted by hand from the artifact is
+            // updated too rather than joined by a second one.
+            const existing = comments.find((comment) => comment.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+        env:
+          BODY: ${{ steps.table.outputs.body }}

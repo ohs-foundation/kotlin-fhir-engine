@@ -184,3 +184,90 @@ jobs:
           path: |
             engine/build/reports/
             engine/build/outputs/androidTest-results/
+
+  benchmark:
+    name: Micro benchmarks
+    runs-on: ubuntu-latest
+    # A pull request runs the tier twice; each side takes about ten minutes on CI.
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add swap space
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile
+          sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=8192
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # On a pull request the same benchmarks run twice on this one runner, against the base
+      # branch and then the head, and the comment reports the difference. Two scores from two jobs
+      # cannot be compared — shared runners differ between them — but two from the same machine
+      # minutes apart can. The base may predate the benchmarks entirely, in which case its run
+      # fails, that failure is tolerated, and the comment shows the head on its own.
+      # Benchmark databases on tmpfs: the runner's disk varies up to 3x within a job, which would
+      # swamp any code change. The full tier on main stays on disk.
+      - name: Create a RAM-backed temp directory
+        if: github.event_name == 'pull_request'
+        run: mkdir -p /dev/shm/benchmarks
+
+      - name: Check out the base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      # kotlinx-benchmark exits 0 when a benchmark's @Setup throws, and drops it from the report.
+      # The doLast check in engine/build.gradle.kts watches the runner's output and fails the task
+      # instead, which is what keeps this job honest. See docs/benchmarking.md.
+      - name: Run the pull-request tier against the base
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        working-directory: base
+        run: ./gradlew :engine:prBenchmark :engine:prNoisyBenchmark -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Run the pull-request tier against the head
+        if: github.event_name == 'pull_request'
+        run: ./gradlew :engine:prBenchmark :engine:prNoisyBenchmark -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      # A push to main runs the full tier, scaling sweeps included. Its artifact is the record any
+      # later trend has to be built from.
+      - name: Run the full tier
+        if: github.event_name != 'pull_request'
+        run: ./gradlew :engine:benchmark "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      # One layout for the commenting workflow, whichever tier ran. Each configuration keeps its
+      # own directory — the pull-request tier is split across two, and the table picks the newest
+      # run per configuration. workflow_run.pull_requests is empty for a pull request raised from a
+      # fork, which is how this repository receives them, so the number travels inside the artifact.
+      - name: Collect reports
+        if: always()
+        run: |
+          mkdir -p reports/head reports/base
+          for configuration in pr prNoisy main; do
+            cp -r "engine/build/reports/benchmarks/$configuration" reports/head/ 2>/dev/null || true
+            cp -r "base/engine/build/reports/benchmarks/$configuration" reports/base/ 2>/dev/null || true
+          done
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "${{ github.event.number }}" > reports/pr-number.txt
+          fi
+
+      - name: Upload benchmark reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-reports
+          path: reports/
