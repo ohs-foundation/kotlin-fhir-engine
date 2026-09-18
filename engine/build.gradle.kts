@@ -7,6 +7,7 @@ plugins {
   alias(libs.plugins.ksp)
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.maven.publish)
+  alias(libs.plugins.room3)
 }
 
 val mavenGroupId: String by project
@@ -159,6 +160,10 @@ dependencies {
     .forEach { add(it, libs.androidx.room3.compiler) }
 }
 
+// Exports the Room schema for every target into one directory (the schema is identical across
+// targets). Committed so migrations can be tested against previous versions.
+room3 { schemaDirectory("$projectDir/schemas") }
+
 tasks
   .withType<Test>()
   .matching { it.name == "testAndroidHostTest" }
@@ -169,6 +174,7 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.FhirEngineProviderTest")
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
     }
   }
 

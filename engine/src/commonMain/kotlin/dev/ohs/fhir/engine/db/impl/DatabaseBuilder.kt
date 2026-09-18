@@ -16,6 +16,7 @@
 package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteDriver
 
 /**
  * Returns a platform-specific [RoomDatabase.Builder] for [ResourceDatabase].
@@ -33,3 +34,15 @@ internal expect fun getDatabaseBuilder(
   storageDirectory: String?,
   inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase>
+
+/** The SQLite driver the engine's database uses on this platform. */
+internal expect fun databaseDriver(): SQLiteDriver
+
+/**
+ * The file name (or, on web, the OPFS name) of the engine's database for [platformContext] and
+ * [storageDirectory], the same one [getDatabaseBuilder] opens.
+ */
+internal expect fun databaseFileName(platformContext: Any, storageDirectory: String?): String
+
+/** Creates the directory [databaseFileName] points into where the platform does not provide it. */
+internal expect fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?)

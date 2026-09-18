@@ -40,4 +40,14 @@ keeps the original's shape for source compatibility but not every knob is functi
 | `httpCache`                                                | ⚠️     | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored.                       |
 | `enableEncryptionIfSupported`                              | ❌      | Throws `IllegalArgumentException`. Encryption is not yet implemented.                                                  |
 | `databaseErrorStrategy`                                    | ❌      | Accepted but never read. `RECREATE_AT_OPEN` has no effect.                                                             |
-| `testMode`                                                 | ❌      | Accepted but never read. There is no in-memory database path.                                                          |
+| `testMode`                                                 | ✅      | In-memory database on every platform.                                                                                  |
+
+## Database
+
+Same schema and file name as android-fhir, one version higher, with all of android-fhir's
+migrations. An app that switches from android-fhir keeps its data. ✅
+
+Databases from this library's releases 2.0.0-alpha01, alpha02 and alpha03 fail to open. They reused
+android-fhir's version 2 with a different layout. Clear the app's data. ⚠️
+
+Encrypted android-fhir databases are not opened yet. ❌
