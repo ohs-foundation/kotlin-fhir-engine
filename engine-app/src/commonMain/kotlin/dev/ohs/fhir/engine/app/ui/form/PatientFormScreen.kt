@@ -112,7 +112,7 @@ fun PatientFormScreen(
           val selected = form.gender == g
           AssistChip(
             onClick = { viewModel.setGender(if (selected) null else g) },
-            label = { Text(g.getDisplay().orEmpty()) },
+            label = { Text(g.display.orEmpty()) },
             colors =
               if (selected) {
                 AssistChipDefaults.assistChipColors(

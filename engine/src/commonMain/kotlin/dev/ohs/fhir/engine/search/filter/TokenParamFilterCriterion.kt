@@ -94,7 +94,7 @@ data class TokenParamFilterCriterion(var parameter: TokenClientParam) : FilterCr
     TokenFilterValue().apply {
       tokenFilters.add(
         TokenParamFilterValueInstance(
-          uri = contactPoint.use?.value?.getCode(),
+          uri = contactPoint.use?.value?.code,
           code = contactPoint.value?.value.orEmpty(),
         ),
       )
