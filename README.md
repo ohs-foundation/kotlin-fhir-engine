@@ -79,7 +79,7 @@ the `kotlin` block of the module's `build.gradle.kts` file (e.g., `composeApp/bu
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("dev.ohs.fhir:fhir-engine:2.0.0-alpha03")
+            implementation("dev.ohs.fhir:fhir-engine:2.0.0-alpha04")
         }
     }
 }
@@ -93,7 +93,7 @@ For Android projects, add the dependency to the `dependencies` block in the modu
 ```
 // e.g., app/build.gradle.kts
 dependencies {
-    implementation("dev.ohs.fhir:fhir-engine:2.0.0-alpha03")
+    implementation("dev.ohs.fhir:fhir-engine:2.0.0-alpha04")
 }
 ```
 
