@@ -77,25 +77,31 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
       database.searchReverseReferencedResources(getRevIncludeQuery(typeIdPairs))
     }
 
+  // Grouped once, by the key each result is looked up with. Filtering the resolved list per base
+  // resource instead costs the product of the two, which at a page of ten thousand is seconds.
+  val includedByBase =
+    includedResources?.groupBy(
+      { it.baseResourceUUID },
+      { it.searchIndex to it.resource },
+    )
+  val revIncludedByBase =
+    revIncludedResources?.groupBy(
+      { it.baseResourceTypeWithId },
+      { (ResourceType.fromCode(it.resource.resourceType) to it.searchIndex) to it.resource },
+    )
+
   return baseResources.map { (uuid, baseResource) ->
     SearchResult(
       baseResource,
       included =
-        includedResources
-          ?.asSequence()
-          ?.filter { it.baseResourceUUID == uuid }
-          ?.groupBy({ it.searchIndex }, { it.resource }),
+        includedByBase?.let { grouped ->
+          grouped[uuid].orEmpty().groupBy({ it.first }, { it.second })
+        },
       revIncluded =
-        revIncludedResources
-          ?.asSequence()
-          ?.filter {
-            it.baseResourceTypeWithId ==
-              "${(baseResource as Resource).resourceType}/${baseResource.id.orEmpty()}"
-          }
-          ?.groupBy(
-            { ResourceType.fromCode(it.resource.resourceType) to it.searchIndex },
-            { it.resource },
-          ),
+        revIncludedByBase?.let { grouped ->
+          val key = "${(baseResource as Resource).resourceType}/${baseResource.id.orEmpty()}"
+          grouped[key].orEmpty().groupBy({ it.first }, { it.second })
+        },
     )
   }
 }
@@ -150,6 +156,16 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
  * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include` (one
  * `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
  */
+/**
+ * Builds the SQL [SearchQuery] loading the resources the base results reference via `_include` (one
+ * `UNION ALL` branch per include). [includeIds] are the base results' resource uuids.
+ *
+ * The join splits `rie.index_value` rather than concatenating `re.resourceType` and `re.resourceId`
+ * into it. Both forms match the same rows — a reference joins only when it is the referenced
+ * resource's type and id separated by a slash — but SQLite cannot seek an index whose column sits
+ * inside an expression, so only this form lets `re` use
+ * `index_ResourceEntity_resourceType_resourceId`. `SearchQueryPlanTest` pins both halves.
+ */
 internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
   val args = mutableListOf<Any>()
   val baseResourceType = type
@@ -165,7 +181,8 @@ internal fun Search.getIncludeQuery(includeIds: List<String>): SearchQuery {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       ${join.query}
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN ($uuidsString)
       ${if (filterQuery.isNotBlank()) "AND re.resourceUuid IN ($filterQuery)" else "AND re.resourceType = ?"}

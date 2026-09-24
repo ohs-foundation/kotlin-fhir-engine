@@ -275,6 +275,25 @@ internal abstract class LocalChangeDao {
   )
   abstract suspend fun getAllLocalChanges(): List<LocalChangeEntity>
 
+  /**
+   * Which of [resourceIds] of [resourceType] have a pending change.
+   *
+   * Conflict detection needs to know which of a downloaded page is already edited locally. Reading
+   * the whole ledger to answer that costs the size of the queue on every page, and deserializes a
+   * payload per entry to discard it. `resourceType` leads the query because it leads the index over
+   * `(resourceType, resourceId)`; without it the lookup scans the queue instead.
+   */
+  @Query(
+    """
+        SELECT DISTINCT resourceId
+        FROM LocalChangeEntity
+        WHERE resourceType = :resourceType AND resourceId IN (:resourceIds)""",
+  )
+  abstract suspend fun getPendingChangeIds(
+    resourceType: String,
+    resourceIds: List<String>,
+  ): List<String>
+
   @Query(
     """
         SELECT *

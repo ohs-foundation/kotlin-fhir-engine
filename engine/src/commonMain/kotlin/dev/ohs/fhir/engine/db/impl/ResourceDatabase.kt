@@ -51,7 +51,11 @@ import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
       LocalChangeEntity::class,
       LocalChangeResourceReferenceEntity::class,
     ],
-  version = 2,
+  // 3: `StringIndexEntity.index_value` is NOCASE; QuantityIndexEntity carries a second index led
+  // by index_code; ReferenceIndexEntity and UriIndexEntity carry resourceUuid. A collation or
+  // index change needs a version bump, and [DatabaseImpl] opens with
+  // fallbackToDestructiveMigration, so clients rebuild and re-sync.
+  version = 3,
   exportSchema = true,
 )
 @ColumnTypeConverters(DbTypeConverters::class)

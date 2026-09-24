@@ -35,11 +35,14 @@ data class StringParamFilterCriterion(
   override fun getConditionalParams(): List<ConditionParam<out Any>> {
     return listOf(
       when (modifier) {
-        StringFilterModifier.STARTS_WITH ->
-          ConditionParam("index_value LIKE ? || '%' COLLATE NOCASE", value!!)
-        StringFilterModifier.MATCHES_EXACTLY -> ConditionParam("index_value = ?", value!!)
-        StringFilterModifier.CONTAINS ->
-          ConditionParam("index_value LIKE '%' || ? || '%' COLLATE NOCASE", value!!)
+        // The wildcard goes in the bound argument: SQLite applies its LIKE optimisation only to a
+        // literal or a plain parameter, never to a `? || '%'` expression.
+        StringFilterModifier.STARTS_WITH -> ConditionParam("index_value LIKE ?", "${value!!}%")
+        // `:exact` is case-sensitive, so it must not inherit the column's NOCASE collation. That
+        // costs it the index, which is the accepted price of indexing the commoner prefix search.
+        StringFilterModifier.MATCHES_EXACTLY ->
+          ConditionParam("index_value = ? COLLATE BINARY", value!!)
+        StringFilterModifier.CONTAINS -> ConditionParam("index_value LIKE ?", "%${value!!}%")
       },
     )
   }

@@ -70,6 +70,9 @@ internal class DatabaseImpl(
 ) : Database {
 
   private companion object {
+    /** Comfortably inside SQLite's limit on bound parameters in a single statement. */
+    private const val PENDING_CHANGE_QUERY_CHUNK = 500
+
     private val USER_TABLES_QUERY =
       """
       SELECT name FROM sqlite_master
@@ -356,6 +359,16 @@ internal class DatabaseImpl(
     localChangeDao.getAllChangesForEarliestChangedResource().map { it.toLocalChange() }
 
   override suspend fun getLocalChangesCount(): Int = localChangeDao.getLocalChangesCount()
+
+  override suspend fun getPendingLocalChangeIds(
+    resourceType: ResourceType,
+    resourceIds: List<String>,
+  ): Set<String> =
+    // Chunked because the ids are bound one parameter each, and a downloaded page has no fixed
+    // upper bound.
+    resourceIds.distinct().chunked(PENDING_CHANGE_QUERY_CHUNK).flatMapTo(mutableSetOf()) {
+      localChangeDao.getPendingChangeIds(resourceType.name, it)
+    }
 
   override suspend fun deleteUpdates(token: LocalChangeToken) {
     localChangeDao.discardLocalChanges(token)
