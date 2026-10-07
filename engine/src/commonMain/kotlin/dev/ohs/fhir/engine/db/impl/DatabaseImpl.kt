@@ -468,18 +468,6 @@ internal class DatabaseImpl(
     }
   }
 
-  private fun bindArgs(statement: SQLiteStatement, args: List<Any>) {
-    args.forEachIndexed { i, arg ->
-      when (arg) {
-        is String -> statement.bindText(i + 1, arg)
-        is Long -> statement.bindLong(i + 1, arg)
-        is Double -> statement.bindDouble(i + 1, arg)
-        is Int -> statement.bindLong(i + 1, arg.toLong())
-        else -> statement.bindText(i + 1, arg.toString())
-      }
-    }
-  }
-
   private suspend fun insertIndices(
     resourceUuid: Uuid,
     resourceType: ResourceType,
@@ -574,6 +562,22 @@ internal class DatabaseImpl(
           index = it,
         ),
       )
+    }
+  }
+}
+
+/**
+ * Binds a [dev.ohs.fhir.engine.search.SearchQuery]'s arguments to [statement]. Shared with the
+ * query-plan test and the benchmarks so they bind exactly as the engine does.
+ */
+internal fun bindArgs(statement: SQLiteStatement, args: List<Any>) {
+  args.forEachIndexed { i, arg ->
+    when (arg) {
+      is String -> statement.bindText(i + 1, arg)
+      is Long -> statement.bindLong(i + 1, arg)
+      is Double -> statement.bindDouble(i + 1, arg)
+      is Int -> statement.bindLong(i + 1, arg.toLong())
+      else -> statement.bindText(i + 1, arg.toString())
     }
   }
 }

@@ -108,13 +108,27 @@ object FhirEngineProvider {
    */
   internal fun getSearchParamProvider(): SearchParamDefinitionsProviderImpl? = searchParamProvider
 
-  /** Clears the singleton instance. Intended for testing only. */
-  internal fun clearInstance() {
+  /**
+   * Closes the database and the data source, and returns the provider to its uninitialized state.
+   *
+   * [init] must be called again before the next [getInstance], and any [FhirEngine] held from
+   * before the reset is unusable.
+   *
+   * Limits:
+   * - On web the database is not closed (see [canCloseDatabaseOnReset]), so only an in-memory store
+   *   (`testMode`) can be opened again in the same page.
+   * - The persisted `DataStore` is a process-level singleton and keeps its sync watermarks. Use a
+   *   new `storageDirectory` to start without them.
+   */
+  internal fun resetForTesting() {
+    if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
+    dataSource?.close()
     fhirEngine = null
     dataSource = null
     configuration = null
     platformContext = Unit
     searchParamProvider = null
+    fhirDataStore = null
   }
 
   private fun buildFhirEngine(

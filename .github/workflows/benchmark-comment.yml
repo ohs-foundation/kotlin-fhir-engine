@@ -1,0 +1,106 @@
+# Posts the micro-benchmark table onto the pull request that produced it.
+#
+# A separate workflow because fork pull requests get a read-only token in CI; `workflow_run` runs
+# with a writable one. Not `pull_request_target`, which would run the pull request's build with
+# that token and the repository's secrets. This job never runs pull request code.
+#
+# The artifact is written by the pull request, so it is untrusted: the pull request number is
+# validated, and the table body goes through the environment, not `${{ }}` interpolation.
+name: Benchmark comment
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Post benchmark results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      # The base branch's copy, never the pull request's.
+      - uses: actions/checkout@v4
+
+      - name: Download benchmark reports
+        uses: actions/download-artifact@v4
+        with:
+          name: benchmark-reports
+          path: reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        # A failed benchmark job uploads whatever it had, and a cancelled one may upload nothing.
+        continue-on-error: true
+
+      - name: Resolve the pull request
+        id: pr
+        run: |
+          # Untrusted input. Accept digits only, so it cannot inject step outputs or quotes.
+          number="$(head -n 1 reports/pr-number.txt 2>/dev/null | tr -d '[:space:]')" || true
+          if printf '%s' "$number" | grep -Eq '^[0-9]+$'; then
+            echo "number=$number" >> "$GITHUB_OUTPUT"
+          else
+            echo "No usable pr-number.txt in the artifact; nothing to comment on."
+            echo "number=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Render the table
+        id: table
+        if: steps.pr.outputs.number != ''
+        run: |
+          BASE=""
+          if [ -n "$(find reports/base -name '*.json' -print -quit 2>/dev/null)" ]; then
+            BASE="--base reports/base"
+          fi
+          {
+            echo 'body<<BENCHMARK_TABLE_EOF'
+            python3 .github/scripts/benchmark_table.py reports/head $BASE
+            echo ''
+            echo "[Full report](${{ github.event.workflow_run.html_url }})"
+            echo 'BENCHMARK_TABLE_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post or update the comment
+        if: steps.pr.outputs.number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- micro-benchmarks -->';
+            const body = process.env.BODY;
+            const issue_number = Number(process.env.ISSUE_NUMBER);
+            const { owner, repo } = context.repo;
+
+            // The artifact can name any pull request. Comment only if its head was benchmarked.
+            const { data: pull } = await github.rest.pulls.get({
+              owner, repo, pull_number: issue_number,
+            });
+            if (pull.head.sha !== process.env.HEAD_SHA) {
+              core.setFailed(
+                `Pull request #${issue_number} is at ${pull.head.sha}, not the benchmarked ` +
+                  `${process.env.HEAD_SHA}. Refusing to comment.`,
+              );
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+        env:
+          BODY: ${{ steps.table.outputs.body }}
+          ISSUE_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}

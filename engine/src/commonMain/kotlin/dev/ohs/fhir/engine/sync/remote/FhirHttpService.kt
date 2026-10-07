@@ -35,4 +35,7 @@ internal interface FhirHttpService {
 
   /** Makes a HTTP-DELETE method request to the server. */
   suspend fun delete(path: String, headers: Map<String, String>): Resource
+
+  /** Releases the underlying client. The service is unusable afterwards. */
+  fun close() {}
 }
