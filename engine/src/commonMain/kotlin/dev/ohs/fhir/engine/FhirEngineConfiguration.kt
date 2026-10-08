@@ -23,10 +23,9 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  * Configuration for the FHIR Engine, including database setup, error recovery, server connection,
  * and custom search parameters.
  *
- * @property enableEncryptionIfSupported Database encryption is NOT yet supported in the
- *   multiplatform engine; setting this to true throws [IllegalArgumentException]. The flag is kept
- *   to preserve the call sites for when encryption is implemented. Until then, all data is stored
- *   unencrypted.
+ * @property enableEncryptionIfSupported Encrypt the database on platforms that support it, Android
+ *   and iOS. On other platforms [FhirEngineProvider.init] throws [UnsupportedOperationException]
+ *   rather than storing data unencrypted.
  * @property databaseErrorStrategy The strategy to handle database errors. Defaults to
  *   [DatabaseErrorStrategy.UNSPECIFIED].
  * @property serverConfiguration Optional configuration for connecting to a remote FHIR server.
@@ -42,10 +41,8 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  *   Desktop has no such per-application directory, so without an explicit value every application
  *   embedding this library on the same machine would default to sharing the same `~/.fhir-engine`
  *   directory, and could read or corrupt each other's data. Defaults to `~/.fhir-engine` when null.
- * @throws IllegalArgumentException if [enableEncryptionIfSupported] is true.
  */
 data class FhirEngineConfiguration
-@Throws(IllegalArgumentException::class)
 constructor(
   val enableEncryptionIfSupported: Boolean = false,
   val databaseErrorStrategy: DatabaseErrorStrategy = DatabaseErrorStrategy.UNSPECIFIED,
@@ -53,13 +50,7 @@ constructor(
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
   val storageDirectory: String? = null,
-) {
-  init {
-    require(!enableEncryptionIfSupported) {
-      "Database encryption is not yet supported in the multiplatform FHIR engine."
-    }
-  }
-}
+)
 
 /** How database errors should be handled. */
 enum class DatabaseErrorStrategy {
