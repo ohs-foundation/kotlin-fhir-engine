@@ -66,7 +66,7 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
-  inMemory: Boolean = false,
+  config: DatabaseConfig = DatabaseConfig(),
 ) : Database {
 
   private companion object {
@@ -81,11 +81,24 @@ internal class DatabaseImpl(
         .trimIndent()
   }
 
-  // The SQLite driver and query coroutine context are platform-specific (bundled native driver on
-  // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
-  // platform-specific [getDatabaseBuilder].
+  init {
+    // A database stored with the other encryption setting would be opened with the wrong driver
+    // and read as corrupt, so refuse before opening anything.
+    if (!config.inMemory) {
+      check(!databaseFileExists(platformContext, storageDirectory, encrypted = !config.encrypt)) {
+        if (config.encrypt) {
+          "An unencrypted database already exists. Encryption cannot be enabled after data was stored without it."
+        } else {
+          "An encrypted database already exists. Encryption cannot be disabled after data was stored with it."
+        }
+      }
+    }
+  }
+
+  // The SQLite driver and query coroutine context are platform specific, see the platform
+  // [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory, inMemory)
+    getDatabaseBuilder(platformContext, storageDirectory, config)
       .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 

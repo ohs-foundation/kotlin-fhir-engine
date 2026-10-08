@@ -24,7 +24,7 @@ kotlin {
 
   androidLibrary {
     namespace = "dev.ohs.fhir.engine"
-    compileSdk = 36
+    compileSdk = 37
     minSdk = 26
     withHostTestBuilder {}
     withDeviceTestBuilder { sourceSetTreeName = "test" }
@@ -94,6 +94,7 @@ kotlin {
     val androidMain by getting {
       dependencies {
         implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.sqlcipher.android)
         implementation(libs.androidx.work.runtime)
         implementation(libs.androidx.lifecycle.livedata)
         implementation(libs.ktor.client.okhttp)
@@ -175,6 +176,7 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.DatabaseFileNameTest")
     }
   }
 

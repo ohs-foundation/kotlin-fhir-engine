@@ -30,22 +30,39 @@ import platform.Foundation.NSUserDomainMask
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
-  inMemory: Boolean,
+  config: DatabaseConfig,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val builder =
-    if (inMemory) {
+    if (config.inMemory) {
       Room.inMemoryDatabaseBuilder<ResourceDatabase>()
     } else {
       createDatabaseDirectory(platformContext, storageDirectory)
-      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
+      Room.databaseBuilder<ResourceDatabase>(
+        databaseFileName(platformContext, storageDirectory, config.encrypt),
+      )
     }
-  return builder.setDriver(databaseDriver()).setQueryCoroutineContext(Dispatchers.IO)
+  return builder.setDriver(databaseDriver(config)).setQueryCoroutineContext(Dispatchers.IO)
 }
 
-internal actual fun databaseDriver(): SQLiteDriver = BundledSQLiteDriver()
+internal actual val isDatabaseEncryptionSupported: Boolean = false
 
-internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
-  "${applicationSupportDirectory()}/$DATABASE_NAME"
+internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver = BundledSQLiteDriver()
+
+internal actual fun databaseFileName(
+  platformContext: Any,
+  storageDirectory: String?,
+  encrypted: Boolean,
+): String =
+  "${applicationSupportDirectory()}/${if (encrypted) ENCRYPTED_DATABASE_NAME else DATABASE_NAME}"
+
+internal actual fun databaseFileExists(
+  platformContext: Any,
+  storageDirectory: String?,
+  encrypted: Boolean,
+): Boolean =
+  NSFileManager.defaultManager.fileExistsAtPath(
+    databaseFileName(platformContext, storageDirectory, encrypted),
+  )
 
 @OptIn(ExperimentalForeignApi::class)
 internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {
@@ -60,5 +77,3 @@ internal actual fun createDatabaseDirectory(platformContext: Any, storageDirecto
 private fun applicationSupportDirectory(): String =
   NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, true).first()
     as String
-
-private const val DATABASE_NAME = "resources.db"
