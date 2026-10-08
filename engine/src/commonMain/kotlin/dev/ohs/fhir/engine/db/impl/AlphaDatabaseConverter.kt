@@ -29,7 +29,7 @@ import co.touchlab.kermit.Logger
 import kotlin.uuid.Uuid
 
 /**
- * Converts a database written by KMP engine 2.0.0-alpha01 to alpha03 to schema version 11.
+ * Converts a database from releases 2.0.0-alpha01 to alpha04 to schema version 11.
  *
  * Those releases stamped the file as version 2 with the version 11 layout, except that resourceUuid
  * was a TEXT column. Every table with that column is rebuilt from its frozen version 11 definition

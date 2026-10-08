@@ -217,7 +217,7 @@ class ResourceDatabaseMigrationTest {
 
   @Test
   fun alphaDatabase_isConvertedAndKeepsItsRows() = runTest {
-    // Alpha01 to alpha03 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
+    // Alpha01 to alpha04 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
     val alphaSchema =
       ExportedSchemas.ddl(Schema11.VERSION).map {
         it.replace("`resourceUuid` BLOB", "`resourceUuid` TEXT")
