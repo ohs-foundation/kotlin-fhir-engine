@@ -29,18 +29,8 @@ import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.db.ResourceWithUUID
 import dev.ohs.fhir.engine.db.impl.dao.ForwardIncludeSearchResult
 import dev.ohs.fhir.engine.db.impl.dao.ReverseIncludeSearchResult
-import dev.ohs.fhir.engine.db.impl.entities.DateIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.DateTimeIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.NumberIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.PositionIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.QuantityIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.ReferenceIndexEntity
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
-import dev.ohs.fhir.engine.db.impl.entities.StringIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.TokenIndexEntity
-import dev.ohs.fhir.engine.db.impl.entities.UriIndexEntity
 import dev.ohs.fhir.engine.index.ResourceIndexer
-import dev.ohs.fhir.engine.index.ResourceIndices
 import dev.ohs.fhir.engine.resourceType
 import dev.ohs.fhir.engine.resourceTypeEnum
 import dev.ohs.fhir.engine.search.SearchQuery
@@ -66,7 +56,7 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
-  inMemory: Boolean = false,
+  config: DatabaseConfig = DatabaseConfig(),
 ) : Database {
 
   private companion object {
@@ -81,11 +71,24 @@ internal class DatabaseImpl(
         .trimIndent()
   }
 
-  // The SQLite driver and query coroutine context are platform-specific (bundled native driver on
-  // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
-  // platform-specific [getDatabaseBuilder].
+  init {
+    // A database stored with the other encryption setting would be opened with the wrong driver
+    // and read as corrupt, so refuse before opening anything.
+    if (!config.inMemory) {
+      check(!databaseFileExists(platformContext, storageDirectory, encrypted = !config.encrypt)) {
+        if (config.encrypt) {
+          "An unencrypted database already exists. Encryption cannot be enabled after data was stored without it."
+        } else {
+          "An encrypted database already exists. Encryption cannot be disabled after data was stored with it."
+        }
+      }
+    }
+  }
+
+  // The SQLite driver and query coroutine context are platform specific, see the platform
+  // [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory, inMemory)
+    getDatabaseBuilder(platformContext, storageDirectory, config)
       .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 
@@ -96,63 +99,18 @@ internal class DatabaseImpl(
     val logicalIds = mutableListOf<String>()
     withTransaction {
       resource.forEach { res ->
-        val resourceId = res.id ?: Uuid.random().toString()
-        val resourceUuid = Uuid.random()
-        val resourceTypeEnum = res.resourceTypeEnum
+        val resourceWithId = if (res.id == null) res.withId(Uuid.random().toString()) else res
         val now = Clock.System.now()
-
-        val resourceWithId = if (res.id == null) res.withId(resourceId) else res
-
-        val serialized = serializeResource(resourceWithId)
-        val entity =
-          ResourceEntity(
-            id = 0,
-            resourceUuid = resourceUuid,
-            resourceType = resourceTypeEnum,
-            resourceId = resourceId,
-            serializedResource = serialized,
-            versionId = null,
-            lastUpdatedRemote = null,
-            lastUpdatedLocal = now,
-          )
-        resourceDao.insertResource(entity)
-
-        val indices = resourceIndexer.index(resourceWithId)
-        insertIndices(resourceUuid, resourceTypeEnum, indices)
-
+        val resourceUuid = resourceDao.insertLocalResource(resourceWithId, now)
         localChangeDao.addInsert(resourceWithId, resourceUuid, now)
-
-        logicalIds.add(resourceId)
+        logicalIds.add(resourceWithId.id!!)
       }
     }
     return logicalIds
   }
 
   override suspend fun <R : Resource> insertRemote(vararg resource: R) {
-    inTransaction {
-      resource.forEach { res ->
-        val resourceId = res.id ?: error("Remote resource must have an id")
-        val resourceUuid = Uuid.random()
-        val resourceTypeEnum = res.resourceTypeEnum
-        val now = Clock.System.now()
-
-        val entity =
-          ResourceEntity(
-            id = 0,
-            resourceUuid = resourceUuid,
-            resourceType = resourceTypeEnum,
-            resourceId = resourceId,
-            serializedResource = serializeResource(res),
-            versionId = null,
-            lastUpdatedRemote = now,
-            lastUpdatedLocal = now,
-          )
-        resourceDao.insertResource(entity)
-
-        val indices = resourceIndexer.index(res)
-        insertIndices(resourceUuid, resourceTypeEnum, indices)
-      }
-    }
+    inTransaction { resourceDao.insertAllRemote(resource.toList()) }
   }
 
   override suspend fun select(type: ResourceType, id: String): Resource {
@@ -214,21 +172,9 @@ internal class DatabaseImpl(
         val existing =
           resourceDao.getResourceEntity(resourceId = resourceId, resourceType = resourceTypeEnum)
             ?: throw ResourceNotFoundException(resourceTypeEnum.name, resourceId)
-
         val now = Clock.System.now()
-
-        // Record the local change by diffing the old (still-stored) resource against the new one.
+        resourceDao.applyLocalUpdate(res, now)
         localChangeDao.addUpdate(existing, res, now)
-
-        val updatedEntity =
-          existing.copy(
-            serializedResource = serializeResource(res),
-            lastUpdatedLocal = now,
-          )
-        resourceDao.insertResource(updatedEntity)
-
-        val indices = resourceIndexer.index(res)
-        insertIndices(existing.resourceUuid, resourceTypeEnum, indices)
       }
     }
   }
@@ -478,103 +424,6 @@ internal class DatabaseImpl(
         is Uuid -> statement.bindBlob(i + 1, arg.toByteArray())
         else -> statement.bindText(i + 1, arg.toString())
       }
-    }
-  }
-
-  private suspend fun insertIndices(
-    resourceUuid: Uuid,
-    resourceType: ResourceType,
-    indices: ResourceIndices,
-  ) {
-    indices.stringIndices.forEach {
-      resourceDao.insertStringIndex(
-        StringIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.referenceIndices.forEach {
-      resourceDao.insertReferenceIndex(
-        ReferenceIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.tokenIndices.forEach {
-      resourceDao.insertCodeIndex(
-        TokenIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.quantityIndices.forEach {
-      resourceDao.insertQuantityIndex(
-        QuantityIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.uriIndices.forEach {
-      resourceDao.insertUriIndex(
-        UriIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.dateIndices.forEach {
-      resourceDao.insertDateIndex(
-        DateIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.dateTimeIndices.forEach {
-      resourceDao.insertDateTimeIndex(
-        DateTimeIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.numberIndices.forEach {
-      resourceDao.insertNumberIndex(
-        NumberIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
-    }
-    indices.positionIndices.forEach {
-      resourceDao.insertPositionIndex(
-        PositionIndexEntity(
-          id = 0,
-          resourceUuid = resourceUuid,
-          resourceType = resourceType,
-          index = it,
-        ),
-      )
     }
   }
 }

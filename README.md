@@ -129,9 +129,76 @@ val patients = fhirEngine.search<Patient> {}
 
 ### Encryption
 
-**Encryption is not yet supported.** The multiplatform engine currently stores all data
-unencrypted. Setting `enableEncryptionIfSupported = true` throws immediately rather than silently
-storing plaintext.
+Set `enableEncryptionIfSupported = true` to store the database encrypted with
+[SQLCipher](https://www.zetetic.net/sqlcipher/). The encrypted database is `resources_encrypted.db`.
+
+#### What each platform does
+
+- **Android.** Works out of the box. The passphrase is derived from a key in the Android Keystore,
+  the same way the android-fhir engine does it, so an encrypted android-fhir database opens with its
+  data.
+- **iOS.** The engine links no SQLite of its own, it uses the one the app links. Add the
+  [SQLCipher.swift](https://github.com/sqlcipher/SQLCipher.swift) package to the app target instead
+  of `libsqlite3.tbd`. The app's Kotlin framework must be static so the app's link decides which
+  SQLite the engine calls. The key is 32 random bytes kept in the Keychain. If the app links the
+  system SQLite with encryption on, the first database access fails with a message saying SQLCipher
+  is not linked.
+- **Desktop and web.** Not supported. `FhirEngineProvider.init` throws
+  `UnsupportedOperationException` rather than silently storing plaintext. Why, and what support
+  would take, is under [Desktop and web](#desktop-and-web) below.
+
+Opening a stored database with the other setting throws `IllegalStateException`. Web cannot make
+that check, because reading the origin private file system suspends and the check runs while the
+database is being built. The two settings use different names there, so switching starts an empty
+database and leaves the old one in place unread. A database whose key was lost fails to open with an
+`SQLiteException`, or, with `DatabaseErrorStrategy.RECREATE_AT_OPEN`, is deleted and created again
+empty.
+
+The key stays on the device it was created on. A backup restored to another device brings no key
+with it, so the app starts with an empty database there and syncs again. Local changes that were
+not uploaded before the restore are lost. On iOS the encrypted file is excluded from backups for
+that reason. The Keychain also refuses unsigned binaries, so run a signed build.
+
+#### Desktop and web
+
+The engine opens its database through Room, which talks to SQLite through an androidx.sqlite
+`SQLiteDriver`. Encrypting takes a SQLite build with a cipher behind that driver and a safe place for
+the key. Android and iOS have both. Desktop and web have neither ready to use.
+
+Room offers no guide for this either. Its
+[Kotlin Multiplatform setup](https://developer.android.com/kotlin/multiplatform/room), the
+[androidx.sqlite one](https://developer.android.com/kotlin/multiplatform/sqlite) and the
+[Room 3.0 announcement](https://android-developers.googleblog.com/2026/03/room-30-modernizing-room.html)
+do not mention encryption, and none of the four drivers androidx.sqlite ships encrypts. What works on
+Android and iOS here is the engine's own wiring of SQLCipher behind those drivers.
+
+**Desktop.** The engine uses `BundledSQLiteDriver`, which compiles a plain SQLite into its native
+library. No encrypting SQLite ships as a `SQLiteDriver` for the JVM. Encrypted SQLite on the JVM
+exists over JDBC, for example [sqlite-jdbc-crypt](https://github.com/Willena/sqlite-jdbc-crypt),
+which is built on [SQLite3MultipleCiphers](https://github.com/utelle/SQLite3MultipleCiphers) and can
+write SQLCipher compatible files. Support would take
+
+1. a `SQLiteDriver` over that JDBC driver, or over a JNI binding to SQLCipher, tested against the way
+   Room uses connections (several at once, write ahead logging, foreign keys),
+2. a key kept in the operating system's store, the macOS Keychain, the Windows Credential Manager or
+   the Linux Secret Service,
+3. a native library for every desktop operating system the engine runs on.
+
+Until then, full disk encryption (FileVault, BitLocker, LUKS) protects the database file at rest
+with no change to the engine.
+
+**Web.** SQLCipher has no WebAssembly build, and no encrypting SQLite WebAssembly build is
+published ready to use. The commercial
+[SQLite Encryption Extension](https://sqlite.org/wasm/doc/trunk/see.md) and SQLite3MultipleCiphers
+can both be compiled into sqlite-wasm, but neither has been tried with the origin private file
+system the engine stores its database in. Support would take
+
+1. building and maintaining one of those WebAssembly builds, and the engine's database worker on top
+   of it,
+2. a place for the key. Browsers have no secure key store, so the key would come from a passphrase
+   the user types, from the server after sign in, or wrapped by a WebCrypto key that cannot be
+   exported. None of these keeps out script running on the same origin, so encryption on web mainly
+   protects against someone copying the browser profile.
 
 ### Synchronizing with a FHIR server
 
@@ -286,8 +353,11 @@ Persistence uses [Room](https://developer.android.com/kotlin/multiplatform/room)
 requires **Room 3** (`androidx.room3`), Room 2 has no Wasm target, which is why the engine uses
 `androidx.room3.*` on all platforms.
 
-Android, iOS, and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
-`sqlite-bundled`), which has no Wasm build. On Wasm the database instead uses `WebWorkerSQLiteDriver`,
+Android and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
+`sqlite-bundled`), which has no Wasm build. Android switches to SQLCipher's driver when the database
+is encrypted. iOS uses `NativeSQLiteDriver` from `sqlite-framework`, which calls whatever SQLite the
+app links, the system `libsqlite3.tbd` or SQLCipher. See [Encryption](#encryption). On Wasm the
+database instead uses `WebWorkerSQLiteDriver`,
 backed by a SQLite-WASM Web Worker running in an
 [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)-persisted
 Web Worker (`engine/src/webMain/npm/sqlite-wasm-worker/worker.js`, npm dependency

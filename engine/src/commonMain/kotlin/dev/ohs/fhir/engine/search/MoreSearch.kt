@@ -45,6 +45,9 @@ import kotlinx.datetime.toInstant
  */
 private const val APPROXIMATION_COEFFICIENT = 0.1
 
+/** The clock approximate date searches measure "now" with. Tests replace it. */
+internal var searchClock: Clock = Clock.System
+
 /**
  * SQLite supports signed and unsigned integers with a maximum length of 8 bytes. The signed
  * integers can range from `-9223372036854775808` to `+9223372036854775807`. See
@@ -492,7 +495,7 @@ internal fun getConditionParamPairForDate(
   val (start, end) = fhirDateToEpochDayRange(value)
   return when (prefix) {
     SearchComparator.Ap -> {
-      val now = Clock.System.now().toEpochMilliseconds()
+      val now = searchClock.now().toEpochMilliseconds()
       val nowDay = now / 86400000L
       val currentRange = nowDay to nowDay
       val (diffStart, diffEnd) =
@@ -542,7 +545,7 @@ internal fun getConditionParamPairForDateTime(
   val (start, end) = fhirDateTimeToEpochMillisRange(value)
   return when (prefix) {
     SearchComparator.Ap -> {
-      val nowMs = Clock.System.now().toEpochMilliseconds()
+      val nowMs = searchClock.now().toEpochMilliseconds()
       val (diffStart, diffEnd) = getApproximateDateRange(start..end, nowMs..nowMs)
       ConditionParam(
         "index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?",

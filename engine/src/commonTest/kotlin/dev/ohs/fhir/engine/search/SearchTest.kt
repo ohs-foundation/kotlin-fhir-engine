@@ -25,8 +25,12 @@ import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import kotlin.math.abs
+import kotlin.math.roundToLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -982,6 +986,115 @@ class SearchTest {
       listOf(ResourceType.Patient.name, "birthdate", epochDay("2013-03-14")),
       query.args,
     )
+  }
+
+  @Test
+  fun search_filter_date_approximate() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val value = FhirDate.fromString("2013-03-14")!!
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                this.value = of(value)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      assertEquals(
+        """
+        SELECT a.resourceUuid, a.serializedResource
+        FROM ResourceEntity a
+        WHERE a.resourceUuid IN (
+        SELECT resourceUuid FROM DateIndexEntity
+        WHERE resourceType = ? AND index_name = ? AND (index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?)
+        )
+        """
+          .trimIndent(),
+        query.query,
+      )
+      val (start, end) = fhirDateToEpochDayRange(value)
+      val today = now.toEpochMilliseconds() / 86400000L
+      val diffStart = (start - 0.1 * abs(start - today)).roundToLong()
+      val diffEnd = (end + 0.1 * abs(end - today)).roundToLong()
+      assertEquals(
+        listOf(ResourceType.Patient.name, "birthdate", diffStart, diffEnd, diffStart, diffEnd),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_filter_dateTime_approximate() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val value = FhirDateTime.fromString("2013-03-14")!!
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                this.value = of(value)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      assertEquals(
+        """
+        SELECT a.resourceUuid, a.serializedResource
+        FROM ResourceEntity a
+        WHERE a.resourceUuid IN (
+        SELECT resourceUuid FROM DateTimeIndexEntity
+        WHERE resourceType = ? AND index_name = ? AND (index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?)
+        )
+        """
+          .trimIndent(),
+        query.query,
+      )
+      val (start, end) = fhirDateTimeToEpochMillisRange(value)
+      val nowMs = now.toEpochMilliseconds()
+      val diffStart = (start - 0.1 * abs(start - nowMs)).roundToLong()
+      val diffEnd = (end + 0.1 * abs(end - nowMs)).roundToLong()
+      assertEquals(
+        listOf(ResourceType.Patient.name, "birthdate", diffStart, diffEnd, diffStart, diffEnd),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_filter_reference_largeList_bindsEveryValue() {
+    val references = (1..990).map { "Patient/patient-$it" }
+    val criteria =
+      references.map<String, ReferenceParamFilterCriterion.() -> Unit> { { value = it } }
+
+    val query =
+      Search(ResourceType.CarePlan)
+        .apply { filter(ReferenceClientParam("subject"), *criteria.toTypedArray()) }
+        .getQuery()
+
+    assertEquals(990, Regex("index_value = \\?").findAll(query.query).count())
+    assertEquals(listOf("CarePlan", "subject") + references, query.args)
   }
 
   @Test

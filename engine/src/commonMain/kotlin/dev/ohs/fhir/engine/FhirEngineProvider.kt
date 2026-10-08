@@ -15,7 +15,9 @@
  */
 package dev.ohs.fhir.engine
 
+import dev.ohs.fhir.engine.db.impl.DatabaseConfig
 import dev.ohs.fhir.engine.db.impl.DatabaseImpl
+import dev.ohs.fhir.engine.db.impl.isDatabaseEncryptionSupported
 import dev.ohs.fhir.engine.impl.FhirEngineImpl
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinition
@@ -54,6 +56,9 @@ object FhirEngineProvider {
    * [IllegalStateException].
    */
   fun init(configuration: FhirEngineConfiguration, platformContext: Any = Unit) {
+    if (configuration.enableEncryptionIfSupported && !isDatabaseEncryptionSupported) {
+      throw UnsupportedOperationException("Database encryption is not supported on this platform.")
+    }
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
@@ -130,7 +135,11 @@ object FhirEngineProvider {
         platformContext,
         resourceIndexer,
         config.storageDirectory,
-        inMemory = config.testMode,
+        DatabaseConfig(
+          inMemory = config.testMode,
+          encrypt = config.enableEncryptionIfSupported,
+          errorStrategy = config.databaseErrorStrategy,
+        ),
       )
 
     config.serverConfiguration?.let { serverConfig ->

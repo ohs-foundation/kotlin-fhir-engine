@@ -1,5 +1,8 @@
 import dev.ohs.fhir.engine.codegen.GenerateSearchParamsTask
+import java.net.URI
+import java.security.MessageDigest
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -19,12 +22,55 @@ val generateSearchParamsTask =
     srcOutputDir.set(layout.buildDirectory.dir("generated/sources/searchparams/commonMain/kotlin"))
   }
 
+val sqlCipherDir = layout.buildDirectory.dir("sqlcipher")
+val sqlCipherVersion = "4.19.0"
+val sqlCipherSha256 = "39f02d2f04f0de2ba1facf215550bfc6e6e2c9971d5d8ebb0cdd604874781bd7"
+
+val downloadSqlCipher by
+  tasks.registering {
+    val zip = sqlCipherDir.map { it.file("SQLCipher.xcframework.zip") }
+    inputs.property("version", sqlCipherVersion)
+    inputs.property("sha256", sqlCipherSha256)
+    outputs.dir(sqlCipherDir)
+    doLast {
+      val file = zip.get().asFile
+      if (!file.exists()) {
+        file.parentFile.mkdirs()
+        URI(
+            "https://github.com/sqlcipher/SQLCipher.swift/releases/download/$sqlCipherVersion/SQLCipher.xcframework.zip",
+          )
+          .toURL()
+          .openStream()
+          .use { it.copyTo(file.outputStream()) }
+      }
+      val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+      val actual = digest.joinToString("") { "%02x".format(it) }
+      check(actual == sqlCipherSha256) {
+        file.delete()
+        "SQLCipher download checksum mismatch, expected $sqlCipherSha256 but was $actual"
+      }
+      ProcessBuilder(
+          "unzip",
+          "-q",
+          "-o",
+          file.path,
+          "SQLCipher.xcframework/ios-arm64_x86_64-simulator/*",
+          "-d",
+          file.parentFile.path,
+        )
+        .inheritIO()
+        .start()
+        .waitFor()
+        .let { check(it == 0) { "unzip failed with $it" } }
+    }
+  }
+
 kotlin {
   jvmToolchain(21)
 
   androidLibrary {
     namespace = "dev.ohs.fhir.engine"
-    compileSdk = 36
+    compileSdk = 37
     minSdk = 26
     withHostTestBuilder {}
     withDeviceTestBuilder { sourceSetTreeName = "test" }
@@ -36,7 +82,20 @@ kotlin {
   // Note: iosX64 (Intel iOS simulator) is omitted because Room 3 (androidx.room3) does not publish
   // iosX64 artifacts; including it breaks dependency resolution.
   iosArm64()
-  iosSimulatorArm64()
+  iosSimulatorArm64().binaries.getTest(NativeBuildType.DEBUG).apply {
+    // The engine links no SQLite on iOS, the app does. The tests link SQLCipher so that both the
+    // plain and the encrypted database run against it.
+    val slice = sqlCipherDir.map { it.dir("SQLCipher.xcframework/ios-arm64_x86_64-simulator") }
+    linkerOpts(
+      "-F",
+      slice.get().asFile.path,
+      "-framework",
+      "SQLCipher",
+      "-rpath",
+      slice.get().asFile.path,
+    )
+    linkTaskProvider.configure { dependsOn(downloadSqlCipher) }
+  }
 
   // useEsModules() is required so the SQLite-WASM Web Worker (loaded via `new Worker(new
   // URL(..., import.meta.url), { type: "module" })`) can be resolved as an ES module.
@@ -94,6 +153,7 @@ kotlin {
     val androidMain by getting {
       dependencies {
         implementation(libs.androidx.sqlite.bundled)
+        implementation(libs.sqlcipher.android)
         implementation(libs.androidx.work.runtime)
         implementation(libs.androidx.lifecycle.livedata)
         implementation(libs.ktor.client.okhttp)
@@ -107,7 +167,8 @@ kotlin {
     }
     iosMain {
       dependencies {
-        implementation(libs.androidx.sqlite.bundled)
+        // The SQLite the app links, which is SQLCipher when the database is encrypted.
+        implementation(libs.androidx.sqlite.framework)
         implementation(libs.ktor.client.darwin)
       }
     }
@@ -132,6 +193,7 @@ kotlin {
       dependencies {
         implementation(libs.androidx.test.core)
         implementation(libs.androidx.test.runner)
+        implementation(libs.androidx.work.testing)
         implementation(libs.kotlin.test.junit)
       }
     }
@@ -175,6 +237,11 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.DatabaseFileNameTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.FhirDataStoreTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.FhirSynchronizerTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.upload.HttpPostResourceConsolidatorTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.upload.LocalChangeFetcherTest")
     }
   }
 

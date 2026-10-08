@@ -6,6 +6,7 @@ androidx-lifecycle = "2.8.7"
 androidx-navigation3 = "1.1.1"
 androidx-room3 = "3.0.2"
 androidx-sqlite = "2.7.0"
+sqlcipher-android = "4.18.0"
 androidx-test-core = "1.6.1"
 androidx-test-runner = "1.6.2"
 androidx-work = "2.8.1"
@@ -35,7 +36,9 @@ androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.re
 androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "androidx-room3" }
 androidx-sqlite-async = { module = "androidx.sqlite:sqlite-async", version.ref = "androidx-sqlite" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+androidx-sqlite-framework = { module = "androidx.sqlite:sqlite-framework", version.ref = "androidx-sqlite" }
 androidx-sqlite-web = { module = "androidx.sqlite:sqlite-web", version.ref = "androidx-sqlite" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher-android" }
 androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }

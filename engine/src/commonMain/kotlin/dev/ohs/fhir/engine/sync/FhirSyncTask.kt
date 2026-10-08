@@ -40,6 +40,11 @@ import kotlinx.coroutines.launch
 interface FhirSyncTask {
   fun getFhirEngine(): FhirEngine
 
+  /**
+   * The server to sync with. Defaults to the one from [dev.ohs.fhir.engine.ServerConfiguration].
+   */
+  fun getDataSource(): DataSource? = FhirEngineProvider.getDataSource()
+
   fun getDownloadWorkManager(): DownloadWorkManager
 
   fun getConflictResolver(): ConflictResolver
@@ -64,7 +69,7 @@ suspend fun FhirSyncTask.runSync(
 ): SyncJobStatus {
   val fhirDataStore = FhirEngineProvider.getFhirDataStore()
   val dataSource =
-    FhirEngineProvider.getDataSource()
+    getDataSource()
       ?: throw IllegalStateException(
         "FhirEngineConfiguration.ServerConfiguration is not set. Call FhirEngineProvider.init to initialize with appropriate configuration.",
       )
