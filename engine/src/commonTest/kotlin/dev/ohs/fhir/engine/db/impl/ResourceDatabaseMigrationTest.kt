@@ -19,6 +19,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.async.executeSQL
 import androidx.sqlite.async.prepare
 import androidx.sqlite.async.step
+import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.engine.testPlatformContext
@@ -216,6 +217,21 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
+  fun migrate11To12_tagsSerializedResourceAsJsonBytes() = runTest {
+    tester.createDatabase(11).use { it.insertPatient() }
+    tester.runMigrationsAndValidate(12, listOf(ResourceDatabase.MIGRATION_11_12)).use {
+      assertEquals("blob", it.single("SELECT typeof(serializedResource) FROM ResourceEntity"))
+      val stored = it.blob("SELECT serializedResource FROM ResourceEntity")
+      assertEquals(JSON_TAG_CHAR.code.toByte(), stored.first())
+      assertEquals(PATIENT_JSON, stored.decodeToString(startIndex = 1))
+      assertEquals(
+        PATIENT_ID,
+        ResourceSerializer(ResourceStorageFormat.JSON).decode(stored).id,
+      )
+    }
+  }
+
+  @Test
   fun alphaDatabase_isConvertedAndKeepsItsRows() = runTest {
     // Alpha01 to alpha04 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
     val alphaSchema =
@@ -378,6 +394,12 @@ class ResourceDatabaseMigrationTest {
     prepare(sql).use {
       assertTrue(it.step(), "no row for: $sql")
       it.getText(0)
+    }
+
+  private suspend fun SQLiteConnection.blob(sql: String): ByteArray =
+    prepare(sql).use {
+      assertTrue(it.step(), "no row for: $sql")
+      it.getBlob(0)
     }
 
   private suspend fun SQLiteConnection.longs(sql: String): List<Long> =

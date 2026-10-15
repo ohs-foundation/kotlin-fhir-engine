@@ -42,6 +42,9 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  *   Desktop has no such per-application directory, so without an explicit value every application
  *   embedding this library on the same machine would default to sharing the same `~/.fhir-engine`
  *   directory, and could read or corrupt each other's data. Defaults to `~/.fhir-engine` when null.
+ * @property resourceStorageFormat Encoding used for the serialized resource stored against each
+ *   row. Defaults to [ResourceStorageFormat.JSON]. Rows record the format they were written in, so
+ *   changing this affects subsequent writes only and leaves existing rows readable.
  * @throws IllegalArgumentException if [enableEncryptionIfSupported] is true.
  */
 data class FhirEngineConfiguration
@@ -53,12 +56,25 @@ constructor(
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
   val storageDirectory: String? = null,
+  val resourceStorageFormat: ResourceStorageFormat = ResourceStorageFormat.JSON,
 ) {
   init {
     require(!enableEncryptionIfSupported) {
       "Database encryption is not yet supported in the multiplatform FHIR engine."
     }
   }
+}
+
+/** Encoding of the serialized FHIR resource held in each database row. */
+enum class ResourceStorageFormat {
+  /** FHIR JSON, the wire format. Human-readable and directly usable as an upload payload. */
+  JSON,
+
+  /**
+   * Protobuf, via kotlin-fhir's format-agnostic serializers. Roughly a third smaller than JSON
+   * because field names are replaced by tag numbers; not readable outside this library.
+   */
+  PROTOBUF,
 }
 
 /** How database errors should be handled. */

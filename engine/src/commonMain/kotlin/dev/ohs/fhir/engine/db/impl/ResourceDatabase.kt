@@ -69,7 +69,7 @@ internal abstract class ResourceDatabase : RoomDatabase() {
   abstract fun localChangeDao(): LocalChangeDao
 
   companion object {
-    const val VERSION = 11
+    const val VERSION = 12
 
     val MIGRATION_1_2 =
       Migration(1, 2) { c -> c.executeSQL("DROP TABLE IF EXISTS SyncedResourceEntity") }
@@ -219,6 +219,29 @@ internal abstract class ResourceDatabase : RoomDatabase() {
     /** Schema 10 and 11 are identical, so this only lets Room record the new version. */
     val MIGRATION_10_11 = Migration(10, 11) {}
 
+    /**
+     * serializedResource becomes a BLOB so a resource can be stored in a binary format. Rows keep
+     * their FHIR JSON, cast to its UTF-8 bytes behind the tag [ResourceSerializer] writes for JSON,
+     * which is what makes the column readable whichever format later writes go out in.
+     */
+    val MIGRATION_11_12 =
+      Migration(11, 12) { c ->
+        c.executeSQL(
+          "CREATE TABLE IF NOT EXISTS `_new_ResourceEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `resourceId` TEXT NOT NULL, `serializedResource` BLOB NOT NULL, `versionId` TEXT, `lastUpdatedRemote` INTEGER, `lastUpdatedLocal` INTEGER)",
+        )
+        c.executeSQL(
+          "INSERT INTO `_new_ResourceEntity` (`id`,`resourceUuid`,`resourceType`,`resourceId`,`serializedResource`,`versionId`,`lastUpdatedRemote`,`lastUpdatedLocal`) SELECT `id`,`resourceUuid`,`resourceType`,`resourceId`, CAST('$JSON_TAG_CHAR' || `serializedResource` AS BLOB),`versionId`,`lastUpdatedRemote`,`lastUpdatedLocal` FROM `ResourceEntity`",
+        )
+        c.executeSQL("DROP TABLE `ResourceEntity`")
+        c.executeSQL("ALTER TABLE `_new_ResourceEntity` RENAME TO `ResourceEntity`")
+        c.executeSQL(
+          "CREATE UNIQUE INDEX IF NOT EXISTS `index_ResourceEntity_resourceUuid` ON `ResourceEntity` (`resourceUuid`)",
+        )
+        c.executeSQL(
+          "CREATE UNIQUE INDEX IF NOT EXISTS `index_ResourceEntity_resourceType_resourceId` ON `ResourceEntity` (`resourceType`, `resourceId`)",
+        )
+      }
+
     /** One migration per version step, the android-fhir engine's nine and then this engine's. */
     val STEPS =
       arrayOf(
@@ -232,6 +255,7 @@ internal abstract class ResourceDatabase : RoomDatabase() {
         MIGRATION_8_9,
         MIGRATION_9_10,
         MIGRATION_10_11,
+        MIGRATION_11_12,
       )
 
     /**

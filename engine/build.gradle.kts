@@ -67,6 +67,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
+        implementation(libs.kotlinx.serialization.protobuf)
         implementation(libs.fhir.model.r4)
         implementation(libs.fhir.path.r4)
         implementation(libs.kermit)
@@ -175,6 +176,7 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceStorageFormatTest")
     }
   }
 

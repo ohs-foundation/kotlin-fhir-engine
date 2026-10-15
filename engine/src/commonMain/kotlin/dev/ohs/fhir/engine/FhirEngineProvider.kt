@@ -131,6 +131,7 @@ object FhirEngineProvider {
         resourceIndexer,
         config.storageDirectory,
         inMemory = config.testMode,
+        resourceStorageFormat = config.resourceStorageFormat,
       )
 
     config.serverConfiguration?.let { serverConfig ->

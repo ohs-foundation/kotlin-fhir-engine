@@ -23,6 +23,7 @@ import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.async.step
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.LocalChangeToken
+import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.LocalChangeResourceReference
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
@@ -67,6 +68,7 @@ internal class DatabaseImpl(
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
   inMemory: Boolean = false,
+  resourceStorageFormat: ResourceStorageFormat = ResourceStorageFormat.JSON,
 ) : Database {
 
   private companion object {
@@ -89,8 +91,17 @@ internal class DatabaseImpl(
       .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 
-  private val resourceDao by lazy { db.resourceDao().also { it.resourceIndexer = resourceIndexer } }
-  private val localChangeDao by lazy { db.localChangeDao() }
+  private val resourceSerializer = ResourceSerializer(resourceStorageFormat)
+
+  private val resourceDao by lazy {
+    db.resourceDao().also {
+      it.resourceIndexer = resourceIndexer
+      it.resourceSerializer = resourceSerializer
+    }
+  }
+  private val localChangeDao by lazy {
+    db.localChangeDao().also { it.resourceSerializer = resourceSerializer }
+  }
 
   override suspend fun <R : Resource> insert(vararg resource: R): List<String> {
     val logicalIds = mutableListOf<String>()
@@ -103,7 +114,7 @@ internal class DatabaseImpl(
 
         val resourceWithId = if (res.id == null) res.withId(resourceId) else res
 
-        val serialized = serializeResource(resourceWithId)
+        val serialized = resourceSerializer.encode(resourceWithId)
         val entity =
           ResourceEntity(
             id = 0,
@@ -142,7 +153,7 @@ internal class DatabaseImpl(
             resourceUuid = resourceUuid,
             resourceType = resourceTypeEnum,
             resourceId = resourceId,
-            serializedResource = serializeResource(res),
+            serializedResource = resourceSerializer.encode(res),
             versionId = null,
             lastUpdatedRemote = now,
             lastUpdatedLocal = now,
@@ -156,9 +167,9 @@ internal class DatabaseImpl(
   }
 
   override suspend fun select(type: ResourceType, id: String): Resource {
-    val json = resourceDao.getResource(resourceId = id, resourceType = type)
-    return if (json != null) {
-      deserializeResource(json)
+    val serialized = resourceDao.getResource(resourceId = id, resourceType = type)
+    return if (serialized != null) {
+      resourceSerializer.decode(serialized)
     } else {
       throw ResourceNotFoundException(type.name, id)
     }
@@ -222,7 +233,7 @@ internal class DatabaseImpl(
 
         val updatedEntity =
           existing.copy(
-            serializedResource = serializeResource(res),
+            serializedResource = resourceSerializer.encode(res),
             lastUpdatedLocal = now,
           )
         resourceDao.insertResource(updatedEntity)
@@ -257,8 +268,8 @@ internal class DatabaseImpl(
     inTransaction {
       resourceDao.getResourceEntity(oldResourceId, resourceType)?.let { oldResourceEntity ->
         val updatedResource =
-          fhirJsonParser
-            .decodeFromString<Resource>(oldResourceEntity.serializedResource)
+          resourceSerializer
+            .decode(oldResourceEntity.serializedResource)
             .withId(newResourceId)
             .updateMeta(versionId, lastUpdated)
         updateResourceAndReferences(oldResourceId, updatedResource)
@@ -289,8 +300,7 @@ internal class DatabaseImpl(
         val results = mutableListOf<ResourceWithUUID<R>>()
         while (statement.step()) {
           val uuid = Uuid.fromByteArray(statement.getBlob(0))
-          val json = statement.getText(1)
-          val resource = deserializeResource(json) as R
+          val resource = resourceSerializer.decode(statement.getBlob(1)) as R
           results.add(ResourceWithUUID(uuid, resource))
         }
         results
@@ -321,8 +331,7 @@ internal class DatabaseImpl(
         while (statement.step()) {
           val searchIndex = statement.getText(0)
           val baseResourceUUID = Uuid.fromByteArray(statement.getBlob(1))
-          val json = statement.getText(2)
-          val resource = deserializeResource(json)
+          val resource = resourceSerializer.decode(statement.getBlob(2))
           results.add(ForwardIncludeSearchResult(searchIndex, baseResourceUUID, resource))
         }
         results
@@ -340,8 +349,7 @@ internal class DatabaseImpl(
         while (statement.step()) {
           val searchIndex = statement.getText(0)
           val baseResourceTypeWithId = statement.getText(1)
-          val json = statement.getText(2)
-          val resource = deserializeResource(json)
+          val resource = resourceSerializer.decode(statement.getBlob(2))
           results.add(ReverseIncludeSearchResult(searchIndex, baseResourceTypeWithId, resource))
         }
         results
@@ -371,8 +379,7 @@ internal class DatabaseImpl(
   ) {
     withTransaction {
       val currentResourceEntity = selectEntity(updatedResource.resourceTypeEnum, currentResourceId)
-      val oldResource =
-        fhirJsonParser.decodeFromString<Resource>(currentResourceEntity.serializedResource)
+      val oldResource = resourceSerializer.decode(currentResourceEntity.serializedResource)
       val resourceUuid = currentResourceEntity.resourceUuid
       updateResourceEntity(resourceUuid, updatedResource)
 
@@ -417,7 +424,7 @@ internal class DatabaseImpl(
       "${updatedResource.resourceTypeEnum.name}/${updatedResource.id.orEmpty()}"
     referringResourcesUuids.forEach { resourceUuid ->
       resourceDao.getResourceEntity(resourceUuid)?.let {
-        val referringResource = fhirJsonParser.decodeFromString<Resource>(it.serializedResource)
+        val referringResource = resourceSerializer.decode(it.serializedResource)
         val updatedReferringResource =
           addUpdatedReferenceToResource(
             referringResource,

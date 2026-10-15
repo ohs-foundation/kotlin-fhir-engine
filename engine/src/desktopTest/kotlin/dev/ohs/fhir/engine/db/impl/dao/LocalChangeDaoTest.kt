@@ -17,7 +17,9 @@ package dev.ohs.fhir.engine.db.impl.dao
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.db.impl.ResourceDatabase
+import dev.ohs.fhir.engine.db.impl.ResourceSerializer
 import dev.ohs.fhir.engine.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.engine.db.impl.fhirJsonParser
@@ -53,6 +55,7 @@ import kotlinx.coroutines.test.runTest
 class LocalChangeDaoTest {
   private lateinit var database: ResourceDatabase
   private lateinit var localChangeDao: LocalChangeDao
+  private val resourceSerializer = ResourceSerializer(ResourceStorageFormat.JSON)
 
   @BeforeTest
   fun setUp() {
@@ -61,7 +64,7 @@ class LocalChangeDaoTest {
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
-    localChangeDao = database.localChangeDao()
+    localChangeDao = database.localChangeDao().also { it.resourceSerializer = resourceSerializer }
   }
 
   @AfterTest
@@ -84,7 +87,7 @@ class LocalChangeDaoTest {
       resourceUuid = uuid,
       resourceType = ResourceType.Observation,
       resourceId = resource.id!!,
-      serializedResource = fhirJsonParser.encodeToString(resource),
+      serializedResource = resourceSerializer.encode(resource),
       versionId = null,
       lastUpdatedRemote = null,
       lastUpdatedLocal = Clock.System.now(),
