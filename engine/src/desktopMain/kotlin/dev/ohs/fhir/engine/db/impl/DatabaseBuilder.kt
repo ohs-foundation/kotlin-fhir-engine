@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.ohs.fhir.engine.sync.defaultDesktopStorageDirectory
 import java.io.File
@@ -26,13 +27,25 @@ import kotlinx.coroutines.IO
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val dbDir = File(storageDirectory ?: defaultDesktopStorageDirectory)
-  dbDir.mkdirs()
-  val dbFile = File(dbDir, DATABASE_NAME)
-  return Room.databaseBuilder<ResourceDatabase>(dbFile.absolutePath)
-    .setDriver(BundledSQLiteDriver())
-    .setQueryCoroutineContext(Dispatchers.IO)
+  val builder =
+    if (inMemory) {
+      Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+    } else {
+      createDatabaseDirectory(platformContext, storageDirectory)
+      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
+    }
+  return builder.setDriver(databaseDriver()).setQueryCoroutineContext(Dispatchers.IO)
+}
+
+internal actual fun databaseDriver(): SQLiteDriver = BundledSQLiteDriver()
+
+internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
+  File(storageDirectory ?: defaultDesktopStorageDirectory, DATABASE_NAME).absolutePath
+
+internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {
+  File(storageDirectory ?: defaultDesktopStorageDirectory).mkdirs()
 }
 
 private const val DATABASE_NAME = "resources.db"

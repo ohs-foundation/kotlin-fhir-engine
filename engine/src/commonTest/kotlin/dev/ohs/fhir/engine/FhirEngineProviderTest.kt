@@ -15,11 +15,14 @@
  */
 package dev.ohs.fhir.engine
 
+import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
+import kotlinx.coroutines.test.runTest
 
 /** Unit tests for [FhirEngineProvider]. */
 class FhirEngineProviderTest {
@@ -54,6 +57,16 @@ class FhirEngineProviderTest {
     )
     val engineTwo = FhirEngineProvider.getInstance(testPlatformContext())
     assertNotSame(engineOne, engineTwo)
+  }
+
+  @Test
+  fun testMode_usesAnInMemoryDatabaseThatSupportsReadsAndWrites() = runTest {
+    FhirEngineProvider.init(FhirEngineConfiguration(testMode = true), testPlatformContext())
+    val engine = FhirEngineProvider.getInstance(testPlatformContext())
+
+    engine.create(Patient(id = "in-memory"))
+
+    assertEquals("in-memory", engine.get(ResourceType.Patient, "in-memory").id)
   }
 
   @Test

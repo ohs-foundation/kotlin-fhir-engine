@@ -18,6 +18,7 @@ package dev.ohs.fhir.engine
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.fhirpath.toEqualCanonicalized
 import dev.ohs.fhir.fhirpath.toEquivalentCanonicalized
+import dev.ohs.fhir.fhirpath.types.FhirPathDecimal
 import dev.ohs.fhir.fhirpath.types.FhirPathQuantity
 
 /**
@@ -46,7 +47,10 @@ internal fun UcumValue.toEquivalentCanonical(): UcumValue =
   toFhirPathQuantity().toEquivalentCanonicalized().toUcumValue(fallback = this)
 
 private fun UcumValue.toFhirPathQuantity(): FhirPathQuantity =
-  FhirPathQuantity(value = value, unit = "'$code'")
+  FhirPathQuantity(value = FhirPathDecimal.fromBigDecimal(value), unit = "'$code'")
 
 private fun FhirPathQuantity.toUcumValue(fallback: UcumValue): UcumValue =
-  UcumValue(code = unit?.trim('\'') ?: fallback.code, value = value ?: fallback.value)
+  UcumValue(
+    code = unit?.trim('\'') ?: fallback.code,
+    value = value?.asBigDecimal() ?: fallback.value,
+  )

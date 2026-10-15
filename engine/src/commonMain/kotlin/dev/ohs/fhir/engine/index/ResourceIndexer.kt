@@ -35,6 +35,7 @@ import dev.ohs.fhir.fhirpath.FhirPathEngine
 import dev.ohs.fhir.fhirpath.forR4
 import dev.ohs.fhir.fhirpath.types.FhirPathDate
 import dev.ohs.fhir.fhirpath.types.FhirPathDateTime
+import dev.ohs.fhir.fhirpath.types.FhirPathDecimal
 import dev.ohs.fhir.model.r4.Address
 import dev.ohs.fhir.model.r4.Canonical
 import dev.ohs.fhir.model.r4.Code
@@ -132,15 +133,16 @@ internal class ResourceIndexer(
     private fun numberIndex(searchParam: SearchParamDefinition, value: Any): NumberIndex? =
       when (value) {
         // fhir-path's evaluateExpression unwraps Integer/UnsignedInt/PositiveInt to kotlin.Int
-        // and Decimal to BigDecimal before returning. Handle those first.
+        // and Decimal to FhirPathDecimal before returning. Handle those first.
         is Int -> NumberIndex(searchParam.name, searchParam.path, BigDecimal.fromInt(value))
-        is BigDecimal -> NumberIndex(searchParam.name, searchParam.path, value)
+        is FhirPathDecimal -> NumberIndex(searchParam.name, searchParam.path, value.asBigDecimal())
         // Defensive fallback in case a kotlin-fhir wrapper leaks through unconverted.
         is Integer ->
           value.value?.let {
             NumberIndex(searchParam.name, searchParam.path, BigDecimal.fromInt(it))
           }
-        is Decimal -> value.value?.let { NumberIndex(searchParam.name, searchParam.path, it.asBigDecimal()) }
+        is Decimal ->
+          value.value?.let { NumberIndex(searchParam.name, searchParam.path, it.asBigDecimal()) }
         else -> null
       }
 
@@ -417,7 +419,7 @@ internal class ResourceIndexer(
     private fun quantityIndex(searchParam: SearchParamDefinition, value: Any): List<QuantityIndex> =
       when (value) {
         is Money -> {
-          val amount = value.value?.value
+          val amount = value.value?.value?.asBigDecimal()
           val currency = value.currency?.value?.name
           if (amount != null && currency != null) {
             listOf(
@@ -426,7 +428,7 @@ internal class ResourceIndexer(
                 searchParam.path,
                 FHIR_CURRENCY_CODE_SYSTEM,
                 currency,
-                amount.asBigDecimal(),
+                amount,
               ),
             )
           } else {
@@ -481,8 +483,10 @@ internal class ResourceIndexer(
 
     private fun specialIndex(value: Any): PositionIndex? {
       if (value !is Location.Position) return null
-      val lat = value.latitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
-      val lon = value.longitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
+      val lat =
+        value.latitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
+      val lon =
+        value.longitude.value?.asBigDecimal()?.doubleValue(exactRequired = false) ?: return null
       return PositionIndex(lat, lon)
     }
 

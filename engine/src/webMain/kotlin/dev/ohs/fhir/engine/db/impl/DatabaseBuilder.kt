@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteDriver
 import dev.ohs.fhir.engine.wasm.worker.createSqliteWasmDriver
 
 /**
@@ -28,13 +29,27 @@ import dev.ohs.fhir.engine.wasm.worker.createSqliteWasmDriver
  * @param storageDirectory Namespaces the OPFS database file. The browser has no real directories,
  *   so it is applied as a filename prefix rather than a path; this keeps a test database (which
  *   passes a value here) separate from the app's default `resources.db`.
+ * @param inMemory Opens SQLite's in-memory database inside the worker instead of an OPFS file.
  */
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
+  inMemory: Boolean,
 ): RoomDatabase.Builder<ResourceDatabase> {
-  val databaseName = storageDirectory?.let { "$it-$DATABASE_NAME" } ?: DATABASE_NAME
-  return Room.databaseBuilder<ResourceDatabase>(databaseName).setDriver(createSqliteWasmDriver())
+  val builder =
+    if (inMemory) {
+      Room.inMemoryDatabaseBuilder<ResourceDatabase>()
+    } else {
+      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
+    }
+  return builder.setDriver(databaseDriver())
 }
+
+internal actual fun databaseDriver(): SQLiteDriver = createSqliteWasmDriver()
+
+internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
+  storageDirectory?.let { "$it-$DATABASE_NAME" } ?: DATABASE_NAME
+
+internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {}
 
 private const val DATABASE_NAME = "resources.db"

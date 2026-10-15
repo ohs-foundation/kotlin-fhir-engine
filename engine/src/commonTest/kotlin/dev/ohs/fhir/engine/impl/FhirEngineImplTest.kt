@@ -21,12 +21,16 @@ import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.get
+import dev.ohs.fhir.engine.search.ReferenceClientParam
 import dev.ohs.fhir.engine.search.count
+import dev.ohs.fhir.engine.search.include
 import dev.ohs.fhir.engine.search.search
 import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.Practitioner
+import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.AfterTest
@@ -63,6 +67,27 @@ class FhirEngineImplTest {
   @AfterTest
   fun tearDown() {
     FhirEngineProvider.clearInstance()
+  }
+
+  @Test
+  fun search_include_returnsReferencedResources() = runTest {
+    val fhirEngine = setUpEngine()
+    fhirEngine.create(
+      Practitioner(id = "gp-1"),
+      Patient(
+        id = "patient-with-gp",
+        generalPractitioner =
+          listOf(Reference(reference = FhirString(value = "Practitioner/gp-1"))),
+      ),
+    )
+
+    val results =
+      fhirEngine.search<Patient> {
+        include<Practitioner>(ReferenceClientParam("general-practitioner"))
+      }
+
+    val withGp = results.single { it.resource.id == "patient-with-gp" }
+    assertEquals(listOf("gp-1"), withGp.included?.get("general-practitioner")?.map { it.id })
   }
 
   @Test

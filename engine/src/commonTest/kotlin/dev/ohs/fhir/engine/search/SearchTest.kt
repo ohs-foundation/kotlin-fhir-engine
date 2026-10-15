@@ -27,6 +27,7 @@ import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -2187,7 +2188,7 @@ class SearchTest {
             referenceParam = ReferenceClientParam("general-practitioner"),
           )
         }
-        .getIncludeQuery(listOf("uuid-1", "uuid-2"))
+        .getIncludeQuery(listOf(UUID_1, UUID_2))
 
     assertEquals(
       """
@@ -2195,7 +2196,7 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
       AND re.resourceType = ?
       )
@@ -2207,8 +2208,8 @@ class SearchTest {
       listOf(
         "Patient",
         "general-practitioner",
-        "uuid-1",
-        "uuid-2",
+        UUID_1,
+        UUID_2,
         "Practitioner",
       ),
       query.args,
@@ -2227,7 +2228,7 @@ class SearchTest {
             filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) })
           }
         }
-        .getIncludeQuery(listOf("uuid-1", "uuid-2"))
+        .getIncludeQuery(listOf(UUID_1, UUID_2))
 
     assertEquals(
       """
@@ -2235,7 +2236,7 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
       AND re.resourceUuid IN (
       SELECT resourceUuid FROM TokenIndexEntity
@@ -2250,8 +2251,8 @@ class SearchTest {
       listOf(
         "Patient",
         "general-practitioner",
-        "uuid-1",
-        "uuid-2",
+        UUID_1,
+        UUID_2,
         "Practitioner",
         "active",
         "true",
@@ -2273,7 +2274,7 @@ class SearchTest {
             sort(StringClientParam("given"), Order.DESCENDING)
           }
         }
-        .getIncludeQuery(listOf("uuid-1", "uuid-2"))
+        .getIncludeQuery(listOf(UUID_1, UUID_2))
 
     assertEquals(
       """
@@ -2281,7 +2282,7 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
@@ -2302,8 +2303,8 @@ class SearchTest {
         "given",
         "Patient",
         "general-practitioner",
-        "uuid-1",
-        "uuid-2",
+        UUID_1,
+        UUID_2,
         "Practitioner",
         "active",
         "true",
@@ -2333,7 +2334,7 @@ class SearchTest {
             sort(StringClientParam("name"), Order.DESCENDING)
           }
         }
-        .getIncludeQuery(listOf("uuid-1", "uuid-2"))
+        .getIncludeQuery(listOf(UUID_1, UUID_2))
 
     assertEquals(
       """
@@ -2341,7 +2342,7 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
@@ -2358,7 +2359,7 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||"/"||re.resourceId = rie.index_value
+      ON re.resourceType||'/'||re.resourceId = rie.index_value
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
@@ -2379,16 +2380,16 @@ class SearchTest {
         "given",
         "Patient",
         "general-practitioner",
-        "uuid-1",
-        "uuid-2",
+        UUID_1,
+        UUID_2,
         "Practitioner",
         "active",
         "true",
         "name",
         "Patient",
         "organization",
-        "uuid-1",
-        "uuid-2",
+        UUID_1,
+        UUID_2,
         "Organization",
         "active",
         "true",
@@ -2578,3 +2579,6 @@ class SearchTest {
     )
   }
 }
+
+private val UUID_1 = Uuid.parse("00000000-0000-0000-0000-000000000001")
+private val UUID_2 = Uuid.parse("00000000-0000-0000-0000-000000000002")

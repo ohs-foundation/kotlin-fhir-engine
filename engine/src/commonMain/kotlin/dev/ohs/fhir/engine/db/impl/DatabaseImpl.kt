@@ -67,6 +67,7 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
+  inMemory: Boolean = false,
   resourceStorageFormat: ResourceStorageFormat = ResourceStorageFormat.JSON,
 ) : Database {
 
@@ -86,8 +87,8 @@ internal class DatabaseImpl(
   // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
   // platform-specific [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory)
-      .fallbackToDestructiveMigration(dropAllTables = true)
+    getDatabaseBuilder(platformContext, storageDirectory, inMemory)
+      .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 
   private val resourceSerializer = ResourceSerializer(resourceStorageFormat)
@@ -298,9 +299,9 @@ internal class DatabaseImpl(
         bindArgs(statement, query.args)
         val results = mutableListOf<ResourceWithUUID<R>>()
         while (statement.step()) {
-          val uuid = statement.getText(0)
+          val uuid = Uuid.fromByteArray(statement.getBlob(0))
           val resource = resourceSerializer.decode(statement.getBlob(1)) as R
-          results.add(ResourceWithUUID(Uuid.parse(uuid), resource))
+          results.add(ResourceWithUUID(uuid, resource))
         }
         results
       }
@@ -329,7 +330,7 @@ internal class DatabaseImpl(
         val results = mutableListOf<ForwardIncludeSearchResult>()
         while (statement.step()) {
           val searchIndex = statement.getText(0)
-          val baseResourceUUID = Uuid.parse(statement.getText(1))
+          val baseResourceUUID = Uuid.fromByteArray(statement.getBlob(1))
           val resource = resourceSerializer.decode(statement.getBlob(2))
           results.add(ForwardIncludeSearchResult(searchIndex, baseResourceUUID, resource))
         }
@@ -481,6 +482,7 @@ internal class DatabaseImpl(
         is Long -> statement.bindLong(i + 1, arg)
         is Double -> statement.bindDouble(i + 1, arg)
         is Int -> statement.bindLong(i + 1, arg.toLong())
+        is Uuid -> statement.bindBlob(i + 1, arg.toByteArray())
         else -> statement.bindText(i + 1, arg.toString())
       }
     }
