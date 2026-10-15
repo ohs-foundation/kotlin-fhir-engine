@@ -216,6 +216,20 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
+  fun migrate11To12_keepsStringIndexRowsAndMatchesThemCaseInsensitively() = runTest {
+    tester.createDatabase(11).use {
+      it.insertPatient()
+      it.insertFamilyNameIndex()
+    }
+    tester.runMigrationsAndValidate(12, listOf(ResourceDatabase.MIGRATION_11_12)).use {
+      assertEquals(
+        "Jones",
+        it.single("SELECT index_value FROM StringIndexEntity WHERE index_value = 'jones'"),
+      )
+    }
+  }
+
+  @Test
   fun alphaDatabase_isConvertedAndKeepsItsRows() = runTest {
     // Alpha01 to alpha04 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
     val alphaSchema =

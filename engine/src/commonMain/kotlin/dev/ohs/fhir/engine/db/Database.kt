@@ -114,6 +114,12 @@ internal interface Database {
   /** Retrieves the count of [LocalChange]s stored in the database. */
   suspend fun getLocalChangesCount(): Int
 
+  /** Returns those of [resourceIds] of [resourceType] that have a pending local change. */
+  suspend fun getPendingLocalChangeIds(
+    resourceType: ResourceType,
+    resourceIds: List<String>,
+  ): Set<String>
+
   /** Remove the [LocalChange]s with given ids. Call this after a successful sync. */
   suspend fun deleteUpdates(token: LocalChangeToken)
 

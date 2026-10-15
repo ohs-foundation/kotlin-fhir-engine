@@ -112,7 +112,7 @@ internal class FhirEngineImpl(private val database: Database) : FhirEngine {
         val resolved =
           resolveConflictingResources(
             resources,
-            getConflictingResourceIds(resources),
+            getConflictingResourceKeys(resources),
             conflictResolver,
           )
         database.insertSyncedResources(resources)
@@ -130,21 +130,33 @@ internal class FhirEngineImpl(private val database: Database) : FhirEngine {
 
   private suspend fun resolveConflictingResources(
     resources: List<Resource>,
-    conflictingResourceIds: Set<String>,
+    conflictingResourceKeys: Set<String>,
     conflictResolver: ConflictResolver,
   ) =
     resources
-      .filter { conflictingResourceIds.contains(it.id.orEmpty()) }
+      .filter { conflictingResourceKeys.contains(it.conflictKey()) }
       .map { conflictResolver.resolve(database.select(it.resourceTypeEnum, it.id.orEmpty()), it) }
       .filterIsInstance<Resolved>()
       .map { it.resolved }
       .takeIf { it.isNotEmpty() }
 
-  private suspend fun getConflictingResourceIds(resources: List<Resource>) =
+  /**
+   * Which of [resources] are already edited locally, keyed by type and id.
+   *
+   * Asked of the page rather than of the whole ledger: the queue can be far larger than a page, and
+   * reading it in full per page makes an ingest cost what is pending rather than what arrives.
+   */
+  private suspend fun getConflictingResourceKeys(resources: List<Resource>): Set<String> =
     resources
-      .map { it.id.orEmpty() }
-      .toSet()
-      .intersect(database.getAllLocalChanges().map { it.resourceId }.toSet())
+      .groupBy { it.resourceTypeEnum }
+      .flatMapTo(mutableSetOf()) { (type, ofType) ->
+        database.getPendingLocalChangeIds(type, ofType.map { it.id.orEmpty() }).map {
+          "${type.name}/$it"
+        }
+      }
+
+  /** A resource of one type never conflicts with a pending change to another sharing its id. */
+  private fun Resource.conflictKey() = "${resourceTypeEnum.name}/${id.orEmpty()}"
 
   override suspend fun count(search: Search): Long {
     return search.count(database)

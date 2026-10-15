@@ -388,6 +388,46 @@ internal object ExportedSchemas {
           """CREATE INDEX IF NOT EXISTS `index_LocalChangeResourceReferenceEntity_localChangeId` ON `LocalChangeResourceReferenceEntity` (`localChangeId`)""",
         )
       11 -> Schema11.tables.flatMap { listOf(it.createSql) + it.indexSql }
+      12 ->
+        listOf(
+          """CREATE TABLE IF NOT EXISTS `ResourceEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `resourceId` TEXT NOT NULL, `serializedResource` TEXT NOT NULL, `versionId` TEXT, `lastUpdatedRemote` INTEGER, `lastUpdatedLocal` INTEGER)""",
+          """CREATE UNIQUE INDEX IF NOT EXISTS `index_ResourceEntity_resourceUuid` ON `ResourceEntity` (`resourceUuid`)""",
+          """CREATE UNIQUE INDEX IF NOT EXISTS `index_ResourceEntity_resourceType_resourceId` ON `ResourceEntity` (`resourceType`, `resourceId`)""",
+          """CREATE TABLE IF NOT EXISTS `StringIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_value` TEXT NOT NULL COLLATE NOCASE, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_StringIndexEntity_resourceType_index_name_index_value` ON `StringIndexEntity` (`resourceType`, `index_name`, `index_value`)""",
+          """CREATE INDEX IF NOT EXISTS `index_StringIndexEntity_resourceUuid_index_name_index_value` ON `StringIndexEntity` (`resourceUuid`, `index_name`, `index_value`)""",
+          """CREATE TABLE IF NOT EXISTS `ReferenceIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_value` TEXT NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_ReferenceIndexEntity_resourceType_index_name_index_value_resourceUuid` ON `ReferenceIndexEntity` (`resourceType`, `index_name`, `index_value`, `resourceUuid`)""",
+          """CREATE INDEX IF NOT EXISTS `index_ReferenceIndexEntity_resourceUuid` ON `ReferenceIndexEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `TokenIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_system` TEXT, `index_value` TEXT NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_TokenIndexEntity_resourceType_index_name_index_value_index_system_resourceUuid` ON `TokenIndexEntity` (`resourceType`, `index_name`, `index_value`, `index_system`, `resourceUuid`)""",
+          """CREATE INDEX IF NOT EXISTS `index_TokenIndexEntity_resourceUuid` ON `TokenIndexEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `QuantityIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_system` TEXT NOT NULL, `index_code` TEXT NOT NULL, `index_value` REAL NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_QuantityIndexEntity_resourceType_index_name_index_value_index_code` ON `QuantityIndexEntity` (`resourceType`, `index_name`, `index_value`, `index_code`)""",
+          """CREATE INDEX IF NOT EXISTS `index_QuantityIndexEntity_resourceType_index_name_index_code_index_value` ON `QuantityIndexEntity` (`resourceType`, `index_name`, `index_code`, `index_value`)""",
+          """CREATE INDEX IF NOT EXISTS `index_QuantityIndexEntity_resourceUuid` ON `QuantityIndexEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `UriIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_value` TEXT NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_UriIndexEntity_resourceType_index_name_index_value_resourceUuid` ON `UriIndexEntity` (`resourceType`, `index_name`, `index_value`, `resourceUuid`)""",
+          """CREATE INDEX IF NOT EXISTS `index_UriIndexEntity_resourceUuid` ON `UriIndexEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `DateIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_from` INTEGER NOT NULL, `index_to` INTEGER NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_DateIndexEntity_resourceType_index_name_resourceUuid_index_from_index_to` ON `DateIndexEntity` (`resourceType`, `index_name`, `resourceUuid`, `index_from`, `index_to`)""",
+          """CREATE INDEX IF NOT EXISTS `index_DateIndexEntity_resourceUuid_index_name_index_from` ON `DateIndexEntity` (`resourceUuid`, `index_name`, `index_from`)""",
+          """CREATE TABLE IF NOT EXISTS `DateTimeIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_from` INTEGER NOT NULL, `index_to` INTEGER NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_DateTimeIndexEntity_resourceType_index_name_resourceUuid_index_from_index_to` ON `DateTimeIndexEntity` (`resourceType`, `index_name`, `resourceUuid`, `index_from`, `index_to`)""",
+          """CREATE INDEX IF NOT EXISTS `index_DateTimeIndexEntity_resourceUuid_index_name_index_from` ON `DateTimeIndexEntity` (`resourceUuid`, `index_name`, `index_from`)""",
+          """CREATE TABLE IF NOT EXISTS `NumberIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_value` REAL NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_NumberIndexEntity_resourceType_index_name_index_value` ON `NumberIndexEntity` (`resourceType`, `index_name`, `index_value`)""",
+          """CREATE INDEX IF NOT EXISTS `index_NumberIndexEntity_resourceUuid_index_name_index_value` ON `NumberIndexEntity` (`resourceUuid`, `index_name`, `index_value`)""",
+          """CREATE TABLE IF NOT EXISTS `PositionIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_latitude` REAL NOT NULL, `index_longitude` REAL NOT NULL, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_PositionIndexEntity_resourceType_index_latitude_index_longitude` ON `PositionIndexEntity` (`resourceType`, `index_latitude`, `index_longitude`)""",
+          """CREATE INDEX IF NOT EXISTS `index_PositionIndexEntity_resourceUuid` ON `PositionIndexEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `LocalChangeEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceType` TEXT NOT NULL, `resourceId` TEXT NOT NULL, `resourceUuid` BLOB NOT NULL, `timestamp` INTEGER NOT NULL, `type` INTEGER NOT NULL, `payload` TEXT NOT NULL, `versionId` TEXT)""",
+          """CREATE INDEX IF NOT EXISTS `index_LocalChangeEntity_resourceType_resourceId` ON `LocalChangeEntity` (`resourceType`, `resourceId`)""",
+          """CREATE INDEX IF NOT EXISTS `index_LocalChangeEntity_resourceUuid` ON `LocalChangeEntity` (`resourceUuid`)""",
+          """CREATE TABLE IF NOT EXISTS `LocalChangeResourceReferenceEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `localChangeId` INTEGER NOT NULL, `resourceReferenceValue` TEXT NOT NULL, `resourceReferencePath` TEXT, FOREIGN KEY(`localChangeId`) REFERENCES `LocalChangeEntity`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)""",
+          """CREATE INDEX IF NOT EXISTS `index_LocalChangeResourceReferenceEntity_resourceReferenceValue` ON `LocalChangeResourceReferenceEntity` (`resourceReferenceValue`)""",
+          """CREATE INDEX IF NOT EXISTS `index_LocalChangeResourceReferenceEntity_localChangeId` ON `LocalChangeResourceReferenceEntity` (`localChangeId`)""",
+        )
       else -> error("No exported schema $version")
     }
 }

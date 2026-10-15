@@ -69,7 +69,7 @@ internal abstract class ResourceDatabase : RoomDatabase() {
   abstract fun localChangeDao(): LocalChangeDao
 
   companion object {
-    const val VERSION = 11
+    const val VERSION = 12
 
     val MIGRATION_1_2 =
       Migration(1, 2) { c -> c.executeSQL("DROP TABLE IF EXISTS SyncedResourceEntity") }
@@ -219,6 +219,46 @@ internal abstract class ResourceDatabase : RoomDatabase() {
     /** Schema 10 and 11 are identical, so this only lets Room record the new version. */
     val MIGRATION_10_11 = Migration(10, 11) {}
 
+    /** A collation change needs the table rebuilt. */
+    val MIGRATION_11_12 =
+      Migration(11, 12) { c ->
+        c.executeSQL(
+          "CREATE TABLE IF NOT EXISTS `_new_StringIndexEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `index_name` TEXT NOT NULL, `index_path` TEXT NOT NULL, `index_value` TEXT NOT NULL COLLATE NOCASE, FOREIGN KEY(`resourceUuid`) REFERENCES `ResourceEntity`(`resourceUuid`) ON UPDATE NO ACTION ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)",
+        )
+        c.executeSQL(
+          "INSERT INTO `_new_StringIndexEntity` (`id`,`resourceUuid`,`resourceType`,`index_name`,`index_path`,`index_value`) SELECT `id`,`resourceUuid`,`resourceType`,`index_name`,`index_path`,`index_value` FROM `StringIndexEntity`",
+        )
+        c.executeSQL("DROP TABLE `StringIndexEntity`")
+        c.executeSQL("ALTER TABLE `_new_StringIndexEntity` RENAME TO `StringIndexEntity`")
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_StringIndexEntity_resourceType_index_name_index_value` ON `StringIndexEntity` (`resourceType`, `index_name`, `index_value`)",
+        )
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_StringIndexEntity_resourceUuid_index_name_index_value` ON `StringIndexEntity` (`resourceUuid`, `index_name`, `index_value`)",
+        )
+        c.executeSQL(
+          "DROP INDEX IF EXISTS `index_ReferenceIndexEntity_resourceType_index_name_index_value`",
+        )
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_ReferenceIndexEntity_resourceType_index_name_index_value_resourceUuid` ON `ReferenceIndexEntity` (`resourceType`, `index_name`, `index_value`, `resourceUuid`)",
+        )
+        c.executeSQL(
+          "DROP INDEX IF EXISTS `index_UriIndexEntity_resourceType_index_name_index_value`",
+        )
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_UriIndexEntity_resourceType_index_name_index_value_resourceUuid` ON `UriIndexEntity` (`resourceType`, `index_name`, `index_value`, `resourceUuid`)",
+        )
+        c.executeSQL(
+          "DROP INDEX IF EXISTS `index_TokenIndexEntity_resourceType_index_name_index_value_resourceUuid`",
+        )
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_TokenIndexEntity_resourceType_index_name_index_value_index_system_resourceUuid` ON `TokenIndexEntity` (`resourceType`, `index_name`, `index_value`, `index_system`, `resourceUuid`)",
+        )
+        c.executeSQL(
+          "CREATE INDEX IF NOT EXISTS `index_QuantityIndexEntity_resourceType_index_name_index_code_index_value` ON `QuantityIndexEntity` (`resourceType`, `index_name`, `index_code`, `index_value`)",
+        )
+      }
+
     /** One migration per version step, the android-fhir engine's nine and then this engine's. */
     val STEPS =
       arrayOf(
@@ -232,6 +272,7 @@ internal abstract class ResourceDatabase : RoomDatabase() {
         MIGRATION_8_9,
         MIGRATION_9_10,
         MIGRATION_10_11,
+        MIGRATION_11_12,
       )
 
     /**
