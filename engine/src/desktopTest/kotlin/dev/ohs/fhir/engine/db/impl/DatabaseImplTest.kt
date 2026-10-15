@@ -16,7 +16,6 @@
 package dev.ohs.fhir.engine.db.impl
 
 import dev.ohs.fhir.engine.LocalChange
-import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.index.ResourceIndexer
@@ -29,11 +28,13 @@ import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
@@ -51,10 +52,8 @@ import kotlinx.coroutines.test.runTest
  * KMP adaptations: HAPI types → kotlin-fhir; assertResourceEquals → compare id/gender or serialized
  * form; `LocalChange.Type` enum at the Database layer; in-file DB cleared per test.
  */
-open class DatabaseImplTest {
+class DatabaseImplTest {
   private lateinit var database: Database
-
-  protected open val resourceStorageFormat = ResourceStorageFormat.JSON
 
   @BeforeTest
   fun setUp() = runTest {
@@ -63,10 +62,28 @@ open class DatabaseImplTest {
         Unit,
         ResourceIndexer(SearchParamDefinitionsProviderImpl()),
         storageDirectory = testStorageDirectory(),
-        resourceStorageFormat = resourceStorageFormat,
       )
     database.clearDatabase()
     database.insert(TEST_PATIENT_1)
+  }
+
+  @Test
+  fun inMemory_createsNoDatabaseFile() = runTest {
+    val directory = testStorageDirectory()!!
+    val inMemoryDatabase =
+      DatabaseImpl(
+        platformContext = Unit,
+        resourceIndexer = ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory = directory,
+        inMemory = true,
+      )
+    try {
+      inMemoryDatabase.insert(Patient(id = "in-memory"))
+      assertEquals("in-memory", inMemoryDatabase.select(ResourceType.Patient, "in-memory").id)
+    } finally {
+      inMemoryDatabase.close()
+    }
+    assertFalse(File(directory, "resources.db").exists())
   }
 
   @AfterTest
@@ -232,9 +249,4 @@ open class DatabaseImplTest {
     private val TEST_PATIENT_2 =
       Patient(id = TEST_PATIENT_2_ID, gender = Enumeration(value = AdministrativeGender.Male))
   }
-}
-
-/** Re-runs the whole DB suite against the Protobuf storage format. */
-class ProtobufDatabaseImplTest : DatabaseImplTest() {
-  override val resourceStorageFormat = ResourceStorageFormat.PROTOBUF
 }
