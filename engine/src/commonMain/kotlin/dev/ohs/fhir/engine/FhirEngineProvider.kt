@@ -15,7 +15,9 @@
  */
 package dev.ohs.fhir.engine
 
+import dev.ohs.fhir.engine.db.impl.DatabaseConfig
 import dev.ohs.fhir.engine.db.impl.DatabaseImpl
+import dev.ohs.fhir.engine.db.impl.isDatabaseEncryptionSupported
 import dev.ohs.fhir.engine.impl.FhirEngineImpl
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinition
@@ -50,10 +52,18 @@ object FhirEngineProvider {
   /**
    * Initializes the [FhirEngineProvider] with the given [configuration].
    *
-   * This must be called before [getInstance]. Calling it again after initialization will throw an
-   * [IllegalStateException].
+   * This must be called before [getInstance].
+   *
+   * @throws UnsupportedOperationException if encryption is requested on a platform that cannot
+   *   encrypt.
+   * @throws IllegalStateException if called again after initialization.
    */
+  // Declared so Swift receives these as errors instead of the app aborting.
+  @Throws(UnsupportedOperationException::class, IllegalStateException::class)
   fun init(configuration: FhirEngineConfiguration, platformContext: Any = Unit) {
+    if (configuration.enableEncryptionIfSupported && !isDatabaseEncryptionSupported) {
+      throw UnsupportedOperationException("Database encryption is not supported on this platform.")
+    }
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
     this.platformContext = platformContext
@@ -70,7 +80,10 @@ object FhirEngineProvider {
    *
    * @param platformContext Platform-specific context. On Android, this should be the application
    *   `Context`. On Desktop and iOS, pass `Unit` or omit.
+   * @throws IllegalStateException if [init] was not called, or if a database stored with the other
+   *   encryption setting exists.
    */
+  @Throws(IllegalStateException::class)
   fun getInstance(platformContext: Any = Unit): FhirEngine {
     val config =
       checkNotNull(configuration) {
@@ -130,7 +143,11 @@ object FhirEngineProvider {
         platformContext,
         resourceIndexer,
         config.storageDirectory,
-        inMemory = config.testMode,
+        DatabaseConfig(
+          inMemory = config.testMode,
+          encrypt = config.enableEncryptionIfSupported,
+          errorStrategy = config.databaseErrorStrategy,
+        ),
       )
 
     config.serverConfiguration?.let { serverConfig ->
