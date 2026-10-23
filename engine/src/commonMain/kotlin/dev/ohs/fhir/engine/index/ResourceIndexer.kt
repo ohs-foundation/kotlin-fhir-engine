@@ -80,17 +80,35 @@ internal class ResourceIndexer(
 
   fun <R : Resource> index(resource: R) = extractIndexValues(resource)
 
+  /**
+   * Returns the references at `<path>` that name `<type>` when every branch of [path] has the form
+   * `<path>.where(resolve() is <type>)`, or null otherwise.
+   */
+  private fun referencesOfType(path: String, resource: Resource): List<Reference>? {
+    val branches =
+      path.split(" | ").map { branch -> WHERE_RESOLVE_IS.matchEntire(branch.trim()) ?: return null }
+    return branches.flatMap { branch ->
+      val (referencePath, type) = branch.destructured
+      fhirPathEngine
+        .evaluateExpression(referencePath, resource)
+        .filterIsInstance<Reference>()
+        .filter { it.resourceType() == type }
+    }
+  }
+
   private fun <R : Resource> extractIndexValues(resource: R): ResourceIndices {
     val resourceType = getResourceType(resource::class)
     val indexBuilder = ResourceIndices.Builder(resourceType, resource.id.orEmpty())
     searchParamDefinitionsProvider
       .get(resource)
       .flatMap { searchParam ->
-        // Some search params reference FHIRPath functions kotlin-fhir-path doesn't implement yet
-        // (e.g. `resolve()` in `Encounter.subject.where(resolve() is Patient)`). A single
-        // unsupported expression shouldn't break indexing for the whole resource, so we swallow
-        // the exception and skip that param.
-        runCatching { fhirPathEngine.evaluateExpression(searchParam.path, resource) }
+        // Some search params reference FHIRPath functions kotlin-fhir-path doesn't implement yet.
+        // A single unsupported expression shouldn't break indexing for the whole resource, so we
+        // swallow the exception and skip that param.
+        runCatching {
+            referencesOfType(searchParam.path, resource)
+              ?: fhirPathEngine.evaluateExpression(searchParam.path, resource)
+          }
           .getOrDefault(emptyList())
           .map { searchParam to it }
       }
@@ -123,6 +141,17 @@ internal class ResourceIndexer(
   }
 
   companion object {
+
+    private val WHERE_RESOLVE_IS = Regex("""(.+)\.where\(resolve\(\) is ([A-Za-z]+)\)""")
+
+    /**
+     * Returns the resource type named in [Reference.reference], as in `Patient/123` or
+     * `http://example.org/fhir/Patient/123/_history/1`, or null if it names none.
+     */
+    private fun Reference.resourceType(): kotlin.String? {
+      val segments = reference?.value?.substringBefore("/_history/")?.split("/") ?: return null
+      return segments.getOrNull(segments.size - 2)?.takeIf { it.isNotEmpty() }
+    }
 
     /**
      * The FHIR currency code system. See: https://bit.ly/30YB3ML. See:
