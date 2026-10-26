@@ -165,6 +165,11 @@ dependencies {
 // targets). Committed so migrations can be tested against previous versions.
 room3 { schemaDirectory("$projectDir/schemas") }
 
+// `StorageFormatSizeBenchmark` is a tool rather than a test and does nothing without this.
+tasks.withType<Test>().configureEach {
+  (findProperty("benchmarkResources") as String?)?.let { systemProperty("benchmarkResources", it) }
+}
+
 tasks
   .withType<Test>()
   .matching { it.name == "testAndroidHostTest" }
