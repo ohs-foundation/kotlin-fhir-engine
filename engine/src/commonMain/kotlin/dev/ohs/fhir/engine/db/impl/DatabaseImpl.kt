@@ -67,7 +67,7 @@ internal class DatabaseImpl(
   platformContext: Any,
   private val resourceIndexer: ResourceIndexer,
   storageDirectory: String? = null,
-  inMemory: Boolean = false,
+  config: DatabaseConfig = DatabaseConfig(),
   resourceStorageFormat: ResourceStorageFormat = ResourceStorageFormat.JSON,
 ) : Database {
 
@@ -83,11 +83,10 @@ internal class DatabaseImpl(
         .trimIndent()
   }
 
-  // The SQLite driver and query coroutine context are platform-specific (bundled native driver on
-  // android/desktop/ios; a Web Worker driver on wasm), so they are configured inside the
-  // platform-specific [getDatabaseBuilder].
+  // The SQLite driver and query coroutine context are platform specific, see the platform
+  // [getDatabaseBuilder].
   private val db: ResourceDatabase =
-    getDatabaseBuilder(platformContext, storageDirectory, inMemory)
+    resourceDatabaseBuilder(platformContext, storageDirectory, config)
       .addMigrations(*ResourceDatabase.MIGRATIONS)
       .build()
 
@@ -475,19 +474,6 @@ internal class DatabaseImpl(
     }
   }
 
-  private fun bindArgs(statement: SQLiteStatement, args: List<Any>) {
-    args.forEachIndexed { i, arg ->
-      when (arg) {
-        is String -> statement.bindText(i + 1, arg)
-        is Long -> statement.bindLong(i + 1, arg)
-        is Double -> statement.bindDouble(i + 1, arg)
-        is Int -> statement.bindLong(i + 1, arg.toLong())
-        is Uuid -> statement.bindBlob(i + 1, arg.toByteArray())
-        else -> statement.bindText(i + 1, arg.toString())
-      }
-    }
-  }
-
   private suspend fun insertIndices(
     resourceUuid: Uuid,
     resourceType: ResourceType,
@@ -582,6 +568,23 @@ internal class DatabaseImpl(
           index = it,
         ),
       )
+    }
+  }
+}
+
+/**
+ * Binds a [dev.ohs.fhir.engine.search.SearchQuery]'s arguments to [statement]. Shared with the
+ * query-plan test and the benchmarks so they bind exactly as the engine does.
+ */
+internal fun bindArgs(statement: SQLiteStatement, args: List<Any>) {
+  args.forEachIndexed { i, arg ->
+    when (arg) {
+      is String -> statement.bindText(i + 1, arg)
+      is Long -> statement.bindLong(i + 1, arg)
+      is Double -> statement.bindDouble(i + 1, arg)
+      is Int -> statement.bindLong(i + 1, arg.toLong())
+      is Uuid -> statement.bindBlob(i + 1, arg.toByteArray())
+      else -> statement.bindText(i + 1, arg.toString())
     }
   }
 }

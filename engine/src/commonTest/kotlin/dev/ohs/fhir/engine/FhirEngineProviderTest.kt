@@ -15,11 +15,13 @@
  */
 package dev.ohs.fhir.engine
 
+import dev.ohs.fhir.engine.db.impl.isDatabaseEncryptionSupported
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlinx.coroutines.test.runTest
@@ -29,7 +31,7 @@ class FhirEngineProviderTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.clearInstance()
+    FhirEngineProvider.resetForTesting()
   }
 
   @Test
@@ -44,13 +46,13 @@ class FhirEngineProviderTest {
   }
 
   @Test
-  fun getInstance_afterClearInstance_shouldReturnDifferentInstances() {
+  fun getInstance_afterReset_shouldReturnDifferentInstances() {
     FhirEngineProvider.init(
       FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
       testPlatformContext(),
     )
     val engineOne = FhirEngineProvider.getInstance(testPlatformContext())
-    FhirEngineProvider.clearInstance()
+    FhirEngineProvider.resetForTesting()
     FhirEngineProvider.init(
       FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
       testPlatformContext(),
@@ -67,6 +69,17 @@ class FhirEngineProviderTest {
     engine.create(Patient(id = "in-memory"))
 
     assertEquals("in-memory", engine.get(ResourceType.Patient, "in-memory").id)
+  }
+
+  @Test
+  fun init_withEncryption_throwsWhereThePlatformCannotEncrypt() {
+    if (isDatabaseEncryptionSupported) return
+    assertFailsWith<UnsupportedOperationException> {
+      FhirEngineProvider.init(
+        FhirEngineConfiguration(enableEncryption = true, testMode = true),
+        testPlatformContext(),
+      )
+    }
   }
 
   @Test
@@ -116,5 +129,18 @@ class FhirEngineProviderTest {
       assertEquals(50L * 1024L * 1024L, httpCache?.maxSize)
       assertEquals("sample-dir/http_cache", httpCache?.cacheDir)
     }
+  }
+
+  @Test
+  fun getFhirDataStore_afterReset_shouldThrow() {
+    FhirEngineProvider.init(
+      FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
+      testPlatformContext(),
+    )
+    FhirEngineProvider.getFhirDataStore()
+
+    FhirEngineProvider.resetForTesting()
+
+    assertFailsWith<IllegalStateException> { FhirEngineProvider.getFhirDataStore() }
   }
 }

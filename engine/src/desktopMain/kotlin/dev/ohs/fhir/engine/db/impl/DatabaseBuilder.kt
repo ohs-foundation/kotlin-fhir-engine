@@ -27,25 +27,41 @@ import kotlinx.coroutines.IO
 internal actual fun getDatabaseBuilder(
   platformContext: Any,
   storageDirectory: String?,
-  inMemory: Boolean,
+  config: DatabaseConfig,
 ): RoomDatabase.Builder<ResourceDatabase> {
   val builder =
-    if (inMemory) {
+    if (config.inMemory) {
       Room.inMemoryDatabaseBuilder<ResourceDatabase>()
     } else {
       createDatabaseDirectory(platformContext, storageDirectory)
-      Room.databaseBuilder<ResourceDatabase>(databaseFileName(platformContext, storageDirectory))
+      Room.databaseBuilder<ResourceDatabase>(
+        databaseFileName(platformContext, storageDirectory, config),
+      )
     }
-  return builder.setDriver(databaseDriver()).setQueryCoroutineContext(Dispatchers.IO)
+  return builder.setDriver(databaseDriver(config)).setQueryCoroutineContext(Dispatchers.IO)
 }
 
-internal actual fun databaseDriver(): SQLiteDriver = BundledSQLiteDriver()
+internal actual val isDatabaseEncryptionSupported: Boolean = false
 
-internal actual fun databaseFileName(platformContext: Any, storageDirectory: String?): String =
-  File(storageDirectory ?: defaultDesktopStorageDirectory, DATABASE_NAME).absolutePath
+internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver = BundledSQLiteDriver()
+
+internal actual fun databaseFileName(
+  platformContext: Any,
+  storageDirectory: String?,
+  config: DatabaseConfig,
+): String =
+  File(
+      storageDirectory ?: defaultDesktopStorageDirectory,
+      config.fileName,
+    )
+    .absolutePath
+
+internal actual fun databaseFileExists(
+  platformContext: Any,
+  storageDirectory: String?,
+  config: DatabaseConfig,
+): Boolean = File(databaseFileName(platformContext, storageDirectory, config)).exists()
 
 internal actual fun createDatabaseDirectory(platformContext: Any, storageDirectory: String?) {
   File(storageDirectory ?: defaultDesktopStorageDirectory).mkdirs()
 }
-
-private const val DATABASE_NAME = "resources.db"

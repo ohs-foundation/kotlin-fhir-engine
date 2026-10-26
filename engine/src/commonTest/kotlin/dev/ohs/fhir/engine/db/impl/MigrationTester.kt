@@ -30,7 +30,7 @@ import kotlin.test.assertEquals
  */
 internal class MigrationTester(platformContext: Any, storageDirectory: String?) {
   private val driver = sharedDriver
-  private val fileName = databaseFileName(platformContext, storageDirectory)
+  private val fileName = databaseFileName(platformContext, storageDirectory, DatabaseConfig())
 
   init {
     createDatabaseDirectory(platformContext, storageDirectory)
@@ -138,6 +138,6 @@ internal class MigrationTester(platformContext: Any, storageDirectory: String?) 
   private companion object {
     // One driver for every test. On web each driver starts a SQLite Web Worker that nothing
     // terminates, and one per test left the browser on CI unresponsive.
-    val sharedDriver by lazy { databaseDriver() }
+    val sharedDriver by lazy { databaseDriver(DatabaseConfig()) }
   }
 }

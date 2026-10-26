@@ -30,6 +30,15 @@ internal val fhirJsonParser = Json {
   encodeDefaults = false
 }
 
+/** Serializes a FHIR [Resource] to a JSON string for database storage. */
+internal fun serializeResource(resource: Resource): String = fhirJsonParser.encodeToString(resource)
+
+/**
+ * Deserializes a JSON string back to a FHIR [Resource]. Polymorphic deserialization is handled
+ * automatically via the `"resourceType"` JSON field.
+ */
+internal fun deserializeResource(json: String): Resource = fhirJsonParser.decodeFromString(json)
+
 /**
  * Binary counterpart of [fhirJsonParser]. kotlin-fhir's generated serializers drive the generic
  * `Encoder`/`Decoder` API rather than the JSON tree, so the same model classes encode to Protobuf
@@ -57,7 +66,7 @@ internal class ResourceSerializer(private val writeFormat: ResourceStorageFormat
   fun encode(resource: Resource): ByteArray =
     when (writeFormat) {
       ResourceStorageFormat.JSON ->
-        byteArrayOf(JSON_TAG) + fhirJsonParser.encodeToString(resource).encodeToByteArray()
+        byteArrayOf(JSON_TAG) + serializeResource(resource).encodeToByteArray()
       ResourceStorageFormat.PROTOBUF ->
         byteArrayOf(PROTOBUF_TAG) +
           fhirProtoParser.encodeToByteArray(Resource.serializer(), resource)
@@ -66,7 +75,7 @@ internal class ResourceSerializer(private val writeFormat: ResourceStorageFormat
   @OptIn(ExperimentalSerializationApi::class)
   fun decode(bytes: ByteArray): Resource =
     when (val tag = bytes[0]) {
-      JSON_TAG -> fhirJsonParser.decodeFromString(bytes.decodeToString(startIndex = 1))
+      JSON_TAG -> deserializeResource(bytes.decodeToString(startIndex = 1))
       PROTOBUF_TAG ->
         fhirProtoParser.decodeFromByteArray(Resource.serializer(), bytes.copyOfRange(1, bytes.size))
       else -> error("Unknown resource storage format tag: $tag")
@@ -77,6 +86,6 @@ internal class ResourceSerializer(private val writeFormat: ResourceStorageFormat
     if (bytes[0] == JSON_TAG) {
       bytes.decodeToString(startIndex = 1)
     } else {
-      fhirJsonParser.encodeToString(decode(bytes))
+      serializeResource(decode(bytes))
     }
 }

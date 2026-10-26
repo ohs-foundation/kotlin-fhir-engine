@@ -47,7 +47,8 @@ import kotlinx.coroutines.test.runTest
  * Not ported (covered elsewhere / blocked / N/A):
  * - ~80 `search_*` execution tests — query generation is covered by SearchTest; execution for
  *   quantity/date/gender is blocked by the indexer (kotlin-fhir-path) limitations.
- * - migration / encryption tests — N/A in KMP.
+ * - migration and encryption tests, which live in `ResourceDatabaseMigrationTest` and
+ *   `EncryptedDatabaseTest`.
  *
  * KMP adaptations: HAPI types → kotlin-fhir; assertResourceEquals → compare id/gender or serialized
  * form; `LocalChange.Type` enum at the Database layer; in-file DB cleared per test.
@@ -75,7 +76,7 @@ class DatabaseImplTest {
         platformContext = Unit,
         resourceIndexer = ResourceIndexer(SearchParamDefinitionsProviderImpl()),
         storageDirectory = directory,
-        inMemory = true,
+        config = DatabaseConfig(inMemory = true),
       )
     try {
       inMemoryDatabase.insert(Patient(id = "in-memory"))

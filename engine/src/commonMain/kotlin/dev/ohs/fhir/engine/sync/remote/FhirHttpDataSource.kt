@@ -49,6 +49,8 @@ internal class FhirHttpDataSource(private val fhirHttpService: FhirHttpService) 
       is UrlUploadRequest -> uploadIndividualRequest(request)
     }
 
+  override fun close() = fhirHttpService.close()
+
   private suspend fun uploadIndividualRequest(request: UrlUploadRequest): Resource =
     when (request.httpVerb) {
       Bundle.HTTPVerb.Post -> fhirHttpService.post(request.url, request.resource, request.headers)

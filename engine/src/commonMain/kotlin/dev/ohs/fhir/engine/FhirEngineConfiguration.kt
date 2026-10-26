@@ -23,10 +23,9 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  * Configuration for the FHIR Engine, including database setup, error recovery, server connection,
  * and custom search parameters.
  *
- * @property enableEncryptionIfSupported Database encryption is NOT yet supported in the
- *   multiplatform engine; setting this to true throws [IllegalArgumentException]. The flag is kept
- *   to preserve the call sites for when encryption is implemented. Until then, all data is stored
- *   unencrypted.
+ * @property enableEncryption Encrypt the database on platforms that support it, currently Android.
+ *   On other platforms [FhirEngineProvider.init] throws [UnsupportedOperationException] rather than
+ *   storing data unencrypted. The in-memory database of [testMode] is not encrypted.
  * @property databaseErrorStrategy The strategy to handle database errors. Defaults to
  *   [DatabaseErrorStrategy.UNSPECIFIED].
  * @property serverConfiguration Optional configuration for connecting to a remote FHIR server.
@@ -45,25 +44,17 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  * @property resourceStorageFormat Encoding used for the serialized resource stored against each
  *   row. Defaults to [ResourceStorageFormat.JSON]. Rows record the format they were written in, so
  *   changing this affects subsequent writes only and leaves existing rows readable.
- * @throws IllegalArgumentException if [enableEncryptionIfSupported] is true.
  */
 data class FhirEngineConfiguration
-@Throws(IllegalArgumentException::class)
 constructor(
-  val enableEncryptionIfSupported: Boolean = false,
+  val enableEncryption: Boolean = false,
   val databaseErrorStrategy: DatabaseErrorStrategy = DatabaseErrorStrategy.UNSPECIFIED,
   val serverConfiguration: ServerConfiguration? = null,
   val testMode: Boolean = false,
   val customSearchParameters: List<SearchParamDefinition>? = null,
   val storageDirectory: String? = null,
   val resourceStorageFormat: ResourceStorageFormat = ResourceStorageFormat.JSON,
-) {
-  init {
-    require(!enableEncryptionIfSupported) {
-      "Database encryption is not yet supported in the multiplatform FHIR engine."
-    }
-  }
-}
+)
 
 /** Encoding of the serialized FHIR resource held in each database row. */
 enum class ResourceStorageFormat {
@@ -86,7 +77,9 @@ enum class DatabaseErrorStrategy {
   UNSPECIFIED,
 
   /**
-   * If a database error occurs at open, automatically recreate the database.
+   * Deletes and recreates an encrypted database that the current key cannot read, for example after
+   * the key was lost. Its data is gone. Any other error, and any error on an unencrypted database,
+   * still reaches the caller, so data that is still readable is never deleted.
    *
    * This strategy is NOT respected when opening a previously unencrypted database with an encrypted
    * configuration or vice versa. An [IllegalStateException] is thrown instead.

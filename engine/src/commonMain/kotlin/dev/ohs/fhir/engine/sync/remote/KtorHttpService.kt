@@ -66,6 +66,11 @@ internal class KtorHttpService(
     this.compressUploads = compressUploads && supportsRequestCompression()
   }
 
+  /** Closes the [HttpClient]. Every later request on this service fails. */
+  override fun close() {
+    client.close()
+  }
+
   /**
    * Sanitizes JSON to work around bugs in the kotlin-fhir library (fhir-model beta):
    * 1. Truncates DateTime values in date-only fields, e.g. birthDate, deceasedDate
