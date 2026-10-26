@@ -220,9 +220,15 @@ internal abstract class ResourceDatabase : RoomDatabase() {
     val MIGRATION_10_11 = Migration(10, 11) {}
 
     /**
-     * serializedResource becomes a BLOB so a resource can be stored in a binary format. Rows keep
-     * their FHIR JSON, cast to its UTF-8 bytes behind the tag [ResourceSerializer] writes for JSON,
-     * which is what makes the column readable whichever format later writes go out in.
+     * serializedResource becomes a BLOB so a resource can also be stored in a binary format.
+     *
+     * Each resource keeps the exact FHIR JSON it already had, behind the one byte that tags it as
+     * JSON, so no resource is reparsed or reserialized and nothing but the tag can differ
+     * afterwards. The tag is not optional: the web driver reads a value stored as TEXT back as an
+     * empty blob, so leaving the old rows as text would make them unreadable there.
+     *
+     * SQLite has no ALTER COLUMN, so the table is rebuilt. The index tables reference it by name
+     * and keep their rows, which `foreign_key_check` in the migration test confirms.
      */
     val MIGRATION_11_12 =
       Migration(11, 12) { c ->

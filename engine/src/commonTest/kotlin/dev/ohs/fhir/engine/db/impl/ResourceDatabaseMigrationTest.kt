@@ -19,11 +19,11 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.async.executeSQL
 import androidx.sqlite.async.prepare
 import androidx.sqlite.async.step
-import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
+import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -216,18 +216,49 @@ class ResourceDatabaseMigrationTest {
     }
   }
 
+  /**
+   * The column changes, the resources do not. An existing app's rows have to keep the FHIR JSON
+   * they already held, keep their search indices and local changes, and come back out of the engine
+   * afterwards.
+   */
   @Test
-  fun migrate11To12_tagsSerializedResourceAsJsonBytes() = runTest {
-    tester.createDatabase(11).use { it.insertPatient() }
+  fun migrate11To12_keepsEveryResourceIndexAndLocalChange() = runTest {
+    tester.createDatabase(11).use {
+      it.insertPatient()
+      it.insertFamilyNameIndex()
+      it.executeSQL(
+        "INSERT INTO LocalChangeEntity (resourceType, resourceId, resourceUuid, timestamp, type, payload) VALUES ('Patient', '$PATIENT_ID', x'${PATIENT_UUID.toHexString()}', 1700000000000, 1, '$PATIENT_JSON')",
+      )
+    }
     tester.runMigrationsAndValidate(12, listOf(ResourceDatabase.MIGRATION_11_12)).use {
-      assertEquals("blob", it.single("SELECT typeof(serializedResource) FROM ResourceEntity"))
       val stored = it.blob("SELECT serializedResource FROM ResourceEntity")
       assertEquals(JSON_TAG_CHAR.code.toByte(), stored.first())
-      assertEquals(PATIENT_JSON, stored.decodeToString(startIndex = 1))
-      assertEquals(
-        PATIENT_ID,
-        ResourceSerializer(ResourceStorageFormat.JSON).decode(stored).id,
+      assertEquals(PATIENT_JSON, stored.decodeToString(startIndex = 1), "the JSON was altered")
+      assertEquals("Jones", it.single("SELECT index_value FROM StringIndexEntity"))
+      assertEquals(PATIENT_JSON, it.single("SELECT payload FROM LocalChangeEntity"))
+      assertEquals(emptyList(), it.longs("PRAGMA foreign_key_check"))
+    }
+  }
+
+  /** The whole upgrade an existing app sees: open an older database and keep using it. */
+  @Test
+  fun resourcesWrittenBeforeTheColumnChanged_areStillReadable() = runTest {
+    tester.createDatabase(11).use { it.insertPatient() }
+    val database =
+      DatabaseImpl(
+        platformContext,
+        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory,
       )
+    try {
+      assertEquals(PATIENT_ID, database.select(ResourceType.Patient, PATIENT_ID).id)
+      database.insertRemote(Patient(id = NEW_PATIENT_ID))
+      assertEquals(NEW_PATIENT_ID, database.select(ResourceType.Patient, NEW_PATIENT_ID).id)
+    } finally {
+      database.close()
+    }
+    tester.openConnection().use {
+      assertEquals(listOf(ResourceDatabase.VERSION.toLong()), it.longs("PRAGMA user_version"))
     }
   }
 
@@ -409,6 +440,7 @@ class ResourceDatabaseMigrationTest {
 
   private companion object {
     const val PATIENT_ID = "android-fhir-patient"
+    const val NEW_PATIENT_ID = "patient-written-after-upgrade"
     val PATIENT_UUID = Uuid.parse("5f4c3a2b-1e0d-4c9b-8a7f-6e5d4c3b2a19")
     const val PATIENT_JSON =
       """{"resourceType":"Patient","id":"$PATIENT_ID","name":[{"family":"Jones"}]}"""

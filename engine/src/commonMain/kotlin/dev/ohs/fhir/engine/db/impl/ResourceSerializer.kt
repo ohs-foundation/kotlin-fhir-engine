@@ -37,21 +37,19 @@ internal val fhirJsonParser = Json {
  */
 @OptIn(ExperimentalSerializationApi::class) internal val fhirProtoParser = ProtoBuf {}
 
-/** Written into the migration SQL that converts the column, so it is public to this module. */
+/** Written into the migration SQL that tags existing rows, so it is visible to this module. */
 internal const val JSON_TAG_CHAR = 'J'
-
-private const val PROTOBUF_TAG_CHAR = 'P'
 
 private val JSON_TAG = JSON_TAG_CHAR.code.toByte()
 
-private val PROTOBUF_TAG = PROTOBUF_TAG_CHAR.code.toByte()
+private val PROTOBUF_TAG = 'P'.code.toByte()
 
 /**
  * Encodes and decodes the `ResourceEntity.serializedResource` blob.
  *
- * Every blob carries a one-byte format tag, so the write format can change (by configuration, or
- * later by migration) without invalidating rows already on disk: a database may hold a mix of JSON
- * and Protobuf rows and still read back correctly.
+ * Every value carries a one-byte format tag, so the write format can change by configuration
+ * without invalidating rows already on disk: a database may hold a mix of JSON and Protobuf rows
+ * and still read back correctly.
  */
 internal class ResourceSerializer(private val writeFormat: ResourceStorageFormat) {
 
