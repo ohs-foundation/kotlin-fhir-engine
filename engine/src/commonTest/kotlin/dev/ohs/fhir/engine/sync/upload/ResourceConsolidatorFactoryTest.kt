@@ -156,6 +156,13 @@ private val fakeDatabase =
       TODO("Not yet implemented")
     }
 
+    override suspend fun getPendingLocalChangeIds(
+      resourceType: ResourceType,
+      resourceIds: List<String>,
+    ): Set<String> {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun deleteUpdates(token: LocalChangeToken) {
       TODO("Not yet implemented")
     }

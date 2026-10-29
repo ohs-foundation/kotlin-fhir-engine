@@ -20,6 +20,7 @@ import dev.ohs.fhir.engine.search.Search
 import dev.ohs.fhir.engine.search.SearchQuery
 import dev.ohs.fhir.engine.search.StringClientParam
 import dev.ohs.fhir.engine.search.getQuery
+import dev.ohs.fhir.engine.search.getSortSegments
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
@@ -33,8 +34,8 @@ import kotlinx.benchmark.State
 import kotlinx.benchmark.TearDown
 
 /**
- * Measures what sorting a search costs, and whether paging avoids it. No index backs a sorted
- * search, so SQLite groups and orders in temporary B-trees.
+ * Measures what sorting a search costs, and whether paging avoids it. The single query groups and
+ * orders in temporary B-trees; an unfiltered sorted search instead reads the sort index in order.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -48,6 +49,7 @@ open class SortBenchmark {
   private lateinit var sorted: SearchQuery
   private lateinit var unsortedFirstPage: SearchQuery
   private lateinit var sortedFirstPage: SearchQuery
+  private lateinit var walkedFirstPage: SearchQuery
   private lateinit var filteredUnsorted: SearchQuery
   private lateinit var filteredSorted: SearchQuery
 
@@ -60,6 +62,12 @@ open class SortBenchmark {
     sorted = search(sort = true)
     unsortedFirstPage = search(page = true)
     sortedFirstPage = search(sort = true, page = true)
+    walkedFirstPage =
+      Search(ResourceType.Patient)
+        .apply { sort(StringClientParam(SORT_PARAM), Order.ASCENDING) }
+        .getSortSegments()!!
+        .first()
+        .page(limit = PAGE, offset = 0)
     filteredUnsorted = search(filterPrefix = probePrefix())
     filteredSorted = search(filterPrefix = probePrefix(), sort = true)
 
@@ -70,6 +78,9 @@ open class SortBenchmark {
     }
     check(database.count(sortedFirstPage) == PAGE) {
       "a sorted first page returned ${database.count(sortedFirstPage)} rows, expected $PAGE"
+    }
+    check(database.count(walkedFirstPage) == PAGE) {
+      "a walked first page returned ${database.count(walkedFirstPage)} rows, expected $PAGE"
     }
     assertSelectivity(
       database.count(filteredSorted),
@@ -92,6 +103,12 @@ open class SortBenchmark {
 
   /** One page in order. Compare with [unsortedFirstPage]. */
   @Benchmark fun sortedFirstPage(): Int = database.count(sortedFirstPage)
+
+  /**
+   * The page [sortedFirstPage] returns, read in index order, as the engine runs an unfiltered
+   * sorted search. Every seeded patient has a value, so the first segment fills the page.
+   */
+  @Benchmark fun walkedFirstPage(): Int = database.count(walkedFirstPage)
 
   /** One prefix slice, unordered. */
   @Benchmark fun filteredUnsorted(): Int = database.count(filteredUnsorted)

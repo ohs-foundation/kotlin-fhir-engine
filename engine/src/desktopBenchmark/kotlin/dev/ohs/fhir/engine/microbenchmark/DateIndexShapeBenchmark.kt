@@ -35,8 +35,9 @@ import kotlinx.benchmark.TearDown
 import kotlinx.datetime.LocalDate
 
 /**
- * A date range search against the shipped date index and one with the range columns ahead of
- * `resourceUuid`, across table sizes and window widths. Indices are rebuilt with raw DDL per trial.
+ * A date range search against the shipped date index and the one before #109, with `resourceUuid`
+ * ahead of the range columns, across table sizes and window widths. Indices are rebuilt with raw
+ * DDL per trial.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -45,8 +46,8 @@ open class DateIndexShapeBenchmark {
 
   @Param("1000", "10000", "50000") var rows: Int = 0
 
-  /** `current` is what the engine ships; `rangeLast` puts `resourceUuid` last. */
-  @Param("current", "rangeLast") var shape: String = ""
+  /** `current` is what the engine ships; `uuidFirst` puts `resourceUuid` ahead of the range. */
+  @Param("current", "uuidFirst") var shape: String = ""
 
   /** `narrow` matches about 4% of rows; `wide` about 40%. */
   @Param("narrow", "wide") var window: String = ""
@@ -101,16 +102,16 @@ open class DateIndexShapeBenchmark {
 
   private fun indexDefinitions(): List<String> =
     when (shape) {
-      "current" ->
-        listOf(
-          "`resourceType`, `index_name`, `resourceUuid`, `index_from`, `index_to`",
-          "`resourceUuid`, `index_name`, `index_from`",
-        )
       // The second index serves comparators that range over index_to.
-      "rangeLast" ->
+      "current" ->
         listOf(
           "`resourceType`, `index_name`, `index_from`, `index_to`, `resourceUuid`",
           "`resourceType`, `index_name`, `index_to`, `resourceUuid`",
+          "`resourceUuid`, `index_name`, `index_from`",
+        )
+      "uuidFirst" ->
+        listOf(
+          "`resourceType`, `index_name`, `resourceUuid`, `index_from`, `index_to`",
           "`resourceUuid`, `index_name`, `index_from`",
         )
       else -> error("Unknown index shape: $shape")

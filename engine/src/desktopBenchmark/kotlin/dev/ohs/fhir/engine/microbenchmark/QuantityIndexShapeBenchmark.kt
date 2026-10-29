@@ -44,10 +44,10 @@ open class QuantityIndexShapeBenchmark {
   @Param("1000", "10000", "50000") var rows: Int = 0
 
   /**
-   * `current` is what the engine ships, `codeFirst` moves the unit ahead of the value, and `both`
-   * keeps the two side by side.
+   * `current` is what the engine ships: the value first and the unit first, side by side.
+   * `valueFirst` and `codeFirst` keep one of the two.
    */
-  @Param("current", "codeFirst", "both") var shape: String = ""
+  @Param("current", "valueFirst", "codeFirst") var shape: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase
   private lateinit var withUnit: SearchQuery
@@ -60,9 +60,9 @@ open class QuantityIndexShapeBenchmark {
     database.reindex(
       "QuantityIndexEntity",
       when (shape) {
-        "current" -> listOf(VALUE_FIRST, FOREIGN_LOOKUP)
+        "current" -> listOf(VALUE_FIRST, CODE_FIRST, FOREIGN_LOOKUP)
+        "valueFirst" -> listOf(VALUE_FIRST, FOREIGN_LOOKUP)
         "codeFirst" -> listOf(CODE_FIRST, FOREIGN_LOOKUP)
-        "both" -> listOf(VALUE_FIRST, CODE_FIRST, FOREIGN_LOOKUP)
         else -> error("Unknown index shape: $shape")
       },
     )
@@ -76,9 +76,9 @@ open class QuantityIndexShapeBenchmark {
         withUnit.args
     }
 
-    // `current` cannot narrow on the unit; the other arms must.
+    // `valueFirst` cannot narrow on the unit; the other arms must.
     val plan = database.planFor(withUnit).joinToString(" | ")
-    check(("index_code=?" in plan) == (shape != "current")) {
+    check(("index_code=?" in plan) == (shape != "valueFirst")) {
       "arm '$shape' produced the wrong plan, so the arms measure the same thing: $plan"
     }
 

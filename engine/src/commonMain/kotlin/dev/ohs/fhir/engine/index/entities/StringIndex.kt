@@ -15,6 +15,8 @@
  */
 package dev.ohs.fhir.engine.index.entities
 
+import androidx.room3.ColumnInfo
+
 /**
  * An index record for a string value in a resource.
  *
@@ -25,6 +27,12 @@ internal data class StringIndex(
   val name: String,
   /** The path of the string index, e.g. "Patient.name.given". */
   val path: String,
-  /** The value of the string index, e.g. "Tom". */
-  val value: String,
+  /**
+   * The value of the string index, e.g. "Tom".
+   *
+   * NOCASE so the index over it matches the collation of a case-insensitive `LIKE`; SQLite will not
+   * use it otherwise. `StringParamFilterCriterion` supplies the other half — either alone leaves
+   * the optimisation off.
+   */
+  @ColumnInfo(collate = ColumnInfo.NOCASE) val value: String,
 )

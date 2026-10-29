@@ -27,7 +27,10 @@ import kotlin.uuid.Uuid
 @Entity(
   indices =
     [
-      Index(value = ["resourceType", "index_name", "index_value"]),
+      // resourceUuid is the only column a filter subquery selects, so carrying it lets the index
+      // answer one outright rather than fetching a row per match. TokenIndexEntity is the same
+      // shape.
+      Index(value = ["resourceType", "index_name", "index_value", "resourceUuid"]),
       // keep this index for faster foreign lookup
       Index(value = ["resourceUuid"]),
     ],

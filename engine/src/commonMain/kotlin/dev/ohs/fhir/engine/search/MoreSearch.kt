@@ -59,7 +59,8 @@ private const val MAX_VALUE = "9223372036854775808"
  * included/revIncluded resources grouped by search index.
  */
 internal suspend fun <R : Resource> Search.execute(database: Database): List<SearchResult<R>> {
-  val baseResources = database.search<R>(getQuery())
+  val baseResources =
+    getSortSegments()?.let { readInOrder<R>(database, it) } ?: database.search<R>(getQuery())
 
   val includedResources =
     if (forwardIncludes.isEmpty() || baseResources.isEmpty()) {
@@ -78,25 +79,31 @@ internal suspend fun <R : Resource> Search.execute(database: Database): List<Sea
       database.searchReverseReferencedResources(getRevIncludeQuery(typeIdPairs))
     }
 
+  // Grouped once, by the key each result is looked up with. Filtering the resolved list per base
+  // resource instead costs the product of the two, which at a page of ten thousand is seconds.
+  val includedByBase =
+    includedResources?.groupBy(
+      { it.baseResourceUUID },
+      { it.searchIndex to it.resource },
+    )
+  val revIncludedByBase =
+    revIncludedResources?.groupBy(
+      { it.baseResourceTypeWithId },
+      { (ResourceType.fromCode(it.resource.resourceType) to it.searchIndex) to it.resource },
+    )
+
   return baseResources.map { (uuid, baseResource) ->
     SearchResult(
       baseResource,
       included =
-        includedResources
-          ?.asSequence()
-          ?.filter { it.baseResourceUUID == uuid }
-          ?.groupBy({ it.searchIndex }, { it.resource }),
+        includedByBase?.let { grouped ->
+          grouped[uuid].orEmpty().groupBy({ it.first }, { it.second })
+        },
       revIncluded =
-        revIncludedResources
-          ?.asSequence()
-          ?.filter {
-            it.baseResourceTypeWithId ==
-              "${(baseResource as Resource).resourceType}/${baseResource.id.orEmpty()}"
-          }
-          ?.groupBy(
-            { ResourceType.fromCode(it.resource.resourceType) to it.searchIndex },
-            { it.resource },
-          ),
+        revIncludedByBase?.let { grouped ->
+          val key = "${(baseResource as Resource).resourceType}/${baseResource.id.orEmpty()}"
+          grouped[key].orEmpty().groupBy({ it.first }, { it.second })
+        },
     )
   }
 }
@@ -148,8 +155,14 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
 }
 
 /**
- * Builds the SQL [SearchQuery] loading resources referenced by the base results via `_include` (one
- * `UNION ALL` branch per forward include). [includeIds] are the base results' resource UUIDs.
+ * Builds the SQL [SearchQuery] loading the resources the base results reference via `_include` (one
+ * `UNION ALL` branch per include). [includeIds] are the base results' resource uuids.
+ *
+ * The join splits `rie.index_value` rather than concatenating `re.resourceType` and `re.resourceId`
+ * into it. Both forms match the same rows — a reference joins only when it is the referenced
+ * resource's type and id separated by a slash — but SQLite cannot seek an index whose column sits
+ * inside an expression, so only this form lets `re` use
+ * `index_ResourceEntity_resourceType_resourceId`. `SearchQueryPlanTest` pins both halves.
  */
 internal fun Search.getIncludeQuery(includeIds: List<Uuid>): SearchQuery {
   val args = mutableListOf<Any>()
@@ -166,7 +179,8 @@ internal fun Search.getIncludeQuery(includeIds: List<Uuid>): SearchQuery {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       ${join.query}
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN ($uuidsString)
       ${if (filterQuery.isNotBlank()) "AND re.resourceUuid IN ($filterQuery)" else "AND re.resourceType = ?"}
@@ -262,14 +276,7 @@ private fun Search.getSortOrder(
     Logger.e { "count not supported for [rev]include search." }
   }
   sort?.let { sort ->
-    val sortTableNames =
-      when (sort) {
-        is StringClientParam -> listOf(SortTableInfo.STRING_SORT_TABLE_INFO)
-        is NumberClientParam -> listOf(SortTableInfo.NUMBER_SORT_TABLE_INFO)
-        is DateClientParam ->
-          listOf(SortTableInfo.DATE_SORT_TABLE_INFO, SortTableInfo.DATE_TIME_SORT_TABLE_INFO)
-        else -> throw NotImplementedError("Unhandled sort parameter of type ${sort::class}: $sort")
-      }
+    val sortTableNames = sort.sortTables()
 
     sortJoinStatement =
       sortTableNames
@@ -315,9 +322,9 @@ private fun Search.getSortOrder(
  * Without the `>= MIN_VALUE` check, NULL values are not included in the results if the default
  * is 0.
  *
- * The default values provided in GROUP BY stage are not carried forward during the ORDER BY, so we
- * provide [MAX_VALUE] and [MIN_VALUE] as default in ORDER BY respectively for ASCENDING and
- * DESCENDING to make sure that results with null index values are always at the bottom.
+ * The ORDER BY puts results with no index value at the bottom with a default that sorts beyond
+ * every value: [MAX_VALUE] or [MIN_VALUE] for numbers and dates, and a BLOB, which SQLite orders
+ * after every string, for an ascending string sort. One sort key costs less than an `IS NULL` term.
  */
 private fun generateGroupAndOrderQuery(
   sort: ClientParam,
@@ -342,19 +349,19 @@ private fun generateGroupAndOrderQuery(
 
     """
       .trimIndent()
-  val defaultValue = if (order == Order.ASCENDING) MAX_VALUE else MIN_VALUE
-  sortTableNames.forEachIndexed { index, sortTableName ->
-    val tableAlias = 'b' + index
-    sortOrderStatement +=
-      if (index == 0) {
-        """
-        ORDER BY IFNULL($tableAlias.${sortTableName.columnName}, $defaultValue) ${order.sqlString}
-        """
-          .trimIndent()
-      } else {
-        ", IFNULL($tableAlias.${SortTableInfo.DATE_TIME_SORT_TABLE_INFO.columnName}, $defaultValue) ${order.sqlString}"
+  sortOrderStatement +=
+    sortTableNames
+      .mapIndexed { index, sortTableName ->
+        val column = "${'b' + index}.${sortTableName.columnName}"
+        val missing =
+          when {
+            order == Order.DESCENDING -> MIN_VALUE
+            sortTableName == SortTableInfo.STRING_SORT_TABLE_INFO -> "x''"
+            else -> MAX_VALUE
+          }
+        "IFNULL($column, $missing) ${order.sqlString}"
       }
-  }
+      .joinToString(prefix = "ORDER BY ")
   return sortOrderStatement
 }
 
@@ -362,7 +369,7 @@ private fun generateGroupAndOrderQuery(
  * Maps every filter criterion (string, quantity, number, reference, date/time, token, uri) to its
  * subquery.
  */
-private fun Search.getFilterQueries() =
+internal fun Search.getFilterQueries() =
   (stringFilterCriteria +
       quantityFilterCriteria +
       numberFilterCriteria +
@@ -696,12 +703,22 @@ data class ConditionParam<T>(val condition: String, val params: List<T>) {
 }
 
 /** Maps each sortable search-param type to the index table and column used to sort on it. */
-private enum class SortTableInfo(val tableName: String, val columnName: String) {
+internal enum class SortTableInfo(val tableName: String, val columnName: String) {
   STRING_SORT_TABLE_INFO("StringIndexEntity", "index_value"),
   NUMBER_SORT_TABLE_INFO("NumberIndexEntity", "index_value"),
   DATE_SORT_TABLE_INFO("DateIndexEntity", "index_from"),
   DATE_TIME_SORT_TABLE_INFO("DateTimeIndexEntity", "index_from"),
 }
+
+/** The index tables holding this sort parameter's values, in the order they sort. */
+internal fun ClientParam.sortTables(): List<SortTableInfo> =
+  when (this) {
+    is StringClientParam -> listOf(SortTableInfo.STRING_SORT_TABLE_INFO)
+    is NumberClientParam -> listOf(SortTableInfo.NUMBER_SORT_TABLE_INFO)
+    is DateClientParam ->
+      listOf(SortTableInfo.DATE_SORT_TABLE_INFO, SortTableInfo.DATE_TIME_SORT_TABLE_INFO)
+    else -> throw NotImplementedError("Unhandled sort parameter of type ${this::class}: $this")
+  }
 
 /**
  * Computes the matching range for the `ap` (approximate) date/dateTime prefix by widening

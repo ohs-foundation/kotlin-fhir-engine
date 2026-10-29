@@ -232,7 +232,7 @@ benchmark {
       param("results", 100)
       // The index the engine ships; the alternatives run in `index`.
       param("shape", "current")
-      param("collation", "binary")
+      param("collation", "nocase")
       warmups = 3
       iterations = 5
       iterationTime = 500

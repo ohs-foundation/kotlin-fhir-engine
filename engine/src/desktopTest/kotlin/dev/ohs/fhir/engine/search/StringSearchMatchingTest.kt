@@ -28,8 +28,12 @@ import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
 
 /**
- * Runs string searches against a real database to check case sensitivity. `SearchTest` only
- * compares the generated SQL, so it cannot catch a collation change.
+ * Executes string searches against a real database, rather than asserting the SQL they compile to.
+ *
+ * `StringIndexEntity.index_value` is stored NOCASE so the prefix search can use its index, and
+ * `:exact` compensates with an explicit `COLLATE BINARY`. Both halves are matching semantics, and
+ * `SearchTest` only compares generated SQL, so without these tests the collation could be changed
+ * in either direction and every test would still pass while search returned the wrong rows.
  */
 class StringSearchMatchingTest {
 

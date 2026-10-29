@@ -45,21 +45,22 @@ Per-resource figures are measured in batches of fifty and divided.
 
 ### Index use per search shape
 
-From `SearchQueryPlanTest`, on the same schema.
+From `SearchQueryPlanTest`, on the current schema. Unlike the timings, this table includes #109.
 
 | Search                  | Index columns narrowed             | Covering |
 |-------------------------|------------------------------------|----------|
 | token, code only        | all three                          | yes      |
-| token with a system     | all three                          | no       |
-| reference, uri          | all three                          | no       |
+| token with a system     | all three, `index_system` read from the index | yes |
+| reference, uri          | all three                          | yes      |
 | number                  | all three, range on the value      | no       |
 | quantity, no unit       | all three, range on the value      | no       |
-| **quantity with a unit**| **two and the range — `index_code` unused** | no |
-| string `:exact`         | all three                          | no       |
-| string prefix, contains | two — `index_value` unused         | no       |
-| date, dateTime          | two — the range columns unused     | yes      |
+| quantity with a unit    | all four: the unit, then the range on the value | no |
+| string prefix           | all three, range on the value      | no       |
+| string `:exact`         | all three: seeks NOCASE, then keeps the exact case | no |
+| string `:contains`      | two — a leading wildcard cannot seek | no     |
+| date, dateTime          | all three, range on `index_from` or `index_to` | yes |
 | `_revinclude`           | all three, then the resource by uuid | no     |
-| **`_include`**          | **two — the join compares a concatenation, so neither side seeks** | no |
+| `_include`              | two on the references, then the resource by type and id | no |
 
 ### Search kinds
 
@@ -79,7 +80,8 @@ From `SearchQueryPlanTest`, on the same schema.
 | **`_include`** | **2,161** | **46,660** |
 
 The searches that seek stay flat as the corpus grows; the ones that narrow on two index columns
-grow with it. `_include` costs 23x a plain token search at 1,000 and 162x at 5,000.
+grow with it. `_include` cost 23x a plain token search at 1,000 and 162x at 5,000, because its join
+could seek neither side. #109 fixes the join; see [Fixed in #109](#fixed-in-109).
 
 ### Result size
 
@@ -92,10 +94,10 @@ grow with it. `_include` costs 23x a plain token search at 1,000 and 162x at 5,0
 | 1,000 | 3,731 | 23,820 | 64,760 |
 | 10,000 | 39,110 | 819,900 | **5,984,000** |
 
-A plain page costs about 4 µs per resource returned. A `_revinclude` over 10,000 takes 6.0 s.
-`Search.execute` rescans the whole resolved list once per base resource, so the include columns
-grow with the product of the page and the included resources. Grouping the resolved resources once,
-by key, makes them linear and needs no schema change.
+A plain page costs about 4 µs per resource returned. A `_revinclude` over 10,000 took 6.0 s.
+`Search.execute` rescanned the whole resolved list once per base resource, so the include columns
+grew with the product of the page and the included resources. #109 groups the resolved resources
+once, by key, which makes them linear.
 
 ### Sorting
 
@@ -110,79 +112,111 @@ by key, makes them linear and needs no schema change.
 | filtered to one name prefix, unsorted | 101 | 605 | 3,731 |
 | filtered to one name prefix, sorted | 102 | 638 | 3,921 |
 
-`count`/`from` does not bound the work on a sorted search. Rows do not arrive in order, so `LIMIT`
-cannot stop early, and a sorted first page orders the whole corpus: 795x an unsorted page at 50,000.
-Every page pays this. Sorting a filtered slice costs almost nothing. Avoid a sorted search with no
-filter or a weak one, such as all patients in alphabetical order.
+Before #109, `count`/`from` did not bound the work on a sorted search. Rows did not arrive in
+order, so `LIMIT` could not stop early, and a sorted first page ordered the whole corpus: 795x an
+unsorted page at 50,000. Sorting a filtered slice costs almost nothing.
+
+#109 runs an unfiltered sorted search as segments read in index order: resources with a value,
+walked through the sort index, then those without one. The limit stops the walk early. A filtered
+sort keeps the single query. In a separate local run, not CI:
+
+| `SortBenchmark`, µs | 1,000 | 10,000 | 50,000 |
+|---|---:|---:|---:|
+| `sortedFirstPage`, single query | 563 | 5,964 | 33,641 |
+| `walkedFirstPage`, as the engine now runs it | 60 | 73 | 84 |
+| `unsortedFirstPage` | 24 | 24 | 24 |
+
+A weak filter, one that matches most resources, still sorts every match.
 
 ## Known shortfalls
 
-Each is pinned by a test in `SearchQueryPlanTest`. Times are µs per search at 1,000 / 10,000 /
-50,000 rows.
+Each is pinned by a test in `SearchQueryPlanTest`.
 
-**Prefix string search** compiles to `index_value LIKE ? || '%' COLLATE NOCASE` and narrows on
+**String `:contains`** compiles to a pattern with a leading wildcard, which no index can seek
+whatever the collation.
+
+**Sorting**, filtered, sorts its matches in a temporary b-tree; see [Sorting](#sorting). Unfiltered,
+a page deep into the results still walks every value before it, and a page among the resources with
+no value first counts those that have one. In a prototype at 50,000 patients the last page took
+153 ms against the single query's 60 ms, and a page halfway through about the same as before.
+These costs are measured, not pinned.
+
+## Fixed in #109
+
+The timings above were measured before these changes. Each table comes from the benchmark that
+found the problem and compares the shape shipped before #109 with the fix, in the same run. The
+benchmarks now call the fix `current`. Times are µs per search at 1,000 / 10,000 / 50,000 rows.
+
+**Prefix string search** compiled to `index_value LIKE ? || '%' COLLATE NOCASE` and narrowed on
 `(resourceType, index_name)` only. SQLite applies its LIKE optimisation only to a literal or plain
-parameter pattern, and uses an index only when its collation matches the comparison's; both must be
-fixed. Fixing them costs `:exact` its index unless a second column mirrors `index_value`, and needs
-a schema version bump.
+parameter pattern, and uses an index only when its collation matches the comparison's. #109 binds
+the pattern whole and declares the column NOCASE, so the search ranges on `index_value`. `:exact`
+keeps its index: it seeks with a NOCASE comparison and keeps the exact case with a BINARY one.
 
 | `StringIndexCollationBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|
-| `binary` (shipped) | 98 | 595 | 3,769 |
-| `nocase` | 57 | 67 | 118 |
+| `binary` (before #109) | 98 | 595 | 3,769 |
+| `nocase` (#109) | 57 | 67 | 118 |
 
-**`_include`** joins on `re.resourceType||'/'||re.resourceId = rie.index_value`. SQLite cannot seek
-on an expression, so neither side uses its index and the work is the product of the two tables (see
-[Search kinds](#search-kinds)). `_revinclude` binds `type/id` strings built in Kotlin and seeks;
-doing the same for `_include` needs no schema change.
+**`_include`** joined on `re.resourceType||'/'||re.resourceId = rie.index_value`. SQLite cannot seek
+on an expression, so neither side used its index and the work was the product of the two tables (see
+[Search kinds](#search-kinds)). #109 reaches the included resource through the unique index on
+`(resourceType, resourceId)`. The reference rows still narrow on `(resourceType, index_name)` only:
+SQLite prefers that index to the one on `resourceUuid`, and forcing the other costs more when a
+search includes many base resources. `IncludeSearchMatchingTest` checks the rows that come back.
 
-**Quantity with a unit**: the index is `(resourceType, index_name, index_value, index_code)`. The
-range on `index_value` comes before `index_code`, so the unit is not used. Putting the unit first
-helps a search with a unit and hurts one without; keeping both indices takes the gain without the
-loss.
+**Quantity with a unit**: the index was `(resourceType, index_name, index_value, index_code)`. The
+range on `index_value` comes before `index_code`, so the unit was not used. Putting the unit first
+helps a search with a unit and hurts one without, so #109 keeps both orders (`current` below) and
+SQLite picks per query.
 
 | `QuantityIndexShapeBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|
-| with a unit, `current` | 50 | 161 | 773 |
+| with a unit, `valueFirst` (before #109) | 50 | 161 | 773 |
 | with a unit, `codeFirst` | 44 | 105 | 506 |
-| with a unit, `both` | 44 | 105 | 508 |
-| without a unit, `current` | 70 | 434 | 2,305 |
+| with a unit, `current` | 44 | 105 | 508 |
+| without a unit, `valueFirst` (before #109) | 70 | 434 | 2,305 |
 | without a unit, `codeFirst` | 136 | 1,222 | 7,653 |
-| without a unit, `both` | 71 | 444 | 2,299 |
+| without a unit, `current` | 71 | 444 | 2,299 |
 
-**Reference and uri lookups are not covering.** Every filter subquery selects only `resourceUuid`;
-the token index ends in that column and the reference and uri indices do not. Reference lookups
-also carry chained, `_has` and `_revinclude` searches.
+**Reference and uri lookups** were not covering. Every filter subquery selects only `resourceUuid`,
+and the reference and uri indices did not end in it. #109 adds it (`current` below). Reference
+lookups also carry chained, `_has` and `_revinclude` searches.
 
 | `LookupIndexCoveringBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|
-| reference, `current` | 46 | 133 | 2,611 |
-| reference, `covering` | 43 | 106 | 1,624 |
-| uri, `current` | 45 | 134 | 2,617 |
-| uri, `covering` | 44 | 108 | 1,682 |
+| reference, `notCovering` (before #109) | 46 | 133 | 2,611 |
+| reference, `current` | 43 | 106 | 1,624 |
+| uri, `notCovering` (before #109) | 45 | 134 | 2,617 |
+| uri, `current` | 44 | 108 | 1,682 |
 
-**Token search with a system** adds `IFNULL(index_system,'') = ?`, and the token index does not
-carry `index_system`, so each match costs a row fetch. Adding the column makes it 37% faster at
-50,000 rows and leaves a code-only search unchanged.
+**Token search with a system** adds `IFNULL(index_system,'') = ?`, and the token index did not
+carry `index_system`, so each match cost a row fetch. #109 adds the column (`current` below),
+which is 37% faster at 50,000 rows and leaves a code-only search unchanged.
 
 | `TokenIndexShapeBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|
-| code only, `current` | 44 | 106 | 1,746 |
-| code only, `withSystem` | 43 | 108 | 1,770 |
-| system and code, `current` | 46 | 134 | 2,701 |
-| system and code, `withSystem` | 45 | 116 | 1,694 |
+| code only, `noSystem` (before #109) | 44 | 106 | 1,746 |
+| code only, `current` | 43 | 108 | 1,770 |
+| system and code, `noSystem` (before #109) | 46 | 134 | 2,701 |
+| system and code, `current` | 45 | 116 | 1,694 |
 
-**Date and dateTime** indices are `(resourceType, index_name, resourceUuid, index_from, index_to)`.
-`resourceUuid` sits between the equality prefix and the range columns, so no range can use the
-index. Moving it last is 13–18% faster against a narrow window, about 4% of rows, and 5–7%
-against a wide one, about 40%.
+**Date and dateTime** indices were `(resourceType, index_name, resourceUuid, index_from, index_to)`.
+`resourceUuid` sat between the equality prefix and the range columns, so no range could use the
+index. #109 moves it last and adds a second index led by `index_to` (`current` below), since `<`,
+`<=` and `sa` range over `index_from` and `>`, `>=` and `eb` over `index_to`. The date sort is
+unaffected: it looks dates up by `resourceUuid` through a separate index. The narrow window matches
+about 4% of rows and the wide one about 40%.
 
 | `DateIndexShapeBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|
-| narrow, `current` | 336 | 3,386 | 19,800 |
-| narrow, `rangeLast` | 276 | 2,949 | 17,280 |
-| wide, `current` | 455 | 4,806 | 28,560 |
-| wide, `rangeLast` | 429 | 4,485 | 27,030 |
+| narrow, `uuidFirst` (before #109) | 336 | 3,386 | 19,800 |
+| narrow, `current` | 276 | 2,949 | 17,280 |
+| wide, `uuidFirst` (before #109) | 455 | 4,806 | 28,560 |
+| wide, `current` | 429 | 4,485 | 27,030 |
+
+`_include` and `_revinclude` result grouping and sync conflict detection were also fixed in #109;
+see [Result size](#result-size) and [Writes and sync](#writes-and-sync).
 
 ## Writes and sync
 
@@ -203,11 +237,12 @@ against a wide one, about 40%.
 | new patients (`insert`) | 532 | 526 | 554 |
 | patients already stored (`update`) | 789 | 781 | 838 |
 
-`syncDownload` reads and deserializes the whole pending queue once per page, only to intersect ids
-with the page, so a download of new data slows as the queue grows: 4% at 1,000 pending changes.
-The intersection also matches on resource id only: a downloaded Patient that shares an id with a
-pending Observation change counts as a conflict, and resolving it throws
-`ResourceNotFoundException`.
+`syncDownload` read and deserialized the whole pending queue once per page, only to intersect ids
+with the page, so a download of new data slowed as the queue grew: 4% at 1,000 pending changes.
+The intersection also matched on resource id only: a downloaded Patient that shared an id with a
+pending Observation change counted as a conflict, and resolving it threw
+`ResourceNotFoundException`. #109 asks the database which of the page's resources, by type and id,
+have a pending change; `SyncDownloadConflictTest` pins the type check.
 
 ### Reads during a sync
 

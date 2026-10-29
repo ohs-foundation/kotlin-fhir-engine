@@ -43,8 +43,11 @@ open class TokenIndexShapeBenchmark {
 
   @Param("1000", "10000", "50000") var rows: Int = 0
 
-  /** `current` is what the engine ships; `withSystem` adds `index_system` before `resourceUuid`. */
-  @Param("current", "withSystem") var shape: String = ""
+  /**
+   * `current` is what the engine ships, with `index_system` before `resourceUuid`; `noSystem` omits
+   * it.
+   */
+  @Param("current", "noSystem") var shape: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase
   private lateinit var codeOnly: SearchQuery
@@ -57,12 +60,12 @@ open class TokenIndexShapeBenchmark {
     database.reindex(
       "TokenIndexEntity",
       when (shape) {
-        "current" -> listOf("`resourceType`, `index_name`, `index_value`, `resourceUuid`", UUID)
-        "withSystem" ->
+        "current" ->
           listOf(
             "`resourceType`, `index_name`, `index_value`, `index_system`, `resourceUuid`",
             UUID,
           )
+        "noSystem" -> listOf("`resourceType`, `index_name`, `index_value`, `resourceUuid`", UUID)
         else -> error("Unknown index shape: $shape")
       },
     )
@@ -75,7 +78,7 @@ open class TokenIndexShapeBenchmark {
       "arm '$shape' no longer answers a code-only search from a covering index"
     }
     val plan = database.planFor(systemAndCode).joinToString(" | ")
-    check(("COVERING INDEX" in plan) == (shape == "withSystem")) {
+    check(("COVERING INDEX" in plan) == (shape == "current")) {
       "arm '$shape' produced the wrong plan, so the arms measure the same thing: $plan"
     }
 

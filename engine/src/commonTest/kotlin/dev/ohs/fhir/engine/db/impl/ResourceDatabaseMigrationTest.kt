@@ -216,6 +216,42 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
+  fun migrate11To12_keepsStringIndexRowsAndMatchesThemCaseInsensitively() = runTest {
+    tester.createDatabase(11).use {
+      it.insertPatient()
+      it.insertFamilyNameIndex()
+    }
+    tester.runMigrationsAndValidate(12, listOf(ResourceDatabase.MIGRATION_11_12)).use {
+      assertEquals(
+        "Jones",
+        it.single("SELECT index_value FROM StringIndexEntity WHERE index_value = 'jones'"),
+      )
+    }
+  }
+
+  @Test
+  fun migrate11To12_keepsDateIndexRows() = runTest {
+    val uuid = "x'${PATIENT_UUID.toHexString()}'"
+    tester.createDatabase(11).use {
+      it.insertPatient()
+      it.insert(
+        "DateIndexEntity",
+        "resourceUuid, resourceType, index_name, index_path, index_from, index_to",
+        "$uuid, 'Patient', 'birthdate', 'Patient.birthDate', 19000, 19000",
+      )
+      it.insert(
+        "DateTimeIndexEntity",
+        "resourceUuid, resourceType, index_name, index_path, index_from, index_to",
+        "$uuid, 'Patient', '_lastUpdated', 'Patient.meta.lastUpdated', 1700000000000, 1700000000000",
+      )
+    }
+    tester.runMigrationsAndValidate(12, listOf(ResourceDatabase.MIGRATION_11_12)).use {
+      assertEquals(listOf(19000L), it.longs("SELECT index_from FROM DateIndexEntity"))
+      assertEquals(listOf(1700000000000L), it.longs("SELECT index_to FROM DateTimeIndexEntity"))
+    }
+  }
+
+  @Test
   fun alphaDatabase_isConvertedAndKeepsItsRows() = runTest {
     // Alpha01 to alpha04 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
     val alphaSchema =

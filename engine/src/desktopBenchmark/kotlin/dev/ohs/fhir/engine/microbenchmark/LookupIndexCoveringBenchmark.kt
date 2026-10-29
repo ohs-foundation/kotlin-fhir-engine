@@ -33,8 +33,8 @@ import kotlinx.benchmark.State
 import kotlinx.benchmark.TearDown
 
 /**
- * A reference or uri lookup with the shipped index and with `resourceUuid` appended, which makes it
- * a covering index as the token index already is. Read cost only.
+ * A reference or uri lookup with the shipped index, which ends in `resourceUuid` and so covers the
+ * lookup, and with the index before #109, which does not. Read cost only.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -45,8 +45,8 @@ open class LookupIndexCoveringBenchmark {
 
   @Param("Reference", "Uri") var table: String = ""
 
-  /** `current` is what the engine ships; `covering` appends `resourceUuid`. */
-  @Param("current", "covering") var shape: String = ""
+  /** `current` is what the engine ships, ending in `resourceUuid`; `notCovering` omits it. */
+  @Param("current", "notCovering") var shape: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase
   private lateinit var query: SearchQuery
@@ -60,8 +60,8 @@ open class LookupIndexCoveringBenchmark {
     database.reindex(
       "${table}IndexEntity",
       when (shape) {
-        "current" -> listOf(columns, "`resourceUuid`")
-        "covering" -> listOf("$columns, `resourceUuid`", "`resourceUuid`")
+        "current" -> listOf("$columns, `resourceUuid`", "`resourceUuid`")
+        "notCovering" -> listOf(columns, "`resourceUuid`")
         else -> error("Unknown index shape: $shape")
       },
     )
@@ -80,9 +80,9 @@ open class LookupIndexCoveringBenchmark {
         }
         .getQuery()
 
-    // Only the covering arm should answer the subquery from the index alone.
+    // Only `current` should answer the subquery from the index alone.
     val plan = database.planFor(query).joinToString(" | ")
-    check(("COVERING INDEX" in plan) == (shape == "covering")) {
+    check(("COVERING INDEX" in plan) == (shape == "current")) {
       "arm '$shape' produced the wrong plan, so the arms measure the same thing: $plan"
     }
 

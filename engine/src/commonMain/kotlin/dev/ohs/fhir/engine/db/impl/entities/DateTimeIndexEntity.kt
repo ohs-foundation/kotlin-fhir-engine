@@ -27,12 +27,12 @@ import kotlin.uuid.Uuid
 @Entity(
   indices =
     [
-      // Covering index for optimizing query performance by minimizing disk I/O and eliminating the
-      // need for accessing underlying table data.
-      // Column ordered to minimise time to run sortJoinStatement in [MoreSearch], and to resolve:
-      // https://github.com/google/android-fhir/issues/2040
-      Index(value = ["resourceType", "index_name", "resourceUuid", "index_from", "index_to"]),
-      // Keep this index for faster foreign lookup
+      // An index serves a range only on the column straight after its equality prefix. `<`, `<=`
+      // and `sa` range over index_from and `>`, `>=` and `eb` over index_to, so each has its own
+      // index. resourceUuid comes last, where it keeps both covering without blocking the range.
+      Index(value = ["resourceType", "index_name", "index_from", "index_to", "resourceUuid"]),
+      Index(value = ["resourceType", "index_name", "index_to", "resourceUuid"]),
+      // Serves the sort join and the foreign key, both of which look rows up by resourceUuid.
       Index(value = ["resourceUuid", "index_name", "index_from"]),
     ],
   foreignKeys =

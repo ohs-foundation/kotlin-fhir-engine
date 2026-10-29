@@ -33,7 +33,7 @@ import kotlinx.benchmark.TearDown
 
 /**
  * Measures a prefix search with `StringIndexEntity.index_value` indexed BINARY or NOCASE. The
- * prefix `LIKE` becomes a range seek only with a NOCASE index and the pattern bound whole.
+ * prefix `LIKE` becomes a range seek only with a NOCASE index.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -42,7 +42,7 @@ open class StringIndexCollationBenchmark {
 
   @Param("1000", "10000", "50000") var rows: Int = 0
 
-  /** `binary` is what the engine ships; `nocase` is the collation plus the bound-pattern SQL. */
+  /** `nocase` is what the engine ships; `binary` is the index before it. */
   @Param("binary", "nocase") var collation: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase
@@ -55,12 +55,12 @@ open class StringIndexCollationBenchmark {
     database.reindex(
       "StringIndexEntity",
       when (collation) {
+        // `index_value` is declared NOCASE, and an index inherits that unless it names BINARY.
         "binary" ->
           listOf(
-            "`resourceType`, `index_name`, `index_value`",
-            "`resourceUuid`, `index_name`, `index_value`",
+            "`resourceType`, `index_name`, `index_value` COLLATE BINARY",
+            "`resourceUuid`, `index_name`, `index_value` COLLATE BINARY",
           )
-        // `index_value` is declared BINARY, and an index inherits that unless it names NOCASE.
         "nocase" ->
           listOf(
             "`resourceType`, `index_name`, `index_value` COLLATE NOCASE",
@@ -75,14 +75,6 @@ open class StringIndexCollationBenchmark {
       Search(ResourceType.Patient)
         .apply { filter(StringClientParam("given"), { value = prefix }) }
         .getQuery()
-    // The `nocase` arm also binds the pattern whole.
-    if (collation == "nocase") {
-      query =
-        SearchQuery(
-          query.query.replace("index_value LIKE ? || '%' COLLATE NOCASE", "index_value LIKE ?"),
-          query.args.dropLast(1) + "$prefix%",
-        )
-    }
 
     // `binary` must not narrow on index_value; `nocase` must.
     val plan = database.planFor(query).joinToString(" | ")

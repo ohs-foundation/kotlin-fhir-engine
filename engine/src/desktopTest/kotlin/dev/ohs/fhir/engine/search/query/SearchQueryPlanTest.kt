@@ -29,6 +29,7 @@ import dev.ohs.fhir.engine.search.QuantityClientParam
 import dev.ohs.fhir.engine.search.ReferenceClientParam
 import dev.ohs.fhir.engine.search.Search
 import dev.ohs.fhir.engine.search.SearchQuery
+import dev.ohs.fhir.engine.search.SortSegment
 import dev.ohs.fhir.engine.search.StringClientParam
 import dev.ohs.fhir.engine.search.StringFilterModifier
 import dev.ohs.fhir.engine.search.TokenClientParam
@@ -37,9 +38,11 @@ import dev.ohs.fhir.engine.search.filter.TokenFilterValue
 import dev.ohs.fhir.engine.search.getIncludeQuery
 import dev.ohs.fhir.engine.search.getQuery
 import dev.ohs.fhir.engine.search.getRevIncludeQuery
+import dev.ohs.fhir.engine.search.getSortSegments
 import dev.ohs.fhir.engine.search.include
 import dev.ohs.fhir.engine.search.revInclude
 import dev.ohs.fhir.model.r4.FhirDate
+import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
@@ -55,18 +58,26 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 
 /**
- * Asserts which SQLite index each search shape uses, via `EXPLAIN QUERY PLAN`. The plan wording
- * varies between SQLite versions, so lines are matched by substring.
+ * Asserts which SQLite index each search shape actually uses, via `EXPLAIN QUERY PLAN`.
  *
- * Some tests pin a known shortfall. If one fails, confirm the plan improved and tighten the
- * assertion.
+ * These are not benchmarks. A lost index only shows up in a timing run at a large corpus, and a
+ * warm page cache hides it even then; the query plan says so immediately and against an empty
+ * database. Timing answers how slow, this answers why.
+ *
+ * The plan text comes from SQLite, so it is checked by substring rather than equality: the wording
+ * varies between versions, but the index name and the constrained columns are what matter.
+ *
+ * Some tests pin behaviour that is suboptimal but current, and say so in their names. If a schema
+ * change fixes one, that test will fail: read the comment, confirm the plan improved, and tighten
+ * the assertion.
  */
 class SearchQueryPlanTest {
 
   private lateinit var database: ResourceDatabase
 
-  private val UUID_A = Uuid.parse("00000000-0000-0000-0000-000000000001")
-  private val UUID_B = Uuid.parse("00000000-0000-0000-0000-000000000002")
+  private val BASE_UUID_A = Uuid.parse("00000000-0000-0000-0000-000000000001")
+  private val BASE_UUID_B = Uuid.parse("00000000-0000-0000-0000-000000000002")
+  private val LOINC = "http://loinc.org"
 
   @BeforeTest
   fun setUp() {
@@ -85,19 +96,6 @@ class SearchQueryPlanTest {
       val scans = planFor(query).filter { it.startsWith("SCAN ") && !it.contains("USING") }
       assertTrue(scans.isEmpty(), "$name scans a table instead of using an index: $scans")
     }
-  }
-
-  @Test
-  fun `token search is answered entirely from a covering index`() = runTest {
-    val plan = planFor(tokenSearch())
-
-    // The only index that ends in resourceUuid, so the subquery never reads a table row.
-    assertIndexUsed(
-      plan,
-      table = "TokenIndexEntity",
-      constraints = "resourceType=? AND index_name=? AND index_value=?",
-      covering = true,
-    )
   }
 
   @Test
@@ -127,60 +125,24 @@ class SearchQueryPlanTest {
     )
   }
 
-  @Test
-  fun `quantity search uses the index for the value range`() = runTest {
-    assertIndexUsed(
-      planFor(quantitySearch()),
-      table = "QuantityIndexEntity",
-      constraints = "resourceType=? AND index_name=? AND index_value>? AND index_value<?",
-    )
-  }
-
   /**
-   * Known shortfall: the index puts `index_value` before `index_code`, so the unit is not used. See
-   * "Known shortfalls" in docs/benchmark-results.md.
+   * A NOCASE column plus a whole bound pattern let SQLite rewrite `LIKE 'x%'` into a range scan,
+   * hence the `>` and `<` bounds. Worth 38x on a 50,000-row table; `StringIndexCollationBenchmark`
+   * sweeps it.
    */
   @Test
-  fun `quantity search with a unit cannot narrow on the unit`() = runTest {
-    val plan = planFor(quantitySearchWithUnit())
-
-    assertIndexUsed(
-      plan,
-      table = "QuantityIndexEntity",
-      constraints = "resourceType=? AND index_name=? AND index_value>? AND index_value<?",
-    )
-  }
-
-  /**
-   * Known shortfall: these indices do not end in `resourceUuid`, so each match costs a row fetch.
-   */
-  @Test
-  fun `reference and uri searches are not answered from a covering index`() = runTest {
-    for ((name, query) in listOf("reference" to referenceSearch(), "uri" to uriSearch())) {
-      val line = planFor(query).first { it.startsWith("SEARCH ") && "IndexEntity" in it }
-      assertTrue(
-        !line.contains("USING COVERING INDEX"),
-        "$name is now covering; drop this test and tighten the assertion above: $line",
+  fun `prefix string search narrows on index_value through the LIKE range optimisation`() =
+    runTest {
+      assertIndexUsed(
+        planFor(stringSearch()),
+        table = "StringIndexEntity",
+        constraints = "resourceType=? AND index_name=? AND index_value>? AND index_value<?",
       )
     }
-  }
 
-  /**
-   * Known shortfall: `LIKE ? || '%' COLLATE NOCASE` cannot use the index on `index_value`. See
-   * "Known shortfalls" in docs/benchmark-results.md.
-   */
+  /** `:exact` seeks with a NOCASE comparison, then keeps the exact case with a BINARY one. */
   @Test
-  fun `prefix string search cannot narrow on index_value`() = runTest {
-    assertIndexUsed(
-      planFor(stringSearch()),
-      table = "StringIndexEntity",
-      constraints = "resourceType=? AND index_name=?",
-    )
-  }
-
-  /** `:exact` compares BINARY against a BINARY index, so it can seek. */
-  @Test
-  fun `exact string search narrows on all three index columns`() = runTest {
+  fun `exact string search narrows on index_value`() = runTest {
     assertIndexUsed(
       planFor(exactStringSearch()),
       table = "StringIndexEntity",
@@ -188,7 +150,9 @@ class SearchQueryPlanTest {
     )
   }
 
-  /** A leading wildcard rules out a seek whatever the collation. */
+  /**
+   * A leading wildcard rules out a range seek whatever the collation, so this one cannot be fixed.
+   */
   @Test
   fun `contains string search cannot narrow on index_value`() = runTest {
     assertIndexUsed(
@@ -199,51 +163,22 @@ class SearchQueryPlanTest {
   }
 
   /**
-   * Known shortfall: the index puts `resourceUuid` before the range columns, so no date range can
-   * use them. See "Known shortfalls" in docs/benchmark-results.md.
+   * The included resource is reached by a unique-index seek. A join comparing an expression against
+   * `rie.index_value` cannot seek, and costs the product of the two tables instead.
    */
   @Test
-  fun `date search above a bound cannot use the range columns`() = runTest {
-    assertIndexUsed(
-      planFor(dateSearch()),
-      table = "DateIndexEntity",
-      constraints = "resourceType=? AND index_name=?",
-      covering = true,
-    )
-  }
-
-  @Test
-  fun `date search below a bound cannot use the range columns`() = runTest {
-    assertIndexUsed(
-      planFor(dateBeforeSearch()),
-      table = "DateIndexEntity",
-      constraints = "resourceType=? AND index_name=?",
-      covering = true,
-    )
-  }
-
-  @Test
-  fun `sorted search sorts with a temporary b-tree rather than an index`() = runTest {
-    val plan = planFor(sortedSearch())
-
-    assertTrue(
-      plan.any { it.contains("USE TEMP B-TREE FOR ORDER BY") },
-      "expected a temporary b-tree sort, got: $plan",
-    )
-  }
-
-  /**
-   * Known shortfall: the join compares `re.resourceType||'/'||re.resourceId`, an expression, so
-   * neither side can seek. See "Known shortfalls" in docs/benchmark-results.md.
-   */
-  @Test
-  fun `include search can seek neither side of its join`() = runTest {
+  fun `include search seeks the resource it references`() = runTest {
     val plan = planFor(includeQuery())
 
+    assertIndexUsed(plan, table = "re", constraints = "resourceType=? AND resourceId=?")
+    // A shortfall, pinned. `rie.resourceUuid IN (...)` could drive the lookup through
+    // index_ReferenceIndexEntity_resourceUuid, but SQLite prefers the wider index and walks the
+    // parameter's reference rows. Forcing the other index costs more whenever a search includes
+    // many base resources.
     assertIndexUsed(plan, table = "rie", constraints = "resourceType=? AND index_name=?")
-    assertIndexUsed(plan, table = "re", constraints = "resourceType=?")
   }
 
+  /** The counterpart: it binds the `type/id` strings from Kotlin, so both sides seek. */
   @Test
   fun `revinclude search seeks both sides of its join`() = runTest {
     val plan = planFor(revIncludeQuery())
@@ -256,12 +191,158 @@ class SearchQueryPlanTest {
     assertIndexUsed(plan, table = "re", constraints = "resourceUuid=?")
   }
 
+  /**
+   * A quantity search naming a unit compares the unit for equality before ranging on the value, so
+   * it needs the index led by `index_code`. Without it the range spans every unit recorded for the
+   * parameter.
+   */
+  @Test
+  fun `quantity search naming a unit narrows on the unit`() = runTest {
+    assertIndexUsed(
+      planFor(quantitySearchWithUnit()),
+      table = "QuantityIndexEntity",
+      constraints =
+        "resourceType=? AND index_name=? AND index_code=? AND index_value>? AND index_value<?",
+    )
+  }
+
+  /** The other order still serves a search that omits the unit, which is why both are kept. */
+  @Test
+  fun `quantity search without a unit ranges on the value`() = runTest {
+    assertIndexUsed(
+      planFor(quantitySearch()),
+      table = "QuantityIndexEntity",
+      constraints = "resourceType=? AND index_name=? AND index_value>? AND index_value<?",
+    )
+  }
+
+  /**
+   * Every filter subquery selects `resourceUuid` alone, so the index answers it without a fetch.
+   */
+  @Test
+  fun `reference and uri searches are answered from a covering index`() = runTest {
+    for ((name, query) in listOf("reference" to referenceSearch(), "uri" to uriSearch())) {
+      val line = planFor(query).first { it.startsWith("SEARCH ") && "IndexEntity" in it }
+      assertTrue(line.contains("USING COVERING INDEX"), "$name should be covering, got: $line")
+    }
+  }
+
+  /** A token search with a system also compares `index_system`, so the index carries it too. */
+  @Test
+  fun `token searches with and without a system are answered from a covering index`() = runTest {
+    for ((name, query) in
+      listOf("code" to tokenSearch(system = null), "system" to tokenSearch(LOINC))) {
+      val line = planFor(query).first { it.startsWith("SEARCH ") && "TokenIndexEntity" in it }
+      assertTrue(line.contains("USING COVERING INDEX"), "$name should be covering, got: $line")
+    }
+  }
+
+  /**
+   * `>` and `>=` compare `index_to`, so they need an index with `index_to` straight after the
+   * equality prefix, and `resourceUuid` after it to stay covering.
+   */
+  @Test
+  fun `date and dateTime searches above a bound range on index_to`() = runTest {
+    for ((table, query) in
+      listOf(
+        "DateIndexEntity" to dateSearch(SearchComparator.Gt),
+        "DateTimeIndexEntity" to dateTimeSearch(SearchComparator.Gt),
+      )) {
+      assertIndexUsed(
+        planFor(query),
+        table = table,
+        constraints = "resourceType=? AND index_name=? AND index_to>?",
+        covering = true,
+      )
+    }
+  }
+
+  /** `<` and `<=` compare `index_from`, so they need the index led by it instead. */
+  @Test
+  fun `date and dateTime searches below a bound range on index_from`() = runTest {
+    for ((table, query) in
+      listOf(
+        "DateIndexEntity" to dateSearch(SearchComparator.Lt),
+        "DateTimeIndexEntity" to dateTimeSearch(SearchComparator.Lt),
+      )) {
+      assertIndexUsed(
+        planFor(query),
+        table = table,
+        constraints = "resourceType=? AND index_name=? AND index_from<?",
+        covering = true,
+      )
+    }
+  }
+
+  /**
+   * A filtered sort joins both date tables on `resourceUuid` without naming a type, so it is served
+   * by the index led by `resourceUuid`, not by the one the range searches use.
+   */
+  @Test
+  fun `filtered date sort finds each resource's dates by its uuid`() = runTest {
+    val plan = planFor(dateSortedSearch())
+
+    assertIndexUsed(plan, table = "b", constraints = "resourceUuid=? AND index_name=?")
+    assertIndexUsed(plan, table = "c", constraints = "resourceUuid=? AND index_name=?")
+  }
+
+  /** The filter leaves few rows, so sorting them costs little. */
+  @Test
+  fun `filtered sort sorts its matches with a temporary b-tree`() = runTest {
+    val plan = planFor(sortedSearch())
+
+    assertTrue(
+      plan.any { it.contains("USE TEMP B-TREE FOR ORDER BY") },
+      "expected a temporary b-tree sort, got: $plan",
+    )
+  }
+
+  /**
+   * Without a filter, sorting every resource before the limit applies is what made a sorted first
+   * page slow. Each segment reads an index in order instead, so the limit stops it early.
+   */
+  @Test
+  fun `unfiltered sort reads every segment in index order`() = runTest {
+    for ((name, segments) in unfilteredSorts()) {
+      for (segment in segments) {
+        val plan = planFor(segment.page(limit = 50, offset = 0))
+        assertTrue(plan.none { "TEMP B-TREE" in it }, "$name sorts rather than walking: $plan")
+      }
+    }
+  }
+
+  @Test
+  fun `unfiltered sort walks the sort index on its type and parameter`() = runTest {
+    for ((name, segments) in unfilteredSorts()) {
+      val plan = planFor(segments.first().page(limit = 50, offset = 0))
+      val line =
+        plan.firstOrNull { it.startsWith("SEARCH b USING") || it.startsWith("SCAN b USING") }
+      assertTrue(
+        line != null && "(resourceType=? AND index_name=?)" in line,
+        "$name should walk its sort index, got: $plan",
+      )
+    }
+  }
+
+  @Test
+  fun `filtered sort has no segments`() {
+    val search =
+      Search(ResourceType.Patient).apply {
+        filter(StringClientParam("family"), { value = "Jones" })
+        sort(StringClientParam("given"), Order.ASCENDING)
+      }
+
+    assertTrue(search.getSortSegments() == null)
+  }
+
+  // ---------------------------------------------------------------------------------------------
   // Search shapes
+  // ---------------------------------------------------------------------------------------------
 
   private fun includeQuery(): SearchQuery =
     Search(ResourceType.Observation)
       .apply { include<Patient>(ReferenceClientParam("subject")) }
-      .getIncludeQuery(listOf(UUID_A, UUID_B))
+      .getIncludeQuery(listOf(BASE_UUID_A, BASE_UUID_B))
 
   private fun revIncludeQuery(): SearchQuery =
     Search(ResourceType.Patient)
@@ -273,17 +354,64 @@ class SearchQueryPlanTest {
       "string" to stringSearch(),
       "string exact" to exactStringSearch(),
       "string contains" to containsStringSearch(),
-      "token" to tokenSearch(),
+      "token" to tokenSearch(system = null),
+      "token with system" to tokenSearch(LOINC),
       "reference" to referenceSearch(),
       "quantity" to quantitySearch(),
       "quantity with unit" to quantitySearchWithUnit(),
-      "date" to dateSearch(),
-      "date before" to dateBeforeSearch(),
+      "date above" to dateSearch(SearchComparator.Gt),
+      "date below" to dateSearch(SearchComparator.Lt),
+      "dateTime above" to dateTimeSearch(SearchComparator.Gt),
+      "dateTime below" to dateTimeSearch(SearchComparator.Lt),
+      "date sorted" to dateSortedSearch(),
       "number" to numberSearch(),
       "uri" to uriSearch(),
       "sorted" to sortedSearch(),
+      *unfilteredSorts()
+        .flatMap { (name, segments) ->
+          segments.mapIndexed { i, it -> "$name segment $i" to it.page(limit = 50, offset = 0) }
+        }
+        .toTypedArray(),
       "count" to countSearch(),
     )
+
+  private fun quantitySearch() =
+    Search(ResourceType.Observation)
+      .apply {
+        filter(QuantityClientParam("value-quantity"), { value = BigDecimal.parseString("5.4") })
+      }
+      .getQuery()
+
+  private fun quantitySearchWithUnit() =
+    Search(ResourceType.Observation)
+      .apply {
+        filter(
+          QuantityClientParam("value-quantity"),
+          {
+            value = BigDecimal.parseString("5.4")
+            system = "http://unitsofmeasure.org"
+            unit = "g/dL"
+          },
+        )
+      }
+      .getQuery()
+
+  private fun tokenSearch(system: String?) =
+    Search(ResourceType.Observation)
+      .apply {
+        filter(TokenClientParam("code"), { value = TokenFilterValue.coding(system, "718-7") })
+      }
+      .getQuery()
+
+  private fun referenceSearch() =
+    Search(ResourceType.Observation)
+      .apply { filter(ReferenceClientParam("subject"), { value = "Patient/patient-1" }) }
+      .getQuery()
+
+  private fun uriSearch() =
+    Search(ResourceType.Patient)
+      .apply { filter(UriClientParam("identifier"), { value = "urn:oid:1.2.3" }) }
+      .getQuery()
 
   private fun stringSearch() =
     Search(ResourceType.Patient)
@@ -316,62 +444,37 @@ class SearchQueryPlanTest {
       }
       .getQuery()
 
-  private fun dateBeforeSearch() =
-    Search(ResourceType.Patient)
-      .apply {
-        filter(
-          DateClientParam("birthdate"),
-          {
-            value = of(FhirDate.Date(LocalDate(2000, 1, 1)))
-            prefix = SearchComparator.Lt
-          },
-        )
-      }
-      .getQuery()
-
-  private fun tokenSearch() =
-    Search(ResourceType.Patient)
-      .apply { filter(TokenClientParam("gender"), { value = TokenFilterValue.string("male") }) }
-      .getQuery()
-
-  private fun referenceSearch() =
-    Search(ResourceType.Patient)
-      .apply {
-        filter(ReferenceClientParam("organization"), { value = "Organization/organization-1" })
-      }
-      .getQuery()
-
-  private fun quantitySearch() =
-    Search(ResourceType.Observation)
-      .apply {
-        filter(QuantityClientParam("value-quantity"), { value = BigDecimal.parseString("5.4") })
-      }
-      .getQuery()
-
-  private fun quantitySearchWithUnit() =
-    Search(ResourceType.Observation)
-      .apply {
-        filter(
-          QuantityClientParam("value-quantity"),
-          {
-            value = BigDecimal.parseString("5.4")
-            system = "http://unitsofmeasure.org"
-            unit = "g/dL"
-          },
-        )
-      }
-      .getQuery()
-
-  private fun dateSearch() =
+  private fun dateSearch(comparator: SearchComparator) =
     Search(ResourceType.Patient)
       .apply {
         filter(
           DateClientParam("birthdate"),
           {
             value = of(FhirDate.Date(LocalDate(1970, 1, 1)))
-            prefix = SearchComparator.Gt
+            prefix = comparator
           },
         )
+      }
+      .getQuery()
+
+  private fun dateTimeSearch(comparator: SearchComparator) =
+    Search(ResourceType.Observation)
+      .apply {
+        filter(
+          DateClientParam("date"),
+          {
+            value = of(FhirDateTime.fromString("2013-03-14T10:00:00Z")!!)
+            prefix = comparator
+          },
+        )
+      }
+      .getQuery()
+
+  private fun dateSortedSearch() =
+    Search(ResourceType.Patient)
+      .apply {
+        filter(StringClientParam("family"), { value = "Jones" })
+        sort(DateClientParam("birthdate"), Order.ASCENDING)
       }
       .getQuery()
 
@@ -380,26 +483,48 @@ class SearchQueryPlanTest {
       .apply { filter(NumberClientParam("probability"), { value = BigDecimal.parseString("0.5") }) }
       .getQuery()
 
-  private fun uriSearch() =
-    Search(ResourceType.Patient)
-      .apply { filter(UriClientParam("identifier"), { value = "urn:oid:1.2.3" }) }
-      .getQuery()
-
   private fun sortedSearch() =
     Search(ResourceType.Patient)
-      .apply { sort(StringClientParam("given"), Order.ASCENDING) }
+      .apply {
+        filter(StringClientParam("family"), { value = "Jones" })
+        sort(StringClientParam("given"), Order.ASCENDING)
+      }
       .getQuery()
+
+  private fun unfilteredSorts(): List<Pair<String, List<SortSegment>>> =
+    listOf(
+        "string ascending" to
+          Search(ResourceType.Patient).apply { sort(StringClientParam("given"), Order.ASCENDING) },
+        "string descending" to
+          Search(ResourceType.Patient).apply { sort(StringClientParam("given"), Order.DESCENDING) },
+        "number" to
+          Search(ResourceType.RiskAssessment).apply {
+            sort(NumberClientParam("probability"), Order.ASCENDING)
+          },
+        "date" to
+          Search(ResourceType.Patient).apply {
+            sort(DateClientParam("birthdate"), Order.ASCENDING)
+          },
+        "date descending" to
+          Search(ResourceType.Patient).apply {
+            sort(DateClientParam("birthdate"), Order.DESCENDING)
+          },
+      )
+      .map { (name, search) -> name to search.getSortSegments()!! }
 
   private fun countSearch() =
     Search(ResourceType.Patient)
       .apply { filter(StringClientParam("given"), { value = "Ja" }) }
       .getQuery(isCount = true)
 
+  // ---------------------------------------------------------------------------------------------
   // Plan helpers
+  // ---------------------------------------------------------------------------------------------
 
   /**
-   * Asserts [table] is searched through an index constrained by exactly [constraints], as SQLite
-   * renders them in the plan.
+   * Asserts [table] is searched through an index constrained by exactly [constraints]. The
+   * constraint list is SQLite's own rendering of which columns it could narrow on, which decides
+   * whether the index is doing its job.
    */
   private fun assertIndexUsed(
     plan: List<String>,
