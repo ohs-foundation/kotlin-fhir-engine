@@ -15,8 +15,11 @@
  */
 package dev.ohs.fhir.engine.db.impl
 
+import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.model.r4.Resource
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.protobuf.ProtoBuf
 
 /**
  * Singleton FHIR JSON parser for serializing/deserializing resources. Replaces HAPI's
@@ -35,3 +38,54 @@ internal fun serializeResource(resource: Resource): String = fhirJsonParser.enco
  * automatically via the `"resourceType"` JSON field.
  */
 internal fun deserializeResource(json: String): Resource = fhirJsonParser.decodeFromString(json)
+
+/**
+ * Binary counterpart of [fhirJsonParser]. kotlin-fhir's generated serializers drive the generic
+ * `Encoder`/`Decoder` API rather than the JSON tree, so the same model classes encode to Protobuf
+ * without a second set of type definitions.
+ */
+@OptIn(ExperimentalSerializationApi::class) internal val fhirProtoParser = ProtoBuf {}
+
+/** Written into the migration SQL that tags existing rows, so it is visible to this module. */
+internal const val JSON_TAG_CHAR = 'J'
+
+private val JSON_TAG = JSON_TAG_CHAR.code.toByte()
+
+private val PROTOBUF_TAG = 'P'.code.toByte()
+
+/**
+ * Encodes and decodes the `ResourceEntity.serializedResource` blob.
+ *
+ * Every value carries a one-byte format tag, so the write format can change by configuration
+ * without invalidating rows already on disk: a database may hold a mix of JSON and Protobuf rows
+ * and still read back correctly.
+ */
+internal class ResourceSerializer(private val writeFormat: ResourceStorageFormat) {
+
+  @OptIn(ExperimentalSerializationApi::class)
+  fun encode(resource: Resource): ByteArray =
+    when (writeFormat) {
+      ResourceStorageFormat.JSON ->
+        byteArrayOf(JSON_TAG) + serializeResource(resource).encodeToByteArray()
+      ResourceStorageFormat.PROTOBUF ->
+        byteArrayOf(PROTOBUF_TAG) +
+          fhirProtoParser.encodeToByteArray(Resource.serializer(), resource)
+    }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  fun decode(bytes: ByteArray): Resource =
+    when (val tag = bytes[0]) {
+      JSON_TAG -> deserializeResource(bytes.decodeToString(startIndex = 1))
+      PROTOBUF_TAG ->
+        fhirProtoParser.decodeFromByteArray(Resource.serializer(), bytes.copyOfRange(1, bytes.size))
+      else -> error("Unknown resource storage format tag: $tag")
+    }
+
+  /** The stored resource as FHIR JSON, for the local-change diff and the upload payload. */
+  fun decodeToJson(bytes: ByteArray): String =
+    if (bytes[0] == JSON_TAG) {
+      bytes.decodeToString(startIndex = 1)
+    } else {
+      serializeResource(decode(bytes))
+    }
+}

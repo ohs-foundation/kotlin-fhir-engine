@@ -162,6 +162,7 @@ object FhirEngineProvider {
           encrypt = config.enableEncryption,
           errorStrategy = config.databaseErrorStrategy,
         ),
+        resourceStorageFormat = config.resourceStorageFormat,
       )
 
     config.serverConfiguration?.let { serverConfig ->

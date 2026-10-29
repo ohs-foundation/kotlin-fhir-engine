@@ -20,6 +20,12 @@ package dev.ohs.fhir.engine.db.impl
  * read the schema files. [ExportedSchemasTest] keeps it equal to the files.
  */
 internal object ExportedSchemas {
+  private const val RESOURCE_ENTITY = "ResourceEntity"
+
+  /** Version 12 is version 11 with serializedResource turned into a BLOB. */
+  private const val RESOURCE_ENTITY_12 =
+    """CREATE TABLE IF NOT EXISTS `ResourceEntity` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `resourceUuid` BLOB NOT NULL, `resourceType` TEXT NOT NULL, `resourceId` TEXT NOT NULL, `serializedResource` BLOB NOT NULL, `versionId` TEXT, `lastUpdatedRemote` INTEGER, `lastUpdatedLocal` INTEGER)"""
+
   fun ddl(version: Int): List<String> =
     when (version) {
       1 ->
@@ -388,6 +394,10 @@ internal object ExportedSchemas {
           """CREATE INDEX IF NOT EXISTS `index_LocalChangeResourceReferenceEntity_localChangeId` ON `LocalChangeResourceReferenceEntity` (`localChangeId`)""",
         )
       11 -> Schema11.tables.flatMap { listOf(it.createSql) + it.indexSql }
+      12 ->
+        Schema11.tables.flatMap {
+          listOf(if (it.name == RESOURCE_ENTITY) RESOURCE_ENTITY_12 else it.createSql) + it.indexSql
+        }
       else -> error("No exported schema $version")
     }
 }

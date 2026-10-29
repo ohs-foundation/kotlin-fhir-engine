@@ -76,6 +76,7 @@ kotlin {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.datetime)
         implementation(libs.kotlinx.serialization.json)
+        implementation(libs.kotlinx.serialization.protobuf)
         implementation(libs.fhir.model.r4)
         implementation(libs.fhir.path.r4)
         implementation(libs.kermit)
@@ -288,6 +289,11 @@ dependencies {
 // targets). Committed so migrations can be tested against previous versions.
 room3 { schemaDirectory("$projectDir/schemas") }
 
+// `StorageFormatSizeBenchmark` is a tool rather than a test and does nothing without this.
+tasks.withType<Test>().configureEach {
+  (findProperty("benchmarkResources") as String?)?.let { systemProperty("benchmarkResources", it) }
+}
+
 tasks
   .withType<Test>()
   .matching { it.name == "testAndroidHostTest" }
@@ -299,6 +305,7 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
       excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceStorageFormatTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.JournalModeTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.DatabaseFileNameTest")
     }

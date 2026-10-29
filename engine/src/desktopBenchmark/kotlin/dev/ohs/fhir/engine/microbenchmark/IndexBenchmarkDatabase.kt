@@ -52,7 +52,7 @@ internal class IndexBenchmarkDatabase(private val file: File) {
       transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
         usePrepared(
           "INSERT INTO ResourceEntity (resourceUuid, resourceType, resourceId, serializedResource) " +
-            "VALUES (?, 'Patient', ?, '{}')",
+            "VALUES (?, 'Patient', ?, CAST('J{}' AS BLOB))",
         ) { statement ->
           repeat(rows) { row ->
             statement.bindBlob(1, uuidFor(row))
@@ -100,7 +100,7 @@ internal class IndexBenchmarkDatabase(private val file: File) {
       transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
         usePrepared(
           "INSERT INTO ResourceEntity (resourceUuid, resourceType, resourceId, serializedResource) " +
-            "VALUES (?, 'Observation', ?, '{}')",
+            "VALUES (?, 'Observation', ?, CAST('J{}' AS BLOB))",
         ) { statement ->
           repeat(rows) { row ->
             statement.bindBlob(1, uuidFor(row))
@@ -138,7 +138,7 @@ internal class IndexBenchmarkDatabase(private val file: File) {
       transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
         usePrepared(
           "INSERT INTO ResourceEntity (resourceUuid, resourceType, resourceId, serializedResource) " +
-            "VALUES (?, 'Observation', ?, '{}')",
+            "VALUES (?, 'Observation', ?, CAST('J{}' AS BLOB))",
         ) { statement ->
           repeat(rows) { row ->
             statement.bindBlob(1, uuidFor(row))
@@ -184,7 +184,7 @@ internal class IndexBenchmarkDatabase(private val file: File) {
       transactor.withTransaction(Transactor.SQLiteTransactionType.IMMEDIATE) {
         usePrepared(
           "INSERT INTO ResourceEntity (resourceUuid, resourceType, resourceId, serializedResource) " +
-            "VALUES (?, 'Observation', ?, '{}')",
+            "VALUES (?, 'Observation', ?, CAST('J{}' AS BLOB))",
         ) { statement ->
           repeat(rows) { row ->
             statement.bindBlob(1, uuidFor(row))

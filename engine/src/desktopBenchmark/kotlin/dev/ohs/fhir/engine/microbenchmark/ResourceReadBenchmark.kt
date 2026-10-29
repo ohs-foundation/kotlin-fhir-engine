@@ -17,7 +17,9 @@ package dev.ohs.fhir.engine.microbenchmark
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import dev.ohs.fhir.engine.ResourceStorageFormat
 import dev.ohs.fhir.engine.db.impl.ResourceDatabase
+import dev.ohs.fhir.engine.db.impl.ResourceSerializer
 import dev.ohs.fhir.engine.db.impl.dao.ResourceDao
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
@@ -52,6 +54,7 @@ internal class CrudFixture(label: String) {
   private val dao: ResourceDao =
     database.resourceDao().also {
       it.resourceIndexer = ResourceIndexer(SearchParamDefinitionsProviderImpl())
+      it.resourceSerializer = ResourceSerializer(ResourceStorageFormat.JSON)
     }
 
   fun patients(count: Int = BATCH): List<Patient> =
