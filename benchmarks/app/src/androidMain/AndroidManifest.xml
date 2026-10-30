@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- The server group syncs against a real FHIR server. -->
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  <!-- usesCleartextTraffic: -Pbenchmark.server may name any host, and a local HAPI is plain
+       http. This app is never published. -->
+  <!-- largeHeap: crud.create_batch holds every Patient in memory for one batch call. -->
+  <application
+      android:allowBackup="false"
+      android:largeHeap="true"
+      android:label="FHIR Engine Benchmarks"
+      android:supportsRtl="true"
+      android:usesCleartextTraffic="true">
+
+    <!-- Macrobenchmark's Perfetto trace requires a shell-profileable, non-debuggable app. -->
+    <profileable
+        android:shell="true"
+        tools:ignore="ProfileableAttributeUnsupported"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <!-- configChanges: recreating the activity would cancel and restart a run. -->
+    <activity
+        android:name="dev.ohs.fhir.engine.benchmark.app.BenchmarkActivity"
+        android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale"
+        android:exported="true"
+        android:launchMode="singleTop">
+      <intent-filter>
+        <action android:name="dev.ohs.fhir.engine.benchmark.RUN" />
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

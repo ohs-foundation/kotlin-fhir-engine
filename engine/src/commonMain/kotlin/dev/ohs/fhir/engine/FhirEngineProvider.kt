@@ -133,7 +133,7 @@ object FhirEngineProvider {
    * - The persisted `DataStore` is a process-level singleton and keeps its sync watermarks. Use a
    *   new `storageDirectory` to start without them.
    */
-  internal fun resetForTesting() {
+  fun resetForTesting() {
     if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
     dataSource?.close()
     fhirEngine = null
