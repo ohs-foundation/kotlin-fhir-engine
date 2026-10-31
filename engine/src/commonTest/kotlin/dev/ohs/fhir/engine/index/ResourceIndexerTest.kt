@@ -62,6 +62,7 @@ import dev.ohs.fhir.model.r4.Quantity
 import dev.ohs.fhir.model.r4.Questionnaire
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.RelatedArtifact
+import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.RiskAssessment
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.Substance
@@ -664,6 +665,106 @@ class ResourceIndexerTest {
     val resourceIndices = resourceIndexer.index(patient)
     assertFalse(resourceIndices.referenceIndices.any { it.path == "Patient.managingOrganization" })
     assertFalse(resourceIndices.referenceIndices.any { it.name == "organization" })
+  }
+
+  private fun observationWithSubject(subject: Reference) =
+    Observation(
+      id = "someObservation",
+      status = Enumeration(value = Observation.ObservationStatus.Final),
+      code = CodeableConcept(),
+      subject = subject,
+    )
+
+  private fun patientIndices(subject: Reference) =
+    resourceIndexer.index(observationWithSubject(subject)).referenceIndices.filter {
+      it.name == "patient"
+    }
+
+  @Test
+  fun index_reference_whereResolveIs_relativeReference() {
+    val resourceIndices =
+      resourceIndexer.index(
+        observationWithSubject(Reference(reference = FhirString(value = "Patient/123"))),
+      )
+    assertContains(
+      resourceIndices.referenceIndices,
+      ReferenceIndex("patient", "Observation.subject.where(resolve() is Patient)", "Patient/123"),
+    )
+    assertContains(
+      resourceIndices.referenceIndices,
+      ReferenceIndex("subject", "Observation.subject", "Patient/123"),
+    )
+  }
+
+  @Test
+  fun index_reference_whereResolveIs_absoluteAndVersionedReferences() {
+    for (reference in
+      listOf(
+        "http://example.org/fhir/Patient/123",
+        "Patient/123/_history/2",
+        "http://example.org/fhir/Patient/123/_history/2",
+      )) {
+      assertEquals(
+        listOf(
+          ReferenceIndex("patient", "Observation.subject.where(resolve() is Patient)", reference),
+        ),
+        patientIndices(Reference(reference = FhirString(value = reference))),
+        reference,
+      )
+    }
+  }
+
+  @Test
+  fun index_reference_whereResolveIs_otherType_notIndexed() {
+    assertEquals(
+      emptyList(),
+      patientIndices(Reference(reference = FhirString(value = "Group/123"))),
+    )
+  }
+
+  @Test
+  fun index_reference_whereResolveIs_noTypeInReference_notIndexed() {
+    for (reference in listOf("urn:uuid:5d4c5b6e-4f45-4a0e-9b0e-2f1d1a6c7e10", "#p1", "123")) {
+      assertEquals(
+        emptyList(),
+        patientIndices(Reference(reference = FhirString(value = reference))),
+        reference,
+      )
+    }
+    assertEquals(
+      emptyList(),
+      patientIndices(Reference(identifier = Identifier(value = FhirString(value = "123")))),
+    )
+  }
+
+  @Test
+  fun index_reference_whereResolveIs_eachBranch() {
+    val auditEvent =
+      fhirJsonParser.decodeFromString<Resource>(
+        """
+        {
+          "resourceType": "AuditEvent",
+          "type": {"code": "rest"},
+          "recorded": "2026-01-01T00:00:00Z",
+          "agent": [
+            {"who": {"reference": "Patient/agent"}, "requestor": true},
+            {"who": {"reference": "Practitioner/agent"}, "requestor": false}
+          ],
+          "source": {"observer": {"reference": "Device/source"}},
+          "entity": [{"what": {"reference": "Patient/entity"}}]
+        }
+        """
+          .trimIndent(),
+      )
+    val path =
+      "AuditEvent.agent.who.where(resolve() is Patient) | AuditEvent.entity.what.where(resolve() is Patient)"
+    assertEquals(
+      setOf(
+        ReferenceIndex("patient", path, "Patient/agent"),
+        ReferenceIndex("patient", path, "Patient/entity"),
+      ),
+      resourceIndexer.index(auditEvent).referenceIndices.filter { it.name == "patient" }.toSet(),
+    )
   }
 
   // fhir-path unwraps Enumeration/Code to a bare String, dropping the code system (e.g.
