@@ -33,16 +33,41 @@ import kotlinx.coroutines.test.runTest
 
 /**
  * One test per migration on every platform. Each builds the older exported schema, inserts rows,
- * migrates and checks the newer exported schema and the rows.
+ * migrates and checks the newer exported schema and the rows. Each runs on the plain database, then
+ * on the encrypted one where tests can encrypt: Android device tests and iOS with SQLCipher.
  */
 class ResourceDatabaseMigrationTest {
   private val platformContext = testPlatformContext()
   private val storageDirectory = testStorageDirectory()
 
-  private val tester = MigrationTester(platformContext, storageDirectory)
+  private fun migrationTest(block: suspend Case.() -> Unit) = runTest {
+    Case(DatabaseConfig()).block()
+    val support = encryptionTestSupport ?: return@runTest
+    support.deleteDatabaseFiles()
+    support.resetDatabaseKey()
+    try {
+      Case(DatabaseConfig(encrypt = true)).block()
+    } catch (e: Throwable) {
+      throw AssertionError("Encrypted database: ${e.message}", e)
+    } finally {
+      support.deleteDatabaseFiles()
+    }
+  }
+
+  private inner class Case(private val config: DatabaseConfig) {
+    val tester = MigrationTester(platformContext, storageDirectory, config)
+
+    fun openDatabase() =
+      DatabaseImpl(
+        platformContext,
+        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        storageDirectory,
+        config,
+      )
+  }
 
   @Test
-  fun migrate1To2_keepsResources() = runTest {
+  fun migrate1To2_keepsResources() = migrationTest {
     tester.createDatabase(1).use { it.insertPatient() }
     tester.runMigrationsAndValidate(2, listOf(ResourceDatabase.MIGRATION_1_2)).use {
       assertEquals(PATIENT_JSON, it.single("SELECT serializedResource FROM ResourceEntity"))
@@ -50,7 +75,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate2To3_keepsResources() = runTest {
+  fun migrate2To3_keepsResources() = migrationTest {
     tester.createDatabase(2).use { it.insertPatient() }
     tester.runMigrationsAndValidate(3, listOf(ResourceDatabase.MIGRATION_2_3)).use {
       assertEquals(PATIENT_JSON, it.single("SELECT serializedResource FROM ResourceEntity"))
@@ -58,7 +83,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate3To4_keepsResources() = runTest {
+  fun migrate3To4_keepsResources() = migrationTest {
     tester.createDatabase(3).use { it.insertPatient() }
     tester.runMigrationsAndValidate(4, listOf(ResourceDatabase.MIGRATION_3_4)).use {
       assertEquals(PATIENT_JSON, it.single("SELECT serializedResource FROM ResourceEntity"))
@@ -66,7 +91,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate4To5_keepsResources() = runTest {
+  fun migrate4To5_keepsResources() = migrationTest {
     tester.createDatabase(4).use { it.insertPatient() }
     tester.runMigrationsAndValidate(5, listOf(ResourceDatabase.MIGRATION_4_5)).use {
       assertEquals(PATIENT_JSON, it.single("SELECT serializedResource FROM ResourceEntity"))
@@ -74,7 +99,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate5To6_convertsTimestampsToEpochMillis_andCorruptOnesToZero() = runTest {
+  fun migrate5To6_convertsTimestampsToEpochMillis_andCorruptOnesToZero() = migrationTest {
     val instant = Instant.parse("2024-01-02T03:04:05.678Z")
     tester.createDatabase(5).use {
       it.insertPatient()
@@ -95,7 +120,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate6To7_backfillsLocalChangeResourceUuid() = runTest {
+  fun migrate6To7_backfillsLocalChangeResourceUuid() = migrationTest {
     tester.createDatabase(6).use {
       it.insertPatient()
       it.executeSQL(
@@ -112,7 +137,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate7To8_extractsReferencesFromPayloads() = runTest {
+  fun migrate7To8_extractsReferencesFromPayloads() = migrationTest {
     val insertPayload =
       """{"resourceType":"Patient","id":"$PATIENT_ID","generalPractitioner":[{"reference":"Practitioner/123"}],"managingOrganization":{"reference":"Organization/123"}}"""
     val updatePayload =
@@ -139,7 +164,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate8To9_keepsTokenIndexRows() = runTest {
+  fun migrate8To9_keepsTokenIndexRows() = migrationTest {
     tester.createDatabase(8).use {
       it.insertPatient()
       it.executeSQL(
@@ -165,7 +190,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate9To10_sortsByStringIndex() = runTest {
+  fun migrate9To10_sortsByStringIndex() = migrationTest {
     val otherUuid = Uuid.parse("541782b3-48f5-4c36-bd20-cae265e974e7")
     tester.createDatabase(9).use {
       it.insertPatient()
@@ -200,7 +225,7 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun migrate10To11_keepsRows() = runTest {
+  fun migrate10To11_keepsRows() = migrationTest {
     tester.createDatabase(10).use {
       it.insertPatient()
       it.insertFamilyNameIndex()
@@ -216,19 +241,14 @@ class ResourceDatabaseMigrationTest {
   }
 
   @Test
-  fun alphaDatabase_isConvertedAndKeepsItsRows() = runTest {
+  fun alphaDatabase_isConvertedAndKeepsItsRows() = migrationTest {
     // Alpha01 to alpha04 stamped version 2 on the version 11 layout with resourceUuid as TEXT.
     val alphaSchema =
       ExportedSchemas.ddl(Schema11.VERSION).map {
         it.replace("`resourceUuid` BLOB", "`resourceUuid` TEXT")
       }
     tester.createDatabase(2, alphaSchema).use { it.insertAlphaRows() }
-    val database =
-      DatabaseImpl(
-        platformContext,
-        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
-        storageDirectory,
-      )
+    val database = openDatabase()
     try {
       assertEquals(
         PATIENT_UUID,
@@ -329,14 +349,9 @@ class ResourceDatabaseMigrationTest {
     executeSQL("INSERT INTO $table ($columns) VALUES ($values)")
 
   @Test
-  fun androidFhirDatabaseAtVersion2_goesThroughTheChain() = runTest {
+  fun androidFhirDatabaseAtVersion2_goesThroughTheChain() = migrationTest {
     tester.createDatabase(2).use { it.insertPatient() }
-    val database =
-      DatabaseImpl(
-        platformContext,
-        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
-        storageDirectory,
-      )
+    val database = openDatabase()
     try {
       assertEquals(PATIENT_ID, database.select(ResourceType.Patient, PATIENT_ID).id)
     } finally {

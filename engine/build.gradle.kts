@@ -1,7 +1,10 @@
 import dev.ohs.fhir.engine.codegen.GenerateSearchParamsTask
 import java.io.ByteArrayOutputStream
+import java.net.URI
+import java.security.MessageDigest
 import org.apache.tools.ant.util.TeeOutputStream
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
   id("org.jetbrains.kotlin.multiplatform")
@@ -21,6 +24,49 @@ val mavenVersion: String by project
 val generateSearchParamsTask =
   tasks.register("generateSearchParamsTask", GenerateSearchParamsTask::class) {
     srcOutputDir.set(layout.buildDirectory.dir("generated/sources/searchparams/commonMain/kotlin"))
+  }
+
+val sqlCipherDir = layout.buildDirectory.dir("sqlcipher")
+val sqlCipherVersion = "4.19.0"
+val sqlCipherSha256 = "39f02d2f04f0de2ba1facf215550bfc6e6e2c9971d5d8ebb0cdd604874781bd7"
+
+val downloadSqlCipher by
+  tasks.registering {
+    val zip = sqlCipherDir.map { it.file("SQLCipher.xcframework.zip") }
+    inputs.property("version", sqlCipherVersion)
+    inputs.property("sha256", sqlCipherSha256)
+    outputs.dir(sqlCipherDir)
+    doLast {
+      val file = zip.get().asFile
+      if (!file.exists()) {
+        file.parentFile.mkdirs()
+        URI(
+            "https://github.com/sqlcipher/SQLCipher.swift/releases/download/$sqlCipherVersion/SQLCipher.xcframework.zip",
+          )
+          .toURL()
+          .openStream()
+          .use { it.copyTo(file.outputStream()) }
+      }
+      val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
+      val actual = digest.joinToString("") { "%02x".format(it) }
+      check(actual == sqlCipherSha256) {
+        file.delete()
+        "SQLCipher download checksum mismatch, expected $sqlCipherSha256 but was $actual"
+      }
+      ProcessBuilder(
+          "unzip",
+          "-q",
+          "-o",
+          file.path,
+          "SQLCipher.xcframework/ios-arm64_x86_64-simulator/*",
+          "-d",
+          file.parentFile.path,
+        )
+        .inheritIO()
+        .start()
+        .waitFor()
+        .let { check(it == 0) { "unzip failed with $it" } }
+    }
   }
 
 kotlin {
@@ -45,7 +91,28 @@ kotlin {
   // Note: iosX64 (Intel iOS simulator) is omitted because Room 3 (androidx.room3) does not publish
   // iosX64 artifacts; including it breaks dependency resolution.
   iosArm64()
-  iosSimulatorArm64()
+  iosSimulatorArm64 {
+    // On iOS the app links SQLite, not the engine. The default test binary links SQLCipher, so
+    // the plain and the encrypted database tests both run on it.
+    binaries.getTest(NativeBuildType.DEBUG).apply {
+      val slice = sqlCipherDir.map { it.dir("SQLCipher.xcframework/ios-arm64_x86_64-simulator") }
+      linkerOpts(
+        "-F",
+        slice.get().asFile.path,
+        "-framework",
+        "SQLCipher",
+        "-rpath",
+        slice.get().asFile.path,
+      )
+      linkTaskProvider.configure { dependsOn(downloadSqlCipher) }
+    }
+    // A second test binary links the system SQLite, which most apps use. Its task is
+    // iosSimulatorArm64SystemSqliteTest.
+    binaries.test("systemSqlite", listOf(NativeBuildType.DEBUG)) { linkerOpts("-lsqlite3") }
+    testRuns.create("systemSqlite") {
+      setExecutionSourceFrom(binaries.getTest("systemSqlite", NativeBuildType.DEBUG))
+    }
+  }
 
   // useEsModules() is required so the SQLite-WASM Web Worker (loaded via `new Worker(new
   // URL(..., import.meta.url), { type: "module" })`) can be resolved as an ES module.
@@ -117,7 +184,8 @@ kotlin {
     }
     iosMain {
       dependencies {
-        implementation(libs.androidx.sqlite.bundled)
+        // Calls the SQLite the app links, the system one or SQLCipher. The engine bundles none.
+        implementation(libs.androidx.sqlite.framework)
         implementation(libs.ktor.client.darwin)
       }
     }

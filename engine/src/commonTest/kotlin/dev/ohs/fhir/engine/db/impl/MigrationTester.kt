@@ -27,10 +27,16 @@ import kotlin.test.assertEquals
 /**
  * Builds the database at an exported schema, runs migrations and compares the result with the
  * exported target schema. Room's own helper does not exist for web and reads files on iOS.
+ *
+ * [config] picks the plain or the encrypted database file and driver.
  */
-internal class MigrationTester(platformContext: Any, storageDirectory: String?) {
-  private val driver = sharedDriver
-  private val fileName = databaseFileName(platformContext, storageDirectory, DatabaseConfig())
+internal class MigrationTester(
+  platformContext: Any,
+  storageDirectory: String?,
+  config: DatabaseConfig = DatabaseConfig(),
+) {
+  private val driver = if (config.encrypt) databaseDriver(config) else sharedDriver
+  private val fileName = databaseFileName(platformContext, storageDirectory, config)
 
   init {
     createDatabaseDirectory(platformContext, storageDirectory)
@@ -60,8 +66,9 @@ internal class MigrationTester(platformContext: Any, storageDirectory: String?) 
     migrations.forEach { it.migrate(connection) }
     connection.executeSQL("PRAGMA user_version = $version")
 
+    // Built with the plain driver, the expected schema needs no key.
     val expected =
-      driver.open(":memory:").use { scratch ->
+      sharedDriver.open(":memory:").use { scratch ->
         ExportedSchemas.ddl(version).forEach { scratch.executeSQL(it) }
         scratch.schema()
       }

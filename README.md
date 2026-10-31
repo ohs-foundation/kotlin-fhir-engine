@@ -85,6 +85,28 @@ kotlin {
 }
 ```
 
+On iOS the app must link SQLite, even without encryption. The engine does not include SQLite on
+iOS, so the app can choose SQLCipher instead, which is how encryption works on iOS. Link the system
+SQLite, or SQLCipher to encrypt (see [Encryption](#encryption)). Without either, the app fails to
+link with undefined `sqlite3_` symbols. Releases up to 2.0.0-alpha04 included SQLite, so apps
+upgrading from them must add this.
+
+In Xcode, add `libsqlite3.tbd` under *Frameworks, Libraries, and Embedded Content*, or add
+`-lsqlite3` to *Other Linker Flags*. Apple explains linking a library in
+[Link against additional frameworks and libraries](https://developer.apple.com/documentation/xcode/customizing-the-build-phases-of-a-target#Link-against-additional-frameworks-and-libraries).
+A dynamic Kotlin framework is linked by Gradle, not Xcode, so
+add the flag in Gradle instead:
+
+```
+kotlin {
+    listOf(iosArm64(), iosSimulatorArm64()).forEach {
+        it.binaries.framework {
+            linkerOpts("-lsqlite3")
+        }
+    }
+}
+```
+
 #### Android projects
 
 For Android projects, add the dependency to the `dependencies` block in the module's
@@ -137,24 +159,72 @@ Set `enableEncryption = true` to store the database encrypted with
 - **Android.** Works out of the box. The passphrase is derived from a key in the Android Keystore,
   the same way the android-fhir engine does it. Opening an encrypted android-fhir database is not
   yet verified.
-- **iOS, desktop and web.** Not supported yet. `FhirEngineProvider.init` throws
-  `UnsupportedOperationException` rather than silently storing plaintext.
+- **iOS.** Add the [SQLCipher.swift](https://github.com/sqlcipher/SQLCipher.swift) package to the
+  app target in place of `libsqlite3.tbd`, as Apple describes in
+  [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
+  Build the Kotlin framework as static, so the app's link decides which SQLite the engine calls. The
+  key is 32 random bytes kept in the Keychain, which only works in a signed build. If the app links
+  the system SQLite instead, the first database call throws `DatabaseEncryptionException` with
+  `errorCode` `UNSUPPORTED`.
+- **Desktop and web.** Not supported. `FhirEngineProvider.init` throws
+  `UnsupportedOperationException` rather than silently storing plaintext. See
+  [Desktop and web](#desktop-and-web) for why, and what support would need.
 
 Opening a stored database with the other setting throws `IllegalStateException`. If the key is
 lost, the first database call throws `SQLiteException`, or, with
 `DatabaseErrorStrategy.RECREATE_AT_OPEN`, the database is deleted and created again empty.
 
-If the Keystore cannot provide the key, the first database call throws `DatabaseEncryptionException`.
-An `errorCode` of `TIMEOUT` means it stayed busy through the engine's retries, so a later call can
-succeed. `UNSUPPORTED` and `UNKNOWN` will not clear on their own.
+If the Keystore or Keychain cannot provide the key, the first database call throws
+`DatabaseEncryptionException`. An `errorCode` of `TIMEOUT` means the key store stayed busy or
+locked through the engine's retries, so a later call can succeed. `UNSUPPORTED` and `UNKNOWN` will
+not clear on their own.
 
-The key never leaves the device, so a backup restored to another device cannot be read. Exclude
-`resources_encrypted.db` from your app's backup rules so a restored app starts empty. Local changes
-not uploaded before the restore are lost either way.
+The key never leaves the device, so a backup restored to another device cannot be read. On Android,
+exclude `resources_encrypted.db` from your app's backup rules so a restored app starts empty. On iOS
+the engine already excludes it. Local changes not uploaded before the restore are lost either way.
 
 An emptied database does not refill on the next sync. Your `DownloadWorkManager` asks only for
 resources changed since the timestamps it keeps, so reset them when the database starts empty, and
 leave them out of backups too, or everything older is never downloaded again.
+
+#### Desktop and web
+
+The engine opens its database through Room, which reaches SQLite through an androidx.sqlite
+`SQLiteDriver`. Encryption needs a SQLite build with a cipher behind that driver, and a safe place
+for the key. Android and iOS have both. Desktop and web have neither ready to use.
+
+Room does not help here. No driver that androidx.sqlite ships encrypts, and neither Room's
+[Kotlin Multiplatform guide](https://developer.android.com/kotlin/multiplatform/room), the
+[androidx.sqlite guide](https://developer.android.com/kotlin/multiplatform/sqlite) nor the
+[Room 3.0 announcement](https://android-developers.googleblog.com/2026/03/room-30-modernizing-room.html)
+mentions encryption. On Android and iOS the engine puts SQLCipher behind those drivers itself.
+
+**Desktop.** The engine uses `BundledSQLiteDriver`, which compiles a plain SQLite into its native
+library. No encrypting SQLite ships as a `SQLiteDriver` for the JVM. It exists over JDBC instead,
+for example [sqlite-jdbc-crypt](https://github.com/Willena/sqlite-jdbc-crypt), which is built on
+[SQLite3MultipleCiphers](https://github.com/utelle/SQLite3MultipleCiphers) and can write SQLCipher
+compatible files. Support would need:
+
+1. A `SQLiteDriver` over that JDBC driver, or over a JNI binding to SQLCipher, tested against how
+   Room uses connections: several at once, write-ahead logging and foreign keys.
+2. A key kept in the operating system's store: the macOS Keychain, the Windows Credential Manager or
+   the Linux Secret Service.
+3. A native library for each desktop operating system the engine runs on.
+
+Until then, full disk encryption (FileVault, BitLocker, LUKS) protects the database file at rest
+with no change to the engine.
+
+**Web.** Neither SQLCipher nor any other encrypting SQLite publishes a WebAssembly build ready to
+use. The commercial [SQLite Encryption Extension](https://sqlite.org/wasm/doc/trunk/see.md) and
+SQLite3MultipleCiphers can both be compiled into sqlite-wasm, but neither has been tested with the
+origin private file system, where the engine stores its database. Support would need:
+
+1. One of those WebAssembly builds, built and maintained by the project, with the engine's database
+   worker on top.
+2. A place for the key. Browsers have no secure key store, so the key would come from a passphrase
+   the user types, from the server after sign-in, or wrapped by a WebCrypto key that cannot be
+   exported. None of these stops script running on the same origin, so on the web, encryption
+   mainly protects against someone copying the browser profile.
 
 ### Synchronizing with a FHIR server
 
@@ -309,9 +379,11 @@ Persistence uses [Room](https://developer.android.com/kotlin/multiplatform/room)
 requires **Room 3** (`androidx.room3`), Room 2 has no Wasm target, which is why the engine uses
 `androidx.room3.*` on all platforms.
 
-Android, iOS, and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
+Android and Desktop use the bundled native SQLite driver (`BundledSQLiteDriver` from
 `sqlite-bundled`), which has no Wasm build. Android switches to SQLCipher's driver when the database
-is encrypted. See [Encryption](#encryption). On Wasm the database instead uses `WebWorkerSQLiteDriver`,
+is encrypted. iOS uses `NativeSQLiteDriver` from `sqlite-framework`, which calls whatever SQLite the
+app links, the system `libsqlite3.tbd` or SQLCipher. See [Encryption](#encryption). On Wasm the
+database instead uses `WebWorkerSQLiteDriver`,
 backed by a SQLite-WASM Web Worker running in an
 [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)-persisted
 Web Worker (`engine/src/webMain/npm/sqlite-wasm-worker/worker.js`, npm dependency
@@ -377,6 +449,17 @@ ships, this workaround — and the local `sqlite-wasm-worker` module in `:engine
 longer be necessary.
 
 ## Developer guide
+
+### Running the iOS tests
+
+The iOS tests run twice, once against each SQLite an app can link. Both need Xcode.
+
+```bash
+./gradlew :engine:iosSimulatorArm64Test            # with SQLCipher, downloaded on first run
+./gradlew :engine:iosSimulatorArm64SystemSqliteTest  # with the system SQLite
+```
+
+Encryption tests run only with SQLCipher. With the system SQLite they return early.
 
 ### Publishing
 
