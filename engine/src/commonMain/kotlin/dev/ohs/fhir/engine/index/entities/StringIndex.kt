@@ -31,8 +31,8 @@ internal data class StringIndex(
    * The value of the string index, e.g. "Tom".
    *
    * NOCASE so a prefix search can use the index. SQLite needs both this and a `LIKE` pattern bound
-   * whole, as `StringParamFilterCriterion` does. NOCASE also makes `=` and `ORDER BY` on this column
-   * ignore case, so `:exact` adds `COLLATE BINARY`.
+   * whole, as `StringParamFilterCriterion` does. NOCASE also makes `=` and `ORDER BY` on this
+   * column ignore case, so `:exact` adds `COLLATE BINARY`.
    */
   @ColumnInfo(collate = ColumnInfo.NOCASE) val value: String,
 )
