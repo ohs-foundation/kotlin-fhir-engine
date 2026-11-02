@@ -130,7 +130,7 @@ A weak filter, one that matches most resources, still sorts every match.
 
 ## Known shortfalls
 
-Each is pinned by a test in `SearchQueryPlanTest`.
+Each is pinned by a test in `SearchQueryPlanTest`, except where noted.
 
 **String `:contains`** compiles to a pattern with a leading wildcard, which no index can seek
 whatever the collation.
@@ -204,9 +204,10 @@ which is 37% faster at 50,000 rows and leaves a code-only search unchanged.
 **Date and dateTime** indices were `(resourceType, index_name, resourceUuid, index_from, index_to)`.
 `resourceUuid` sat between the equality prefix and the range columns, so no range could use the
 index. #109 moves it last and adds a second index led by `index_to` (`current` below), since `<`,
-`<=` and `sa` range over `index_from` and `>`, `>=` and `eb` over `index_to`. The date sort is
-unaffected: it looks dates up by `resourceUuid` through a separate index. The narrow window matches
-about 4% of rows and the wide one about 40%.
+`<=` and `sa` range over `index_from` and `>`, `>=` and `eb` over `index_to`. A filtered date sort
+is unaffected: it looks dates up by `resourceUuid` through a separate index. An unfiltered one walks
+the new index in `index_from` order. The narrow window matches about 4% of rows and the wide one
+about 40%.
 
 | `DateIndexShapeBenchmark` | 1,000 | 10,000 | 50,000 |
 |---|---:|---:|---:|

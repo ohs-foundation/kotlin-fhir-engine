@@ -127,7 +127,7 @@ class SearchQueryPlanTest {
 
   /**
    * A NOCASE column plus a whole bound pattern let SQLite rewrite `LIKE 'x%'` into a range scan,
-   * hence the `>` and `<` bounds. Worth 38x on a 50,000-row table; `StringIndexCollationBenchmark`
+   * hence the `>` and `<` bounds. Worth 32x on a 50,000-row table; `StringIndexCollationBenchmark`
    * sweeps it.
    */
   @Test
