@@ -19,11 +19,9 @@ package dev.ohs.fhir.codelab
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.search.Order
 import dev.ohs.fhir.engine.search.StringClientParam
-import dev.ohs.fhir.engine.search.StringFilterModifier
 import dev.ohs.fhir.engine.search.search
 import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.model.r4.Patient
-import dev.ohs.fhir.model.r4.String as FhirString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,59 +50,15 @@ class PatientListViewModel(
   }
 
   fun triggerOneTimeSync() {
-    scope.launch { syncLauncher.oneTimeSync().collect { _pollState.emit(it) } }
+    // Add code to start sync
   }
 
   /** Swaps the city of patients in Wakefield and Taunton, then syncs the changes. */
   fun triggerUpdate() {
-    scope.launch {
-      val patientsFromWakefield = searchByCity("Wakefield")
-      val patientsFromTaunton = searchByCity("Taunton")
-
-      patientsFromWakefield.forEach { fhirEngine.update(it.withCity("Taunton")) }
-      patientsFromTaunton.forEach { fhirEngine.update(it.withCity("Wakefield")) }
-
-      triggerOneTimeSync()
-    }
+    // Add code to trigger update
   }
 
   fun searchPatientsByName(nameQuery: String) {
-    scope.launch {
-      val searchResult =
-        fhirEngine.search<Patient> {
-          if (nameQuery.isNotEmpty()) {
-            filter(
-              StringClientParam("name"),
-              {
-                modifier = StringFilterModifier.CONTAINS
-                value = nameQuery
-              },
-            )
-          }
-        }
-      _patients.value = searchResult.map { it.resource }
-    }
+    // Add code to use fhirEngine to search for patients
   }
-
-  private suspend fun searchByCity(city: String): List<Patient> =
-    fhirEngine
-      .search<Patient> {
-        filter(
-          StringClientParam("address-city"),
-          {
-            modifier = StringFilterModifier.MATCHES_EXACTLY
-            value = city
-          },
-        )
-      }
-      .map { it.resource }
 }
-
-/** Returns a copy of this patient with the city of its first address set to [city]. */
-private fun Patient.withCity(city: String): Patient =
-  copy(
-    address =
-      address.mapIndexed { index, address ->
-        if (index == 0) address.copy(city = FhirString(value = city)) else address
-      },
-  )

@@ -10,7 +10,7 @@
 - [ ] Keeping a standalone build is acceptable, given that the root Spotless config does not cover it.
 
 ## Pending
-- [ ] Starter version: method bodies replaced by `// TODO` stubs, solution kept separately.
+- [ ] Keep the README code in step with the starter. The solution exists only in the README.
 - [ ] New screenshots of the app, the project in Android Studio, and the Sync button.
 - [ ] Bump the engine version in `shared/build.gradle.kts` and the README with each release.
 - [ ] Build the codelab in CI.

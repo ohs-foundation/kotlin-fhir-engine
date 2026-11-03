@@ -16,24 +16,7 @@
 
 package dev.ohs.fhir.codelab
 
-import dev.ohs.fhir.engine.DatabaseErrorStrategy
-import dev.ohs.fhir.engine.FhirEngineConfiguration
-import dev.ohs.fhir.engine.FhirEngineProvider
-import dev.ohs.fhir.engine.ServerConfiguration
-import dev.ohs.fhir.engine.sync.remote.HttpLogger
-
 /** Initializes the FHIR Engine. [platformContext] is the application `Context` on Android. */
 fun initFhirEngine(platformContext: Any, baseUrl: String, debug: Boolean) {
-  FhirEngineProvider.init(
-    FhirEngineConfiguration(
-      databaseErrorStrategy = DatabaseErrorStrategy.RECREATE_AT_OPEN,
-      serverConfiguration =
-        ServerConfiguration(
-          baseUrl = baseUrl,
-          httpLogger =
-            HttpLogger(if (debug) HttpLogger.Level.BODY else HttpLogger.Level.BASIC),
-        ),
-    ),
-    platformContext,
-  )
+  // Add code to initialize the FHIR Engine
 }

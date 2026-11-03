@@ -18,7 +18,6 @@ package dev.ohs.fhir.codelab
 
 import dev.ohs.fhir.engine.sync.DownloadWorkManager
 import dev.ohs.fhir.engine.sync.download.DownloadRequest
-import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
@@ -26,16 +25,14 @@ class DownloadWorkManagerImpl : DownloadWorkManager {
   private val urls = ArrayDeque(listOf("Patient"))
 
   override suspend fun getNextRequest(): DownloadRequest? {
-    val url = urls.removeFirstOrNull() ?: return null
-    return DownloadRequest.of(url)
+    // Add code to return the next download request
+    return null
   }
 
   override suspend fun getSummaryRequestUrls() = mapOf<ResourceType, String>()
 
   override suspend fun processResponse(response: Resource): Collection<Resource> {
-    if (response is Bundle && response.type.value == Bundle.BundleType.Searchset) {
-      return response.entry.mapNotNull { it.resource }
-    }
+    // Add code to extract the resources from the response
     return emptyList()
   }
 }

@@ -104,6 +104,8 @@ codelabs/
   androidApp/   FhirApplication, MainActivity
 ```
 
+The code to add is marked with "Add code to ..." comments. Each section below has the code.
+
 ### Import the app into Android Studio
 
 Open Android Studio, select **Open**, and choose the `codelabs/` folder.
@@ -126,12 +128,13 @@ kotlin {
 The FHIR model is [kotlin-fhir](https://github.com/ohs-foundation/kotlin-fhir), not HAPI.
 kotlin-fhir resources are immutable. To change a resource, make a copy with `copy(...)`.
 
-Sync the project with the Gradle files, then run `androidApp` on the emulator.
+Sync the project with the Gradle files. Complete the next section before you run
+`androidApp`: the patient list needs an initialized engine.
 
 ## Create the FHIR Engine instance
 
-1.  Open `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/FhirEngineSetup.kt`. `initFhirEngine`
-    initializes the engine:
+1.  Open `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/FhirEngineSetup.kt`. In
+    `initFhirEngine`, add the code that initializes the engine:
 
     ```kotlin
     fun initFhirEngine(platformContext: Any, baseUrl: String, debug: Boolean) {
@@ -169,7 +172,7 @@ Sync the project with the Gradle files, then run `androidApp` on the emulator.
 
 ## Sync data with the FHIR server
 
-1.  `DownloadWorkManagerImpl.kt` in `commonMain` tells the engine which resources to download:
+1.  In `DownloadWorkManagerImpl.kt` in `commonMain`, define which resources to download:
 
     ```kotlin
     class DownloadWorkManagerImpl : DownloadWorkManager {
@@ -194,7 +197,7 @@ Sync the project with the Gradle files, then run `androidApp` on the emulator.
     The class has a queue of URLs to download. It extracts the resources from each returned bundle,
     and the engine saves them in the local database.
 
-1.  `AppFhirSyncWorker.kt` in `androidMain` is the background worker that runs the sync on Android:
+1.  In `AppFhirSyncWorker.kt` in `androidMain`, define the worker that runs the sync on Android:
 
     ```kotlin
     class AppFhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
@@ -227,8 +230,8 @@ Sync the project with the Gradle files, then run `androidApp` on the emulator.
 
     To add a platform later, implement `SyncLauncher` for it.
 
-1.  In `PatientListViewModel.kt`, `triggerOneTimeSync()` starts the sync and forwards its status to
-    the UI:
+1.  In `PatientListViewModel.kt`, add the code to `triggerOneTimeSync()` that starts the sync and
+    forwards its status to the UI:
 
     ```kotlin
     fun triggerOneTimeSync() {
@@ -236,8 +239,8 @@ Sync the project with the Gradle files, then run `androidApp` on the emulator.
     }
     ```
 
-1.  In `PatientListScreen.kt`, `handleSyncJobStatus` refreshes the list and shows a message when the
-    sync completes:
+1.  In `PatientListScreen.kt`, add the code to `handleSyncJobStatus` that refreshes the list and
+    shows a message when the sync completes:
 
     ```kotlin
     when (syncJobStatus) {
@@ -309,7 +312,7 @@ the changes. The code is in `triggerUpdate()` in `PatientListViewModel.kt`.
 
 ## Search for patients by name
 
-`searchPatientsByName` in `PatientListViewModel.kt` filters patients by name:
+Add the code to `searchPatientsByName` in `PatientListViewModel.kt` that filters patients by name:
 
 ```kotlin
 fun searchPatientsByName(nameQuery: String) {

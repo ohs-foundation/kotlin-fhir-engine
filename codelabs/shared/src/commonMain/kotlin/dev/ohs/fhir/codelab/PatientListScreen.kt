@@ -93,13 +93,7 @@ private suspend fun handleSyncJobStatus(
   viewModel: PatientListViewModel,
   snackbarHostState: SnackbarHostState,
 ) {
-  when (syncJobStatus) {
-    is CurrentSyncJobStatus.Succeeded -> {
-      viewModel.searchPatientsByName("")
-      snackbarHostState.showSnackbar("Sync Finished")
-    }
-    else -> {}
-  }
+  // Add code to show a message when the sync job is complete
 }
 
 @Composable
