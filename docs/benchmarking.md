@@ -48,7 +48,7 @@ The tasks map to configurations in `engine/build.gradle.kts`:
 - `pr` (`prBenchmark`): everything except `SyncDownloadBenchmark`, `ConcurrentAccessBenchmark` and
   the `prNoisy` classes, in three forks of three warmups and five half-second iterations, with the
   sweeps at their smallest size (`rows=1000`, `changeCount=50`, `results=100`) and the index
-  benchmarks at the shipped index only (`shape=current`, `collation=binary`).
+  benchmarks at the shipped index only (`shape=current`, `collation=nocase`).
 - `prNoisy` (`prNoisyBenchmark`): the engine write, `BulkImport`, `ResourceRead` and `DatabaseOpen`
   classes in three forks of five one-second iterations, because one invocation can take about
   300 ms.

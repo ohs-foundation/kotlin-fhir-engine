@@ -275,6 +275,25 @@ internal abstract class LocalChangeDao {
   )
   abstract suspend fun getAllLocalChanges(): List<LocalChangeEntity>
 
+  /**
+   * Which of [resourceIds] of [resourceType] have a pending change.
+   *
+   * Conflict detection needs to know which of a downloaded page is already edited locally. Reading
+   * the whole queue to answer that costs its size on every page, payload text included.
+   * `resourceType` leads the query because it leads the index over `(resourceType, resourceId)`.
+   * Without it the lookup scans the queue instead.
+   */
+  @Query(
+    """
+        SELECT DISTINCT resourceId
+        FROM LocalChangeEntity
+        WHERE resourceType = :resourceType AND resourceId IN (:resourceIds)""",
+  )
+  abstract suspend fun getPendingChangeIds(
+    resourceType: String,
+    resourceIds: List<String>,
+  ): List<String>
+
   @Query(
     """
         SELECT *
@@ -556,7 +575,7 @@ internal abstract class LocalChangeDao {
 
 /**
  * Calculates the JSON patch between two serialized [Resource]s. KMP replacement for the original
- * engine's Jackson + jsonpatch `diff`; delegates to [JsonDiff], which also filters the `/meta` and
+ * engine's Jackson + jsonpatch `diff`. Delegates to [JsonDiff], which also filters the `/meta` and
  * `/text` paths.
  */
 internal fun diff(source: String, target: String): String = JsonDiff.diff(source, target)

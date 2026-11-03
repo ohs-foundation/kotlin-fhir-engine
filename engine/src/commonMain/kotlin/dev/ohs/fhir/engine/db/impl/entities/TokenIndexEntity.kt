@@ -27,7 +27,7 @@ import kotlin.uuid.Uuid
 @Entity(
   indices =
     [
-      Index(value = ["resourceType", "index_name", "index_value", "resourceUuid"]),
+      Index(value = ["resourceType", "index_name", "index_value", "index_system", "resourceUuid"]),
       // Keep this index for faster foreign lookup
       Index(value = ["resourceUuid"]),
     ],
