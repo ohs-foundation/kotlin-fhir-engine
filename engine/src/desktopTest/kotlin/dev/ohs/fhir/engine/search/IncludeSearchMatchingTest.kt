@@ -41,8 +41,8 @@ import kotlinx.coroutines.test.runTest
  * Executes `_include` and `_revinclude` searches against a real database, rather than asserting the
  * SQL they compile to.
  *
- * The include join is written for the query planner rather than for legibility — see
- * `Search.getIncludeQuery` — and `SearchTest` only compares generated SQL while
+ * The include join is written for the query planner rather than for legibility, as
+ * `Search.getIncludeQuery` explains. `SearchTest` only compares generated SQL and
  * `SearchQueryPlanTest` only reads the plan. Neither would notice a join that matched the wrong
  * rows, or none.
  *
@@ -113,7 +113,7 @@ class IncludeSearchMatchingTest {
     val observation = results.single { it.resource.id == SHARED_OBSERVATION_ID }
     val included = observation.included?.get(SUBJECT_PARAM).orEmpty()
 
-    // A patient shares this id; only the practitioner may come back, and only once.
+    // A patient shares this id. Only the practitioner may come back, and only once.
     assertEquals(listOf(SHARED_ID), included.map { it.id })
     assertEquals(listOf("Practitioner"), included.map { it.resourceType })
   }

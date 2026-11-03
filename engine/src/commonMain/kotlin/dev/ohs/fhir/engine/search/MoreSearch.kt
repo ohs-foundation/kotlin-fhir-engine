@@ -113,7 +113,7 @@ internal suspend fun Search.count(database: Database): Long {
   return database.count(getQuery(true))
 }
 
-/** Builds the SQL [SearchQuery] for this search; pass [isCount] to produce a `COUNT(*)` query. */
+/** Builds the SQL [SearchQuery] for this search. Pass [isCount] to produce a `COUNT(*)` query. */
 fun Search.getQuery(isCount: Boolean = false): SearchQuery {
   return getQuery(isCount, null)
 }
@@ -159,8 +159,8 @@ internal fun Search.getRevIncludeQuery(includeIds: List<String>): SearchQuery {
  * `UNION ALL` branch per include). [includeIds] are the base results' resource uuids.
  *
  * The join splits `rie.index_value` rather than concatenating `re.resourceType` and `re.resourceId`
- * into it. Both forms match the same rows — a reference joins only when it is the referenced
- * resource's type and id separated by a slash — but SQLite cannot seek an index whose column sits
+ * into it. Both forms match the same rows, since a reference joins only when it is the referenced
+ * resource's type and id separated by a slash. But SQLite cannot seek an index whose column sits
  * inside an expression, so only this form lets `re` use
  * `index_ResourceEntity_resourceType_resourceId`. `SearchQueryPlanTest` pins both halves.
  */
@@ -782,7 +782,7 @@ internal fun fhirDateTimeToEpochMillis(dateTime: FhirDateTime): Long =
   }
 
 /**
- * Returns the end of [dateTime] as epoch milliseconds (UTC) — the last instant of its precision
+ * Returns the end of [dateTime] as epoch milliseconds (UTC), the last instant of its precision
  * window.
  */
 internal fun fhirDateTimeToEndEpochMillis(dateTime: FhirDateTime): Long =

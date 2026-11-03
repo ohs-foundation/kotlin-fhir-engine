@@ -35,9 +35,8 @@ import kotlinx.benchmark.TearDown
 import kotlinx.datetime.LocalDate
 
 /**
- * A date range search against the shipped date index and the one before #109, with `resourceUuid`
- * ahead of the range columns, across table sizes and window widths. Indices are rebuilt with raw
- * DDL per trial.
+ * A date range search against the shipped date index and one with `resourceUuid` ahead of the range
+ * columns, across table sizes and window widths. Indices are rebuilt with raw DDL per trial.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -46,10 +45,10 @@ open class DateIndexShapeBenchmark {
 
   @Param("1000", "10000", "50000") var rows: Int = 0
 
-  /** `current` is what the engine ships; `uuidFirst` puts `resourceUuid` ahead of the range. */
+  /** `current` is what the engine ships, and `uuidFirst` puts `resourceUuid` ahead of the range. */
   @Param("current", "uuidFirst") var shape: String = ""
 
-  /** `narrow` matches about 4% of rows; `wide` about 40%. */
+  /** `narrow` matches about 4% of rows and `wide` about 40%. */
   @Param("narrow", "wide") var window: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase

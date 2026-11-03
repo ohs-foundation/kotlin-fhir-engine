@@ -34,7 +34,7 @@ import kotlinx.benchmark.TearDown
 
 /**
  * A reference or uri lookup with the shipped index, which ends in `resourceUuid` and so covers the
- * lookup, and with the index before #109, which does not. Read cost only.
+ * lookup, and with one that does not. Read cost only.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -45,7 +45,7 @@ open class LookupIndexCoveringBenchmark {
 
   @Param("Reference", "Uri") var table: String = ""
 
-  /** `current` is what the engine ships, ending in `resourceUuid`; `notCovering` omits it. */
+  /** `current` is what the engine ships, ending in `resourceUuid`. `notCovering` omits it. */
   @Param("current", "notCovering") var shape: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase

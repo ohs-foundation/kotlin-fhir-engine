@@ -35,7 +35,7 @@ import kotlinx.benchmark.TearDown
 
 /**
  * Measures what sorting a search costs, and whether paging avoids it. The single query groups and
- * orders in temporary B-trees; an unfiltered sorted search instead reads the sort index in order.
+ * orders in temporary B-trees. An unfiltered sorted search instead reads the sort index in order.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)

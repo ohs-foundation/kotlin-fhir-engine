@@ -61,7 +61,7 @@ import kotlinx.datetime.LocalDate
  * Asserts which SQLite index each search shape actually uses, via `EXPLAIN QUERY PLAN`.
  *
  * These are not benchmarks. A lost index only shows up in a timing run at a large corpus, and a
- * warm page cache hides it even then; the query plan says so immediately and against an empty
+ * warm page cache hides it even then. The query plan says so immediately and against an empty
  * database. Timing answers how slow, this answers why.
  *
  * The plan text comes from SQLite, so it is checked by substring rather than equality: the wording
@@ -127,8 +127,8 @@ class SearchQueryPlanTest {
 
   /**
    * A NOCASE column plus a whole bound pattern let SQLite rewrite `LIKE 'x%'` into a range scan,
-   * hence the `>` and `<` bounds. Worth 32x on a 50,000-row table; `StringIndexCollationBenchmark`
-   * sweeps it.
+   * hence the `>` and `<` bounds. Worth 32x on a 50,000-row table, as
+   * `StringIndexCollationBenchmark` measures.
    */
   @Test
   fun `prefix string search narrows on index_value through the LIKE range optimisation`() =

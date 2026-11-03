@@ -57,7 +57,7 @@ import kotlin.uuid.Uuid
  * The implementation for the persistence layer using Room KMP. See docs for
  * [dev.ohs.fhir.engine.db.Database] for the API docs.
  *
- * Note: Room KMP does not provide a `withTransaction` extension; transactions are run via
+ * Note: Room KMP does not provide a `withTransaction` extension. Transactions are run via
  * [androidx.room3.useWriterConnection] and [androidx.room3.Transactor.withTransaction]. DAO calls
  * made inside reuse the writer connection from the coroutine context, so they participate in the
  * transaction.
@@ -394,7 +394,7 @@ internal class DatabaseImpl(
 
       // Update LocalChange records and identify referring resources. We update LocalChange records
       // first because they may contain references to the old resource ID that aren't present in the
-      // latest ResourceEntity; the LocalChangeResourceReferenceEntity table lets us find them.
+      // latest ResourceEntity. The LocalChangeResourceReferenceEntity table lets us find them.
       val uuidsOfReferringResources =
         localChangeDao.updateResourceIdAndReferences(
           resourceUuid = resourceUuid,

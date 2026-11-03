@@ -38,8 +38,8 @@ data class StringParamFilterCriterion(
         // The wildcard goes in the bound argument: SQLite applies its LIKE optimisation only to a
         // literal or a plain parameter, never to a `? || '%'` expression.
         StringFilterModifier.STARTS_WITH -> ConditionParam("index_value LIKE ?", "${value!!}%")
-        // `:exact` is case-sensitive. The NOCASE comparison seeks the index; the BINARY one keeps
-        // only the exact case.
+        // `:exact` is case-sensitive. The NOCASE comparison seeks the index, and the BINARY one
+        // keeps only the exact case.
         StringFilterModifier.MATCHES_EXACTLY ->
           ConditionParam("index_value = ? AND index_value = ? COLLATE BINARY", value!!, value!!)
         // A leading wildcard can never use the LIKE optimisation, and a plain parameter makes

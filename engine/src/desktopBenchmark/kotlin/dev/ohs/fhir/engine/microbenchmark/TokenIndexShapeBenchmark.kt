@@ -44,7 +44,7 @@ open class TokenIndexShapeBenchmark {
   @Param("1000", "10000", "50000") var rows: Int = 0
 
   /**
-   * `current` is what the engine ships, with `index_system` before `resourceUuid`; `noSystem` omits
+   * `current` is what the engine ships, with `index_system` before `resourceUuid`. `noSystem` omits
    * it.
    */
   @Param("current", "noSystem") var shape: String = ""

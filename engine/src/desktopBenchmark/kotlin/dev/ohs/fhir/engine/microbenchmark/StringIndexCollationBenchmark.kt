@@ -42,7 +42,7 @@ open class StringIndexCollationBenchmark {
 
   @Param("1000", "10000", "50000") var rows: Int = 0
 
-  /** `nocase` is what the engine ships; `binary` is the index before it. */
+  /** `nocase` is what the engine ships, and `binary` is the index before it. */
   @Param("binary", "nocase") var collation: String = ""
 
   private lateinit var database: IndexBenchmarkDatabase
@@ -76,7 +76,7 @@ open class StringIndexCollationBenchmark {
         .apply { filter(StringClientParam("given"), { value = prefix }) }
         .getQuery()
 
-    // `binary` must not narrow on index_value; `nocase` must.
+    // `binary` must not narrow on index_value, and `nocase` must.
     val plan = database.planFor(query).joinToString(" | ")
     val narrowsOnValue = "index_value>?" in plan
     check(narrowsOnValue == (collation == "nocase")) {

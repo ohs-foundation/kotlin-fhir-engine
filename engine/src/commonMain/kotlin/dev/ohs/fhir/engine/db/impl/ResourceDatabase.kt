@@ -257,7 +257,7 @@ internal abstract class ResourceDatabase : RoomDatabase() {
         c.executeSQL(
           "CREATE INDEX IF NOT EXISTS `index_QuantityIndexEntity_resourceType_index_name_index_code_index_value` ON `QuantityIndexEntity` (`resourceType`, `index_name`, `index_code`, `index_value`)",
         )
-        // The date range columns move ahead of resourceUuid; the rows are unchanged.
+        // The date range columns move ahead of resourceUuid. The rows are unchanged.
         for (table in listOf("DateIndexEntity", "DateTimeIndexEntity")) {
           c.executeSQL(
             "DROP INDEX IF EXISTS `index_${table}_resourceType_index_name_resourceUuid_index_from_index_to`",

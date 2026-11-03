@@ -70,13 +70,13 @@ open class QuantityIndexShapeBenchmark {
     withUnit = quantitySearch(unit = PROBE_UNIT)
     withoutUnit = quantitySearch(unit = null)
 
-    // The engine rewrites the code for units it can convert; PROBE_UNIT must stay verbatim.
+    // The engine rewrites the code for units it can convert, so PROBE_UNIT must stay verbatim.
     check(PROBE_UNIT in withUnit.args.map { it.toString() }) {
       "the engine no longer queries '$PROBE_UNIT' verbatim, so the seeded codes do not match it: " +
         withUnit.args
     }
 
-    // `valueFirst` cannot narrow on the unit; the other arms must.
+    // `valueFirst` cannot narrow on the unit, and the other arms must.
     val plan = database.planFor(withUnit).joinToString(" | ")
     check(("index_code=?" in plan) == (shape != "valueFirst")) {
       "arm '$shape' produced the wrong plan, so the arms measure the same thing: $plan"
@@ -96,8 +96,8 @@ open class QuantityIndexShapeBenchmark {
   @Benchmark fun quantitySearchWithUnit(): Int = database.count(withUnit)
 
   /**
-   * No unit, so `codeFirst` cannot use the range. Matches more rows than [quantitySearchWithUnit];
-   * compare it only across the arms.
+   * No unit, so `codeFirst` cannot use the range. Matches more rows than [quantitySearchWithUnit],
+   * so compare it only across the arms.
    */
   @Benchmark fun quantitySearchWithoutUnit(): Int = database.count(withoutUnit)
 
