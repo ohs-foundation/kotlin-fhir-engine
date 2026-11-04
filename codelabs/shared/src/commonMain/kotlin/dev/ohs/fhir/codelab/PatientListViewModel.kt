@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.codelab
 
 import dev.ohs.fhir.engine.FhirEngine
@@ -43,9 +42,9 @@ class PatientListViewModel(
   init {
     scope.launch {
       _patients.value =
-        fhirEngine.search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }.map {
-          it.resource
-        }
+        fhirEngine
+          .search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }
+          .map { it.resource }
     }
   }
 

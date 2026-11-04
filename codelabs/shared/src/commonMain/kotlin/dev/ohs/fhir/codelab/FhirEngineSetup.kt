@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dev.ohs.fhir.codelab
 
 /** Initializes the FHIR Engine. [platformContext] is the application `Context` on Android. */
