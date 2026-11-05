@@ -80,6 +80,9 @@ jobs:
           - name: iOS simulator
             target: ":engine:iosSimulatorArm64Test"
             os: macos-latest
+          - name: iOS simulator, system SQLite
+            target: ":engine:iosSimulatorArm64SystemSqliteTest"
+            os: macos-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
 

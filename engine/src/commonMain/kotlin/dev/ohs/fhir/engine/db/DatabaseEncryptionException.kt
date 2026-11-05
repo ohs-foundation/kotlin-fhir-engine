@@ -34,7 +34,10 @@ class DatabaseEncryptionException(
     /** Required encryption algorithm is not available. */
     UNSUPPORTED,
 
-    /** The key store is temporarily unavailable, busy or locked. Retried before it is thrown. */
+    /**
+     * The key store is temporarily unavailable, busy or locked, so a later call can succeed.
+     * Android retries before it throws.
+     */
     TIMEOUT,
   }
 }
