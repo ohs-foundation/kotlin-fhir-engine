@@ -15,54 +15,37 @@
  */
 package dev.ohs.fhir.engine.db.impl
 
-import dev.ohs.fhir.engine.db.DatabaseEncryptionException
-import dev.ohs.fhir.engine.db.DatabaseEncryptionException.DatabaseEncryptionErrorCode.UNSUPPORTED
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
 import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
-import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.test.runTest
 import platform.Foundation.NSFileManager
 
 /** Only runs in iosSimulatorArm64SystemSqliteTest, the test binary without SQLCipher. */
 @OptIn(ExperimentalForeignApi::class)
 class SqlCipherNotLinkedTest {
   @Test
-  fun encryptedDatabase_withoutSqlCipher_throwsUnsupported() = runTest {
-    if (isSqlCipherLinked) return@runTest
+  fun encryptedDatabase_withoutSqlCipher_throwsUnsupported() {
+    if (isSqlCipherLinked) return
     // Other tests leave a plain database behind, which blocks opening an encrypted one.
     NSFileManager.defaultManager.removeItemAtPath(
       databaseFileName(Unit, null, DatabaseConfig()),
       error = null,
     )
     val config = DatabaseConfig(encrypt = true)
-    val database =
+    assertFailsWith<UnsupportedOperationException> {
       DatabaseImpl(
         testPlatformContext(),
         ResourceIndexer(SearchParamDefinitionsProviderImpl()),
         testStorageDirectory(),
         config,
       )
-    try {
-      val exception =
-        assertFailsWith<DatabaseEncryptionException> {
-          database.select(ResourceType.Patient, "any")
-        }
-      assertEquals(UNSUPPORTED, exception.errorCode)
-      // An empty file left here would stop the app from turning encryption off.
-      assertFalse(databaseFileExists(Unit, null, config))
-    } finally {
-      database.close()
-      NSFileManager.defaultManager.removeItemAtPath(
-        databaseFileName(Unit, null, config),
-        error = null,
-      )
     }
+    // An empty file left here would stop the app from turning encryption off.
+    assertFalse(databaseFileExists(Unit, null, config))
   }
 }

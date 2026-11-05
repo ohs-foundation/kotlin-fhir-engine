@@ -23,8 +23,6 @@ import androidx.sqlite.SQLiteException
 import androidx.sqlite.driver.NativeSQLiteDriver
 import androidx.sqlite.execSQL
 import dev.ohs.fhir.engine.DatabaseErrorStrategy
-import dev.ohs.fhir.engine.db.DatabaseEncryptionException
-import dev.ohs.fhir.engine.db.DatabaseEncryptionException.DatabaseEncryptionErrorCode.UNSUPPORTED
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -53,7 +51,11 @@ internal actual fun getDatabaseBuilder(
   return builder.setDriver(databaseDriver(config)).setQueryCoroutineContext(Dispatchers.IO)
 }
 
-internal actual val isDatabaseEncryptionSupported: Boolean = true
+// The app links SQLCipher, not the engine, so init checks it on an in-memory database. Opening the
+// file would create it, and an empty encrypted file then stops the app from turning encryption off.
+internal actual val isDatabaseEncryptionSupported: Boolean by lazy {
+  NativeSQLiteDriver().linksSqlCipher()
+}
 
 // An in-memory database never reaches disk, so it is not encrypted.
 internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver =
@@ -63,10 +65,7 @@ internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver =
     NativeSQLiteDriver()
   }
 
-/**
- * Keys every connection with the Keychain key. The app links SQLCipher, not the engine, so every
- * open first checks that it is linked.
- */
+/** Keys every connection with the Keychain key. */
 private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorStrategy) :
   SQLiteDriver {
   private val driver = NativeSQLiteDriver()
@@ -94,18 +93,7 @@ private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorSt
       openKeyed(fileName)
     }
 
-  // Checked on an in-memory database. Opening the file would create it, and an empty encrypted file
-  // then stops the app from turning encryption off.
-  private val sqlCipherLinked by lazy { driver.linksSqlCipher() }
-
   private fun openKeyed(fileName: String): SQLiteConnection {
-    if (!sqlCipherLinked) {
-      throw DatabaseEncryptionException(
-        null,
-        UNSUPPORTED,
-        "SQLCipher is not linked into the app, so the database cannot be encrypted.",
-      )
-    }
     // Read before the open creates the file, so a Keychain failure leaves no file behind.
     val keyHex = key.toHexString()
     val connection = driver.open(fileName)

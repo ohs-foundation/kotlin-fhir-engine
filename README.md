@@ -164,8 +164,7 @@ Set `enableEncryption = true` to store the database encrypted with
   [Adding package dependencies to your app](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
   Build the Kotlin framework as static, so the app's link decides which SQLite the engine calls. The
   key is 32 random bytes kept in the Keychain, which only works in a signed build. If the app links
-  the system SQLite instead, the first database call throws `DatabaseEncryptionException` with
-  `errorCode` `UNSUPPORTED`.
+  the system SQLite instead, `FhirEngineProvider.init` throws `UnsupportedOperationException`.
 - **Desktop and web.** Not supported. `FhirEngineProvider.init` throws
   `UnsupportedOperationException` rather than silently storing plaintext. See
   [Desktop and web](#desktop-and-web) for why, and what support would need.
