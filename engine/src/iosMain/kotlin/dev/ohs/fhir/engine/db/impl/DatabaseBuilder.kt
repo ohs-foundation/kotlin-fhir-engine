@@ -29,7 +29,6 @@ import kotlinx.coroutines.IO
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
-import platform.Foundation.NSThread
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLIsExcludedFromBackupKey
 import platform.Foundation.NSUserDomainMask
@@ -71,12 +70,9 @@ private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorSt
   private val driver = NativeSQLiteDriver()
 
   // Read on the first open, as on Android, so a Keychain failure is thrown by the first database
-  // call. Lazy reads it once for all of Room's connections.
-  private val key by lazy {
-    readKeyRetryingTimeouts({ NSThread.sleepForTimeInterval(it / 1000.0) }) {
-      DatabaseEncryptionKeyProvider.getOrCreateKey()
-    }
-  }
+  // call. Lazy reads it once for all of Room's connections. Not retried like Android, because a
+  // Keychain locked before the first unlock stays locked until the user unlocks the device.
+  private val key by lazy { DatabaseEncryptionKeyProvider.getOrCreateKey() }
 
   override fun open(fileName: String): SQLiteConnection =
     try {

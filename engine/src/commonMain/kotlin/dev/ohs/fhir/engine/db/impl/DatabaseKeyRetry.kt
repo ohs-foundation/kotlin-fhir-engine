@@ -21,11 +21,10 @@ import dev.ohs.fhir.engine.db.DatabaseEncryptionException.DatabaseEncryptionErro
 /**
  * Reads the database key with [read], trying again while the platform key store reports a timeout.
  *
- * Android's keymaster reports its secure hardware busy. The iOS Keychain refuses everything until
- * the first unlock after a reboot, which is when a background sync may run. Any other failure, and
- * the last attempt, go straight to the caller.
+ * Android's keymaster reports its secure hardware busy. Any other failure, and the last attempt, go
+ * straight to the caller.
  *
- * [sleep] takes milliseconds and blocks. The drivers call this from inside open, which Room runs
+ * [sleep] takes milliseconds and blocks. The driver calls this from inside open, which Room runs
  * off the main thread.
  */
 internal fun <T> readKeyRetryingTimeouts(sleep: (Long) -> Unit, read: () -> T): T {

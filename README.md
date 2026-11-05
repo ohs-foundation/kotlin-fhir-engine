@@ -174,8 +174,9 @@ lost, the first database call throws `SQLiteException`, or, with
 `DatabaseErrorStrategy.RECREATE_AT_OPEN`, the database is deleted and created again empty.
 
 If the Keystore or Keychain cannot provide the key, the first database call throws
-`DatabaseEncryptionException`. An `errorCode` of `TIMEOUT` means the key store stayed busy or
-locked through the engine's retries, so a later call can succeed. `UNSUPPORTED` and `UNKNOWN` will
+`DatabaseEncryptionException`. An `errorCode` of `TIMEOUT` means the key store is busy or locked,
+so a later call can succeed. Android retries for a few seconds first. iOS throws at once, because
+its Keychain stays locked until the first unlock after a reboot. `UNSUPPORTED` and `UNKNOWN` will
 not clear on their own.
 
 The key never leaves the device, so a backup restored to another device cannot be read. On Android,
