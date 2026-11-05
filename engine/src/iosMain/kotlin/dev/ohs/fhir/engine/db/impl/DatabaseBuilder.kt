@@ -106,9 +106,11 @@ private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorSt
         "SQLCipher is not linked into the app, so the database cannot be encrypted.",
       )
     }
+    // Read before the open creates the file, so a Keychain failure leaves no file behind.
+    val keyHex = key.toHexString()
     val connection = driver.open(fileName)
     try {
-      connection.execSQL("PRAGMA key = \"x'${key.toHexString()}'\"")
+      connection.execSQL("PRAGMA key = \"x'$keyHex'\"")
       // Reads the header, which fails when the key does not match the file.
       connection.prepare("SELECT count(*) FROM sqlite_master").use { it.step() }
     } catch (exception: Throwable) {
