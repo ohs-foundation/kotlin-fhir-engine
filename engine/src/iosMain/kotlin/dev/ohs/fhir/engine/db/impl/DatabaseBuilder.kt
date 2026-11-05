@@ -114,16 +114,15 @@ private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorSt
         .setResourceValue(true, forKey = NSURLIsExcludedFromBackupKey, error = null)
     }
   }
+}
 
-  @OptIn(ExperimentalForeignApi::class)
-  private fun deleteDatabaseFiles(fileName: String) {
-    for (suffix in DATABASE_FILE_SUFFIXES) {
-      NSFileManager.defaultManager.removeItemAtPath(fileName + suffix, error = null)
-    }
-  }
+private val DATABASE_FILE_SUFFIXES = listOf("", "-wal", "-shm", "-journal")
 
-  private companion object {
-    val DATABASE_FILE_SUFFIXES = listOf("", "-wal", "-shm", "-journal")
+/** Deletes the database file and the files SQLite keeps beside it. */
+@OptIn(ExperimentalForeignApi::class)
+internal fun deleteDatabaseFiles(fileName: String) {
+  for (suffix in DATABASE_FILE_SUFFIXES) {
+    NSFileManager.defaultManager.removeItemAtPath(fileName + suffix, error = null)
   }
 }
 

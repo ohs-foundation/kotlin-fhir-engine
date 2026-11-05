@@ -22,20 +22,14 @@ import dev.ohs.fhir.engine.testStorageDirectory
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlinx.cinterop.ExperimentalForeignApi
-import platform.Foundation.NSFileManager
 
 /** Only runs in iosSimulatorArm64SystemSqliteTest, the test binary without SQLCipher. */
-@OptIn(ExperimentalForeignApi::class)
 class SqlCipherNotLinkedTest {
   @Test
   fun encryptedDatabase_withoutSqlCipher_throwsUnsupported() {
     if (isSqlCipherLinked) return
     // Other tests leave a plain database behind, which blocks opening an encrypted one.
-    NSFileManager.defaultManager.removeItemAtPath(
-      databaseFileName(Unit, null, DatabaseConfig()),
-      error = null,
-    )
+    deleteDatabaseFiles(databaseFileName(Unit, null, DatabaseConfig()))
     val config = DatabaseConfig(encrypt = true)
     assertFailsWith<UnsupportedOperationException> {
       DatabaseImpl(

@@ -22,7 +22,6 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
-import platform.Foundation.NSFileManager
 import platform.Foundation.dataWithContentsOfFile
 import platform.posix.memcpy
 
@@ -37,10 +36,7 @@ internal actual val encryptionTestSupport: EncryptionTestSupport? =
     object : EncryptionTestSupport {
       override fun deleteDatabaseFiles() {
         for (encrypted in listOf(false, true)) {
-          NSFileManager.defaultManager.removeItemAtPath(
-            databaseFileName(Unit, null, DatabaseConfig(encrypt = encrypted)),
-            error = null,
-          )
+          deleteDatabaseFiles(databaseFileName(Unit, null, DatabaseConfig(encrypt = encrypted)))
         }
       }
 
