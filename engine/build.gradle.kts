@@ -45,7 +45,7 @@ val downloadSqlCipher by
           )
           .toURL()
           .openStream()
-          .use { it.copyTo(file.outputStream()) }
+          .use { input -> file.outputStream().use { input.copyTo(it) } }
       }
       val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
       val actual = digest.joinToString("") { "%02x".format(it) }
