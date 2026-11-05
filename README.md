@@ -88,7 +88,7 @@ kotlin {
 On iOS the app must link SQLite, even without encryption. The engine does not include SQLite on
 iOS, so the app can choose SQLCipher instead, which is how encryption works on iOS. Link the system
 SQLite, or SQLCipher to encrypt (see [Encryption](#encryption)). Without either, the app fails to
-link with undefined `sqlite3_` symbols. Releases up to 2.0.0-alpha04 included SQLite, so apps
+link with undefined `sqlite3_` symbols. Releases up to 2.0.0-alpha05 included SQLite, so apps
 upgrading from them must add this.
 
 In Xcode, add `libsqlite3.tbd` under *Frameworks, Libraries, and Embedded Content*, or add
