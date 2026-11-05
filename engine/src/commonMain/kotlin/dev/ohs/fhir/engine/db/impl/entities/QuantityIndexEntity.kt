@@ -27,7 +27,12 @@ import kotlin.uuid.Uuid
 @Entity(
   indices =
     [
+      // A search that omits the unit ranges on index_value, and one that names a unit compares it
+      // for equality first. An index serves a range only on the column after its equality prefix,
+      // and nothing past that range is reachable, so neither order serves both shapes. Both are
+      // kept and SQLite picks per query.
       Index(value = ["resourceType", "index_name", "index_value", "index_code"]),
+      Index(value = ["resourceType", "index_name", "index_code", "index_value"]),
       // keep this index for faster foreign lookup
       Index(value = ["resourceUuid"]),
     ],

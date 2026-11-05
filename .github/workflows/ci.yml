@@ -188,6 +188,8 @@ jobs:
             engine/build/reports/
             engine/build/outputs/androidTest-results/
 
+  # Each shard runs base and head for its share of the classes on one runner. The comment workflow
+  # merges the shards.
   benchmark:
     name: Micro benchmarks
     runs-on: ubuntu-latest
@@ -195,11 +197,42 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
 
     steps:
       - uses: actions/checkout@v4
 
+      # Read from the API so a re-run sees labels added after the event. Empty when the pull
+      # request changes nothing the benchmarks compile.
+      - name: Choose the tier
+        id: tier
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+        run: |
+          mkdir -p reports
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "tasks=:engine:benchmark" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only > reports/changed-files.txt \
+            || rm -f reports/changed-files.txt
+          if gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name' \
+              | grep -qx 'benchmark:full'; then
+            tasks=":engine:benchmark"
+          elif [ -f reports/changed-files.txt ] && [ "$(python3 .github/scripts/benchmark_table.py \
+              --changed-files reports/changed-files.txt --count-changes)" = 0 ]; then
+            tasks=""
+          else
+            tasks=":engine:prBenchmark :engine:prNoisyBenchmark"
+          fi
+          echo "tasks=$tasks" >> "$GITHUB_OUTPUT"
+
       - name: Add swap space
+        if: steps.tier.outputs.tasks != ''
         run: |
           sudo swapoff -a || true
           sudo rm -f /mnt/swapfile
@@ -209,58 +242,46 @@ jobs:
           sudo swapon /mnt/swapfile
 
       - name: Set up JDK 21
+        if: steps.tier.outputs.tasks != ''
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Gradle
+        if: steps.tier.outputs.tasks != ''
         uses: gradle/actions/setup-gradle@v4
 
       # On a pull request, base and head run in this one job, because scores from different
       # runners are not comparable. Databases go on tmpfs because runner disk speed is unstable.
       - name: Create a RAM-backed temp directory
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.tier.outputs.tasks != ''
         run: mkdir -p /dev/shm/benchmarks
 
       - name: Check out the base branch
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.tier.outputs.tasks != ''
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
 
-      # Read from the API so a re-run sees labels added after the event.
-      - name: Choose the tier
-        id: tier
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.number }}
-        run: |
-          if gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name' \
-              | grep -qx 'benchmark:full'; then
-            echo "tasks=:engine:benchmark" >> "$GITHUB_OUTPUT"
-          else
-            echo "tasks=:engine:prBenchmark :engine:prNoisyBenchmark" >> "$GITHUB_OUTPUT"
-          fi
-
       # The base may predate the benchmarks; the comment then shows the head alone.
       - name: Run the benchmarks against the base
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.tier.outputs.tasks != ''
         continue-on-error: true
         working-directory: base
-        run: ./gradlew ${{ steps.tier.outputs.tasks }} -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        run: ./gradlew ${{ steps.tier.outputs.tasks }} -Pbenchmark.shard=${{ matrix.shard }} -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
 
       - name: Run the benchmarks against the head
-        if: github.event_name == 'pull_request'
-        run: ./gradlew ${{ steps.tier.outputs.tasks }} -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        if: github.event_name == 'pull_request' && steps.tier.outputs.tasks != ''
+        run: ./gradlew ${{ steps.tier.outputs.tasks }} -Pbenchmark.shard=${{ matrix.shard }} -Pbenchmark.tmpdir=/dev/shm/benchmarks "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
 
       - name: Run the full tier
         if: github.event_name != 'pull_request'
-        run: ./gradlew :engine:benchmark "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        run: ./gradlew :engine:benchmark -Pbenchmark.shard=${{ matrix.shard }} "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
 
       # Fork pull requests leave workflow_run.pull_requests empty; the artifact carries the number.
+      # A skipped run uploads these alone, and the comment says so.
       - name: Collect reports
         if: always()
         run: |
@@ -269,10 +290,11 @@ jobs:
           cp -r base/engine/build/reports/benchmarks/. reports/base/ 2>/dev/null || true
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "${{ github.event.number }}" > reports/pr-number.txt
+            echo "${{ github.event.pull_request.base.sha }}" > reports/base-sha.txt
           fi
 
       - name: Record the machine
-        if: always()
+        if: always() && steps.tier.outputs.tasks != ''
         run: |
           {
             echo "Runner image: ${ImageOS:-unknown} ${ImageVersion:-}"
@@ -283,20 +305,26 @@ jobs:
           } > reports/machine.txt
           cat reports/machine.txt
 
+      # This shard's rows only; the pull request comment has all of them.
       - name: Write the job summary
         if: always()
         run: |
-          if [ -z "$(find reports/head -name '*.json' -print -quit)" ]; then exit 0; fi
-          BASE=""
+          ARGS=(--repository "$GITHUB_REPOSITORY")
+          if [ -f reports/machine.txt ]; then ARGS+=(--machine reports/machine.txt); fi
           if [ -n "$(find reports/base -name '*.json' -print -quit)" ]; then
-            BASE="--base reports/base"
+            ARGS+=(--base reports/base)
           fi
-          python3 .github/scripts/benchmark_table.py reports/head $BASE >> "$GITHUB_STEP_SUMMARY"
-          { echo; echo '```'; cat reports/machine.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/base-sha.txt ]; then
+            ARGS+=(--base-sha "$(head -n 1 reports/base-sha.txt)" --head-sha "${{ github.event.pull_request.head.sha }}")
+          fi
+          if [ -f reports/changed-files.txt ]; then
+            ARGS+=(--changed-files reports/changed-files.txt)
+          fi
+          python3 .github/scripts/benchmark_table.py reports/head "${ARGS[@]}" >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: Upload benchmark reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: benchmark-reports
+          name: benchmark-shard-${{ matrix.shard }}
           path: reports/

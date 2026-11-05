@@ -119,14 +119,14 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ? || '%' COLLATE NOCASE
+      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ?
       )
       """
         .trimIndent(),
       query.query,
     )
     assertEquals(
-      listOf(ResourceType.Patient.name, "address", "someValue"),
+      listOf(ResourceType.Patient.name, "address", "someValue%"),
       query.args,
     )
   }
@@ -152,14 +152,14 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value = ?
+      WHERE resourceType = ? AND index_name = ? AND (index_value = ? AND index_value = ? COLLATE BINARY)
       )
       """
         .trimIndent(),
       query.query,
     )
     assertEquals(
-      listOf(ResourceType.Patient.name, "address", "someValue"),
+      listOf(ResourceType.Patient.name, "address", "someValue", "someValue"),
       query.args,
     )
   }
@@ -660,7 +660,7 @@ class SearchTest {
       WHERE a.resourceType = ?
       GROUP BY a.resourceUuid
       HAVING MIN(IFNULL(b.index_value,0)) >= -9223372036854775808
-      ORDER BY IFNULL(b.index_value, 9223372036854775808) ASC
+      ORDER BY IFNULL(b.index_value, x'') ASC
       """
         .trimIndent(),
       query.query,
@@ -1544,11 +1544,11 @@ class SearchTest {
       ON a.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ? || '%' COLLATE NOCASE
+      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ?
       )
       GROUP BY a.resourceUuid
       HAVING MIN(IFNULL(b.index_value,0)) >= -9223372036854775808
-      ORDER BY IFNULL(b.index_value, 9223372036854775808) ASC
+      ORDER BY IFNULL(b.index_value, x'') ASC
       LIMIT ? OFFSET ?
       """
         .trimIndent(),
@@ -1559,7 +1559,7 @@ class SearchTest {
         "given",
         ResourceType.Patient.name,
         "family",
-        "Jones",
+        "Jones%",
         10,
         20,
       ),
@@ -1643,13 +1643,13 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND (index_value = ? OR index_value = ?)
+      WHERE resourceType = ? AND index_name = ? AND ((index_value = ? AND index_value = ? COLLATE BINARY) OR (index_value = ? AND index_value = ? COLLATE BINARY))
       )
       """
         .trimIndent(),
       query.query,
     )
-    assertEquals(listOf("Patient", "given", "John", "Jane"), query.args)
+    assertEquals(listOf("Patient", "given", "John", "John", "Jane", "Jane"), query.args)
   }
 
   @Test
@@ -1682,17 +1682,20 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value = ?
+      WHERE resourceType = ? AND index_name = ? AND (index_value = ? AND index_value = ? COLLATE BINARY)
       )
       OR a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value = ?
+      WHERE resourceType = ? AND index_name = ? AND (index_value = ? AND index_value = ? COLLATE BINARY)
       )
       """
         .trimIndent(),
       query.query,
     )
-    assertEquals(listOf("Patient", "given", "John", "Patient", "given", "Jane"), query.args)
+    assertEquals(
+      listOf("Patient", "given", "John", "John", "Patient", "given", "Jane", "Jane"),
+      query.args,
+    )
   }
 
   // Test for https://github.com/google/android-fhir/issues/903
@@ -1712,18 +1715,18 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ? || '%' COLLATE NOCASE
+      WHERE resourceType = ? AND index_name = ? AND index_value LIKE ?
       )
       AND a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND (index_value LIKE ? || '%' COLLATE NOCASE OR index_value LIKE ? || '%' COLLATE NOCASE)
+      WHERE resourceType = ? AND index_name = ? AND (index_value LIKE ? OR index_value LIKE ?)
       )
       """
         .trimIndent(),
       query.query,
     )
     assertEquals(
-      listOf("Patient", "given", "John", "Patient", "family", "Doe", "Roe"),
+      listOf("Patient", "given", "John%", "Patient", "family", "Doe%", "Roe%"),
       query.args,
     )
   }
@@ -1819,7 +1822,7 @@ class SearchTest {
       FROM ResourceEntity a
       WHERE a.resourceUuid IN (
       SELECT resourceUuid FROM StringIndexEntity
-      WHERE resourceType = ? AND index_name = ? AND index_value = ?
+      WHERE resourceType = ? AND index_name = ? AND (index_value = ? AND index_value = ? COLLATE BINARY)
       )
       AND a.resourceUuid IN (
       SELECT resourceUuid
@@ -1845,6 +1848,7 @@ class SearchTest {
       listOf(
         ResourceType.Patient.name,
         "address-country",
+        "IN",
         "IN",
         ResourceType.Patient.name,
         "patient",
@@ -2196,7 +2200,8 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
       AND re.resourceType = ?
       )
@@ -2236,7 +2241,8 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
       AND re.resourceUuid IN (
       SELECT resourceUuid FROM TokenIndexEntity
@@ -2282,7 +2288,8 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
@@ -2342,7 +2349,8 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)
@@ -2359,7 +2367,8 @@ class SearchTest {
       SELECT rie.index_name, rie.resourceUuid, re.serializedResource
       FROM ResourceEntity re
       JOIN ReferenceIndexEntity rie
-      ON re.resourceType||'/'||re.resourceId = rie.index_value
+      ON re.resourceType = substr(rie.index_value, 1, instr(rie.index_value, '/') - 1)
+      AND re.resourceId = substr(rie.index_value, instr(rie.index_value, '/') + 1)
       LEFT JOIN StringIndexEntity b
       ON re.resourceUuid = b.resourceUuid AND b.index_name = ?
       WHERE rie.resourceType = ?  AND rie.index_name = ?  AND rie.resourceUuid IN (?, ?)

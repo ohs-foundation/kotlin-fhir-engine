@@ -46,10 +46,12 @@ The tasks map to configurations in `engine/build.gradle.kts`:
 - `main` (`benchmark`): every class, every `@Param` value, five warmups and ten one-second
   iterations.
 - `pr` (`prBenchmark`): everything except `SyncDownloadBenchmark`, `ConcurrentAccessBenchmark` and
-  the `prNoisy` classes, at ten half-second iterations, with the sweeps at their smallest size
-  (`rows=1000`, `changeCount=50`, `results=100`).
+  the `prNoisy` classes, in three forks of three warmups and five half-second iterations, with the
+  sweeps at their smallest size (`rows=1000`, `changeCount=50`, `results=100`) and the index
+  benchmarks at the shipped index only (`shape=current`, `collation=nocase`).
 - `prNoisy` (`prNoisyBenchmark`): the engine write, `BulkImport`, `ResourceRead` and `DatabaseOpen`
-  classes at ten one-second iterations, because one invocation can take about 300 ms.
+  classes in three forks of five one-second iterations, because one invocation can take about
+  300 ms.
 - `index` (`indexBenchmark`): the classes with a `@Param` grid or a seeded corpus, at full size,
   three warmups and five half-second iterations.
 
@@ -103,10 +105,24 @@ reports a confidence interval itself. For end-to-end comparisons run by hand:
 the base branch and then the head, on the same runner, and comments with the difference. Scores
 from two different jobs are not comparable, because shared runners differ in machine class.
 
-A row is flagged when the difference is outside its 99.9% confidence interval and is at least 5%.
-The interval of a difference combines the two errors in quadrature. A row whose combined error is
-wider than 5% says **too noisy**, with the smallest change it could detect. A blank row means no
-change of 5% or more.
+The benchmarks are split across two jobs (`-Pbenchmark.shard=1` or `2`; `firstShard` in
+`engine/build.gradle.kts`). Each job runs base and head for its share, so a row is compared on one
+runner. The comment workflow merges the reports.
+
+A row is flagged when the difference is outside its 95% interval and is at least 7.5%. The interval
+is a pooled t-interval over the fork means: JIT decisions vary between forks more than one fork's
+own interval shows. On identical code, one fork per side flagged 3–21 of 75 rows; three forks
+flagged one at 5% and none at 7.5%. The comment shows the interval next to the change.
+
+A row whose interval is wider than 7.5% is **too noisy**. Otherwise an unflagged row is
+**unchanged**. The comment shows flagged rows and collapses the rest.
+
+If either side has one fork, as when the base predates the forks setting, the comment falls back to
+JMH's 99.9% intervals combined in quadrature.
+
+The comment also counts the changed files the benchmarks compile: `commonMain`, `desktopMain`,
+`desktopBenchmark` and the build files. With none changed, the benchmarks are skipped, and an
+earlier comment says so. A `benchmark:full` pull request always runs.
 
 On a pull request the databases live on tmpfs (`-Pbenchmark.tmpdir=/dev/shm/benchmarks`), because
 the runner's disk speed varies within a job. SQL, indexing and cascades still run.

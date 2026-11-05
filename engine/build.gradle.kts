@@ -270,6 +270,14 @@ val noisyOnCi =
   "dev\\.ohs\\.fhir\\.engine\\.microbenchmark\\." +
     "(BulkImport|DatabaseOpen|Engine(Create|Update|Delete)|ResourceRead)Benchmark"
 
+/**
+ * Shard 1 of a CI run; shard 2 runs everything else. Split by run time. Each shard needs a
+ * [noisyOnCi] class, or its prNoisy run matches nothing and fails.
+ */
+val firstShard =
+  "dev\\.ohs\\.fhir\\.engine\\.microbenchmark\\." +
+    "(SearchExecution|SearchResultSize|Sort|LocalChangeRead|DatabaseOpen|ResourceRead)Benchmark\\."
+
 benchmark {
   targets { register("desktopBenchmark") }
   configurations {
@@ -279,7 +287,8 @@ benchmark {
       iterationTime = 1
       iterationTimeUnit = "s"
     }
-    // The pull-request tier, with each sweep at its smallest size.
+    // The pull-request tier, with each sweep at its smallest size. Three forks, because JIT
+    // decisions vary between forks more than a single fork's interval shows.
     register("pr") {
       exclude(noisyOnCi)
       // One invocation takes a second or more.
@@ -289,18 +298,23 @@ benchmark {
       param("rows", 1000)
       param("changeCount", 50)
       param("results", 100)
-      warmups = 5
-      iterations = 10
+      // The index the engine ships; the alternatives run in `index`.
+      param("shape", "current")
+      param("collation", "nocase")
+      warmups = 3
+      iterations = 5
       iterationTime = 500
       iterationTimeUnit = "ms"
+      advanced("jvmForks", 3)
     }
     // The pull-request tier's slow benchmarks.
     register("prNoisy") {
       include(noisyOnCi)
       warmups = 5
-      iterations = 10
+      iterations = 5
       iterationTime = 1
       iterationTimeUnit = "s"
+      advanced("jvmForks", 3)
     }
     // The benchmarks with a @Param grid or a seeded corpus, at full size.
     register("index") {
@@ -316,6 +330,13 @@ benchmark {
       iterationTime = 500
       iterationTimeUnit = "ms"
     }
+  }
+  // -Pbenchmark.shard splits every configuration across CI jobs.
+  when (val shard = providers.gradleProperty("benchmark.shard").orNull) {
+    null -> {}
+    "1" -> configurations.configureEach { exclude("^(?!$firstShard)") }
+    "2" -> configurations.configureEach { exclude(firstShard) }
+    else -> throw GradleException("Unknown benchmark.shard: $shard")
   }
 }
 
