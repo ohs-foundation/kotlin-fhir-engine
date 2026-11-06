@@ -80,6 +80,8 @@ internal class ResourceIndexer(
 
   fun <R : Resource> index(resource: R) = extractIndexValues(resource)
 
+  // TODO: Temporary, until kotlin-fhir-path implements `resolve()`; then evaluate these paths with
+  // it (https://github.com/ohs-foundation/kotlin-fhir-engine/issues/114).
   /**
    * Returns the references at `<path>` that name `<type>` when every branch of [path] has the form
    * `<path>.where(resolve() is <type>)`, or null otherwise.
