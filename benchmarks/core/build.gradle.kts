@@ -248,6 +248,10 @@ val webBenchmarkProperties =
       "benchmark.warmup",
       "benchmark.iterations",
       "benchmark.groups",
+      "benchmark.workloads",
+      "benchmark.population",
+      "benchmark.mix",
+      "benchmark.coldcache",
     )
     .mapNotNull { key -> providers.gradleProperty(key).orNull?.let { key to it } }
     .toMap()
@@ -262,12 +266,11 @@ val writeWebBenchmarkConfig by
     doLast {
       val file = webConfigFile.get().asFile
       file.parentFile.mkdirs()
-      val groups =
-        (webBenchmarkProperties["benchmark.groups"] ?: "crud,search,sync").split(",").joinToString(
-          ", ",
-        ) {
-          "\"${it.trim()}\""
-        }
+      fun list(key: String, default: String = "") =
+        (webBenchmarkProperties[key] ?: default)
+          .split(",")
+          .map { it.trim() }
+          .filter { it.isNotEmpty() }
       val dataset =
         if (webBenchmarkProperties["benchmark.dataset"].equals("synthea", ignoreCase = true)) {
           "synthea"
@@ -275,19 +278,21 @@ val writeWebBenchmarkConfig by
           "synthetic"
         }
       // Browser defaults are smaller than desktop's; OPFS is the slowest target.
-      file.writeText(
-        """
-        {
-          "profile": "${(webBenchmarkProperties["benchmark.profile"] ?: "smoke").lowercase()}",
-          "datasetKind": "$dataset",
-          "seed": ${webBenchmarkProperties["benchmark.seed"]?.toIntOrNull() ?: 20260819},
-          "warmupIterations": ${webBenchmarkProperties["benchmark.warmup"]?.toIntOrNull() ?: 1},
-          "measuredIterations": ${webBenchmarkProperties["benchmark.iterations"]?.toIntOrNull() ?: 3},
-          "groups": [$groups]
-        }
-        """
-          .trimIndent(),
-      )
+      val config =
+        mapOf(
+          "profile" to (webBenchmarkProperties["benchmark.profile"] ?: "smoke").lowercase(),
+          "datasetKind" to dataset,
+          "seed" to (webBenchmarkProperties["benchmark.seed"]?.toIntOrNull() ?: 20260819),
+          "warmupIterations" to (webBenchmarkProperties["benchmark.warmup"]?.toIntOrNull() ?: 1),
+          "measuredIterations" to
+            (webBenchmarkProperties["benchmark.iterations"]?.toIntOrNull() ?: 3),
+          "groups" to list("benchmark.groups", "crud,search,sync"),
+          "workloadIds" to list("benchmark.workloads"),
+          "population" to webBenchmarkProperties["benchmark.population"]?.toIntOrNull(),
+          "clinicalMix" to (webBenchmarkProperties["benchmark.mix"] ?: "8x2"),
+          "coldCache" to webBenchmarkProperties["benchmark.coldcache"].toBoolean(),
+        )
+      file.writeText(groovy.json.JsonOutput.toJson(config))
     }
   }
 
@@ -331,6 +336,10 @@ tasks
         "benchmark.iterations",
         "benchmark.groups",
         "benchmark.server",
+        "benchmark.workloads",
+        "benchmark.population",
+        "benchmark.mix",
+        "benchmark.coldcache",
       )
       .forEach { key ->
         providers.gradleProperty(key).orNull?.let {

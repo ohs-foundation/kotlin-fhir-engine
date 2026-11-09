@@ -41,4 +41,12 @@ internal actual suspend fun benchmarkConfigFromEnvironment(): BenchmarkConfig =
         ?: listOf("crud", "search", "sync"),
     serverUrl = env("BENCHMARK_SERVER"),
     coldCache = env("BENCHMARK_COLDCACHE").toBoolean(),
+    population = env("BENCHMARK_POPULATION")?.toIntOrNull(),
+    clinicalMix = env("BENCHMARK_MIX") ?: "8x2",
+    workloadIds =
+      env("BENCHMARK_WORKLOADS")
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        .orEmpty(),
   )

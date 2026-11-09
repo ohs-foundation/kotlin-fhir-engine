@@ -49,9 +49,9 @@ The report prints as a table and is written to
 | `-Pbenchmark.data.dir` | the packaged output | Where the Synthea corpus is read from |
 | `-Pbenchmark.storage.dir` | `build/benchmark-db` | Where the engine's database file goes |
 
-The first six also work on `jsBrowserTest`, `wasmJsBrowserTest` and `iosSimulatorArm64Test`.
-`-Pbenchmark.mix` works on desktop and Android; `-Pbenchmark.server` works on Android and iOS but
-not on web. The three directory flags are desktop-only —
+The first ten also work on `jsBrowserTest`, `wasmJsBrowserTest` and `iosSimulatorArm64Test`;
+web cannot reopen a database, so `-Pbenchmark.coldcache` is recorded but has no effect there.
+`-Pbenchmark.server` works on Android and iOS but not on web. The three directory flags are desktop-only —
 [Web](#web) and [iOS](#ios) say where those paths come from instead. Browser runs also have their
 own lighter defaults.
 
