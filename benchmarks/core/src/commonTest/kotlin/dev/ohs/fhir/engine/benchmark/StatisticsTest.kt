@@ -24,7 +24,7 @@ import kotlin.test.assertNull
 class StatisticsTest {
 
   @Test
-  fun `standard deviation treats samples as a sample, not a population`() {
+  fun `standard deviation treats samples as a sample not a population`() {
     // The population standard deviation of these samples is 2.0.
     val statistics = Statistics.of(listOf(2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0))
 
