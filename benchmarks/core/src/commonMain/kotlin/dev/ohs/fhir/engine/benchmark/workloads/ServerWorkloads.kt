@@ -32,9 +32,13 @@ import dev.ohs.fhir.engine.sync.runSync
 import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
 import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
+import dev.ohs.fhir.model.r4.Code
+import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.Meta
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirString
+import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /**
@@ -48,6 +52,13 @@ object ServerWorkloads {
   fun all(): List<Workload> = listOf(UploadCreates, UploadUpdates, DownloadFromServer)
 
   private const val UPLOAD_BATCH = 100
+
+  /** Marks uploaded patients so `server.download` skips them and stays the same size. */
+  private val UPLOAD_TAG =
+    Coding(system = Uri(value = "urn:ohs:benchmark"), code = Code(value = "upload"))
+
+  private fun uploadPatient(id: String, name: HumanName? = null) =
+    Patient(id = id, meta = Meta(tag = listOf(UPLOAD_TAG)), name = listOfNotNull(name))
 
   /** Identifies this process, since macrobenchmark restarts it between iterations. */
   private val RUN_TOKEN = nowIso8601()
@@ -86,9 +97,7 @@ object ServerWorkloads {
     override suspend fun beforeEach(env: BenchmarkEnv) {
       val ids = uploadIds("bench-upload", RUN_TOKEN, sequence++, UPLOAD_BATCH)
       for (id in ids) {
-        env.engine.create(
-          Patient(id = id, name = listOf(HumanName(family = FhirString("Upload$sequence")))),
-        )
+        env.engine.create(uploadPatient(id, HumanName(family = FhirString("Upload$sequence"))))
       }
     }
 
@@ -110,7 +119,7 @@ object ServerWorkloads {
       val revision = sequence++
       val ids = uploadIds("bench-update", RUN_TOKEN, revision, UPLOAD_BATCH)
       // Pushed first, so the measured sync carries only updates.
-      ids.forEach { id -> env.engine.create(Patient(id = id)) }
+      ids.forEach { id -> env.engine.create(uploadPatient(id)) }
       env.syncTask().runSyncOrThrow()
       ids.forEach { id ->
         val patient = env.engine.get<Patient>(id)
@@ -134,7 +143,13 @@ object ServerWorkloads {
 
     override suspend fun run(env: BenchmarkEnv) {
       env
-        .syncTask(downloadParams = mapOf(ResourceType.Patient to mapOf("_count" to "100")))
+        .syncTask(
+          downloadParams =
+            mapOf(
+              ResourceType.Patient to
+                mapOf("_count" to "100", "_tag:not" to "urn:ohs:benchmark|upload"),
+            ),
+        )
         .runSyncOrThrow()
     }
   }
