@@ -17,12 +17,17 @@ package dev.ohs.fhir.engine.benchmark.workloads
 
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.benchmark.BenchmarkEnv
+import dev.ohs.fhir.engine.db.ResourceNotFoundException
+import dev.ohs.fhir.engine.get
 import dev.ohs.fhir.engine.search.count
 import dev.ohs.fhir.engine.search.search
+import dev.ohs.fhir.model.r4.Basic
+import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Organization
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Practitioner
 import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.String as FhirString
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -72,11 +77,14 @@ internal enum class SeedDecision {
   RESEED,
 }
 
-/** Whether the database already holds the corpus; any patient count but the exact one reseeds. */
-internal fun seedDecision(present: Long, expected: Int): SeedDecision =
+/**
+ * Whether the database already holds the corpus. Only a marker matching the corpus fingerprint
+ * skips: another workload may have left a subset, such as `crud.create_batch`'s patients alone.
+ */
+internal fun seedDecision(patients: Long, marker: String?, fingerprint: String): SeedDecision =
   when {
-    present == expected.toLong() -> SeedDecision.SKIP
-    present == 0L -> SeedDecision.SEED
+    marker == fingerprint -> SeedDecision.SKIP
+    patients == 0L && marker == null -> SeedDecision.SEED
     else -> SeedDecision.RESEED
   }
 
@@ -85,7 +93,14 @@ internal fun seedDecision(present: Long, expected: Int): SeedDecision =
  * [dev.ohs.fhir.engine.benchmark.Isolation.NONE] share one seeded database.
  */
 internal suspend fun BenchmarkEnv.seedDatasetIfEmpty() {
-  when (seedDecision(engine.count<Patient> {}, dataset.population)) {
+  val fingerprint = dataset.manifest().fingerprint
+  val marker =
+    try {
+      engine.get<Basic>(SEED_MARKER_ID).code.text?.value
+    } catch (e: ResourceNotFoundException) {
+      null
+    }
+  when (seedDecision(engine.count<Patient> {}, marker, fingerprint)) {
     SeedDecision.SKIP -> return
     SeedDecision.SEED -> seedDataset()
     SeedDecision.RESEED -> {
@@ -93,7 +108,13 @@ internal suspend fun BenchmarkEnv.seedDatasetIfEmpty() {
       seedDataset()
     }
   }
+  // Written last, so a seed cut short leaves no marker.
+  engine.create(
+    Basic(id = SEED_MARKER_ID, code = CodeableConcept(text = FhirString(value = fingerprint))),
+  )
 }
+
+private const val SEED_MARKER_ID = "benchmark-seed"
 
 /** Shuffled so reads avoid sequential page access; fixed so every platform touches the same ids. */
 internal fun BenchmarkEnv.crudTargetIds(limit: Int): List<String> =

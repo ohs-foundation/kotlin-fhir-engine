@@ -23,26 +23,35 @@ class SeedDecisionTest {
 
   @Test
   fun `seeds an empty database`() {
-    assertEquals(SeedDecision.SEED, seedDecision(present = 0, expected = 50_000))
+    assertEquals(SeedDecision.SEED, seedDecision(patients = 0, marker = null, fingerprint = "a"))
   }
 
   @Test
-  fun `does nothing when the corpus is already all there`() {
-    assertEquals(SeedDecision.SKIP, seedDecision(present = 50_000, expected = 50_000))
+  fun `does nothing when the marker matches the corpus`() {
+    assertEquals(
+      SeedDecision.SKIP,
+      seedDecision(patients = 50_000, marker = "a", fingerprint = "a"),
+    )
   }
 
   @Test
   fun `starts over when a previous seed was cut short`() {
-    assertEquals(SeedDecision.RESEED, seedDecision(present = 31_402, expected = 50_000))
+    assertEquals(
+      SeedDecision.RESEED,
+      seedDecision(patients = 31_402, marker = null, fingerprint = "a"),
+    )
   }
 
   @Test
-  fun `starts over when the database holds more than the corpus`() {
-    assertEquals(SeedDecision.RESEED, seedDecision(present = 60_000, expected = 50_000))
+  fun `starts over when another workload left only patients`() {
+    assertEquals(
+      SeedDecision.RESEED,
+      seedDecision(patients = 50_000, marker = null, fingerprint = "a"),
+    )
   }
 
   @Test
-  fun `does nothing for a corpus with no patients to count`() {
-    assertEquals(SeedDecision.SKIP, seedDecision(present = 0, expected = 0))
+  fun `starts over when the database holds a different corpus`() {
+    assertEquals(SeedDecision.RESEED, seedDecision(patients = 100, marker = "b", fingerprint = "a"))
   }
 }
