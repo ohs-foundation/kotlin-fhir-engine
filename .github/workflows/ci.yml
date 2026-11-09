@@ -61,7 +61,9 @@ jobs:
 
       - name: Check the codelab compiles
         working-directory: codelabs
-        run: ./gradlew :androidApp:compileDebugKotlinAndroid
+        run: >
+          ./gradlew :androidApp:compileDebugKotlinAndroid :shared:compileKotlinDesktop
+          :shared:compileKotlinWasmJs :shared:compileKotlinIosSimulatorArm64
 
   test:
     name: Test ${{ matrix.name }}

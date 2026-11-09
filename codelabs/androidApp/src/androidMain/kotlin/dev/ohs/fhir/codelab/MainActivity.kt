@@ -18,24 +18,10 @@ package dev.ohs.fhir.codelab
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import dev.ohs.fhir.engine.FhirEngineProvider
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContent {
-      val scope = rememberCoroutineScope()
-      val viewModel = remember {
-        PatientListViewModel(
-          fhirEngine = FhirEngineProvider.getInstance(applicationContext),
-          syncLauncher = AndroidSyncLauncher(applicationContext),
-          scope = scope,
-        )
-      }
-      MaterialTheme { PatientListScreen(viewModel) }
-    }
+    setContent { App(applicationContext, AndroidSyncLauncher(applicationContext)) }
   }
 }

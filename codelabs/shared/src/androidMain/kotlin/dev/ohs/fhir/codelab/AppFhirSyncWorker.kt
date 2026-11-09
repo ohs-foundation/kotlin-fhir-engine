@@ -17,21 +17,18 @@ package dev.ohs.fhir.codelab
 
 import android.content.Context
 import androidx.work.WorkerParameters
-import dev.ohs.fhir.engine.FhirEngine
-import dev.ohs.fhir.engine.sync.ConflictResolver
-import dev.ohs.fhir.engine.sync.DownloadWorkManager
 import dev.ohs.fhir.engine.sync.FhirSyncWorker
-import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 
+/** Runs [AppFhirSyncTask] with WorkManager. */
 class AppFhirSyncWorker(appContext: Context, workerParams: WorkerParameters) :
   FhirSyncWorker(appContext, workerParams) {
-  // Add code to define the download manager, conflict resolver, FHIR Engine and upload strategy
+  private val task = AppFhirSyncTask(appContext)
 
-  override fun getDownloadWorkManager(): DownloadWorkManager = TODO()
+  override fun getDownloadWorkManager() = task.getDownloadWorkManager()
 
-  override fun getConflictResolver(): ConflictResolver = TODO()
+  override fun getConflictResolver() = task.getConflictResolver()
 
-  override fun getFhirEngine(): FhirEngine = TODO()
+  override fun getFhirEngine() = task.getFhirEngine()
 
-  override fun getUploadStrategy(): UploadStrategy = TODO()
+  override fun getUploadStrategy() = task.getUploadStrategy()
 }
