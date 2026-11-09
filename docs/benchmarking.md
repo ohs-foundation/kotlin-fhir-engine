@@ -196,6 +196,9 @@ One class at a time:
   -Pandroid.testInstrumentationRunnerArguments.class=dev.ohs.fhir.engine.benchmark.macro.FhirEngineSearchMacrobenchmark
 ```
 
+Each class runs one test case per workload in its group, so a failing workload does not stop the
+rest. The app is compiled ahead of time (`CompilationMode.Full()`) on every run.
+
 Results land in
 `benchmarks/macro/build/outputs/connected_android_test_additional_output/`, alongside the Perfetto
 traces.
@@ -570,6 +573,8 @@ Before trusting a run:
 
 ## Known limitations
 
+- **Android numbers are from unminified code.** The driver app's release build has R8 off, while
+  an app shipping the engine usually runs it, so device timings may be higher than users see.
 - **A macrobenchmark passes whether or not it measured anything.** Nothing fails a run whose trace
   sections are all zero, so check the metrics rather than the exit code; see the Android section.
 

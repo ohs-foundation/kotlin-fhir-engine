@@ -15,16 +15,16 @@
  */
 package dev.ohs.fhir.engine.benchmark.macro
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.ohs.fhir.engine.benchmark.workloads.Workloads
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-@RunWith(AndroidJUnit4::class)
-class FhirEngineSearchMacrobenchmark : FhirEngineMacrobenchmark() {
+@RunWith(Parameterized::class)
+class FhirEngineSearchMacrobenchmark(private val workloadId: String) : FhirEngineMacrobenchmark() {
 
-  @Test
-  fun search() {
-    Workloads.byGroup("search").filter { ONLY == null || it.id == ONLY }.forEach { measure(it) }
+  @Test fun measure() = measure(workloadId)
+
+  companion object {
+    @JvmStatic @Parameterized.Parameters(name = "{0}") fun workloads() = workloadIds("search")
   }
 }

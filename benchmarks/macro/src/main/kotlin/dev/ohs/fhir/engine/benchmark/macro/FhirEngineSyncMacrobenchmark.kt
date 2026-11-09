@@ -15,16 +15,16 @@
  */
 package dev.ohs.fhir.engine.benchmark.macro
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.ohs.fhir.engine.benchmark.workloads.Workloads
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-@RunWith(AndroidJUnit4::class)
-class FhirEngineSyncMacrobenchmark : FhirEngineMacrobenchmark() {
+@RunWith(Parameterized::class)
+class FhirEngineSyncMacrobenchmark(private val workloadId: String) : FhirEngineMacrobenchmark() {
 
-  @Test
-  fun sync() {
-    Workloads.byGroup("sync").filter { ONLY == null || it.id == ONLY }.forEach { measure(it) }
+  @Test fun measure() = measure(workloadId)
+
+  companion object {
+    @JvmStatic @Parameterized.Parameters(name = "{0}") fun workloads() = workloadIds("sync")
   }
 }

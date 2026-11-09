@@ -15,26 +15,28 @@
  */
 package dev.ohs.fhir.engine.benchmark.macro
 
+import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
-import dev.ohs.fhir.engine.benchmark.Isolation
-import dev.ohs.fhir.engine.benchmark.Workload
+import dev.ohs.fhir.engine.benchmark.workloads.Workloads
 import java.util.regex.Pattern
 import org.junit.Rule
 
-/** Drives one workload group from the `:benchmarks:core` catalogue through the driver app. */
+/** Drives one workload from the `:benchmarks:core` catalogue through the driver app. */
 abstract class FhirEngineMacrobenchmark {
 
   @get:Rule val benchmarkRule = MacrobenchmarkRule()
 
-  protected fun measure(workload: Workload) {
+  protected fun measure(workloadId: String) {
     benchmarkRule.measureRepeated(
       packageName = TARGET_PACKAGE,
       // One launch emits the section once; Sum fails when it is missing.
-      metrics = listOf(TraceSectionMetric(workload.id, mode = TraceSectionMetric.Mode.Sum)),
+      metrics = listOf(TraceSectionMetric(workloadId, mode = TraceSectionMetric.Mode.Sum)),
+      // Fixed, so adding a baseline profile does not change the numbers.
+      compilationMode = CompilationMode.Full(),
       iterations = ITERATIONS,
       // Kills the process, and the engine's in-memory state, between iterations.
       startupMode = StartupMode.COLD,
@@ -42,17 +44,13 @@ abstract class FhirEngineMacrobenchmark {
         // A sleeping device renders no frames, so the launch cannot be confirmed.
         device.wakeUp()
         device.executeShellCommand("wm dismiss-keyguard")
-        if (workload.isolation == Isolation.FRESH_DATABASE) {
-          // Android ignores the engine's storageDirectory, so clear the app's data.
-          Runtime.getRuntime().exec(arrayOf("pm", "clear", TARGET_PACKAGE)).waitFor()
-        }
       },
     ) {
       startActivityAndWait(
         android.content.Intent().apply {
           setClassName(TARGET_PACKAGE, "$TARGET_PACKAGE.BenchmarkActivity")
           action = ACTION_RUN
-          putExtra("workload", workload.id)
+          putExtra("workload", workloadId)
           putExtra("profile", PROFILE)
           putExtra("dataset", DATASET)
           putExtra("server", SERVER)
@@ -81,7 +79,7 @@ abstract class FhirEngineMacrobenchmark {
           } else {
             "did not finish within ${TIMEOUT_MILLIS}ms"
           }
-        "Workload ${workload.id} $what. " +
+        "Workload $workloadId $what. " +
           "Status: $actual. Current window: ${device.currentPackageName}. " +
           "Nodes for $TARGET_PACKAGE: ${visible.ifEmpty { "<none>" }}"
       }
@@ -129,5 +127,9 @@ abstract class FhirEngineMacrobenchmark {
     /** Restricts a class to one workload id, for debugging a single measurement. */
     val ONLY: String? =
       androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("workload")
+
+    /** The group's workload ids, or just [ONLY] when it is in the group. */
+    fun workloadIds(group: String): List<String> =
+      Workloads.byGroup(group).map { it.id }.filter { ONLY == null || it == ONLY }
   }
 }
