@@ -73,13 +73,13 @@ project so it survives `clean`. The version and its SHA-256 are pinned in `gradl
 changing either changes the report fingerprint and makes earlier reports incomparable.
 
 **Regenerating destroys what is already packaged.** `generateSyntheaData` deletes its output before
-running, and the population comes from `benchmark.population`, which defaults to `10`. A command
+running, and the population comes from `synthea.population`, which defaults to `10`. A command
 that forgets the flag would therefore replace a 50,000-patient corpus that took half an hour to
 build. `guardBenchmarkCorpus` fails the build instead:
 
 ```
 A benchmark corpus of 50000 patients is already packaged, but this run asks for 10 and
-generating would delete it. Pass -Pbenchmark.population=50000 to use what is there, or
+generating would delete it. Pass -Psynthea.population=50000 to use what is there, or
 -Pbenchmark.regenerate to replace it.
 ```
 
@@ -95,7 +95,7 @@ conditions the search workloads query are **generated in code** against its real
 rather than one Synthea decides. It is 8 observations and 2 conditions by default, and
 `-Pbenchmark.mix` sets it: `12x3` for more, `off` to generate nothing and measure the corpus alone.
 
-| `-Pbenchmark.population` | From the corpus | Generated | Total loaded |
+| `-Psynthea.population` | From the corpus | Generated | Total loaded |
 |---|---|---|---|
 | `10` (default) | ~75 | 100 | ~175 |
 | `500` | ~2,350 | 5,000 | ~7,350 |
@@ -123,7 +123,7 @@ filenames, e.g. `Organization.1787101630467.ndjson` — so packaging merges ever
 into `<Type>.ndjson` and writes a `manifest.json` beside it.
 
 **A pinned seed does not give a reproducible corpus.** Two runs at the same `synthea.version`,
-`benchmark.seed` and `benchmark.population` have produced different resource counts, and so
+`benchmark.seed` and `synthea.population` have produced different resource counts, and so
 different fingerprints. Pinning narrows the variation; it does not remove it. The fingerprint
 recorded in the report, not the seed, is what says whether two reports are comparable — regenerate
 the dataset only when you are ready to rebaseline.
@@ -209,7 +209,7 @@ traces.
 One flag does both jobs: it stages the packaged data into the driver app's assets and tells the run
 to use it. Android cannot read the host filesystem, and `/data/local/tmp` is unreadable to an app
 from API 30, so the corpus travels inside the APK — only the types a workload queries, about
-5.7 MB at `benchmark.population=10`, which compresses to roughly 1 MB of APK.
+5.7 MB at `synthea.population=10`, which compresses to roughly 1 MB of APK.
 
 **A Synthea run that cannot find the data fails.** Nothing substitutes the synthetic dataset for
 it, so a build without the staged assets stops the run:
@@ -464,7 +464,7 @@ The report lands in `benchmarks/core/build/reports/benchmarks/ios-<timestamp>.js
 platform's. A simulator shares the host filesystem, so both the report and the Synthea directory are
 ordinary host paths handed to the harness through `BENCHMARK_REPORT_DIR` and `BENCHMARK_DATA_DIR`.
 
-A Synthea run on the simulator takes about 20 minutes at `benchmark.population=10`, most of it
+A Synthea run on the simulator takes about 20 minutes at `synthea.population=10`, most of it
 seeding the corpus for the fresh-database CRUD workloads.
 
 **Simulator numbers are indicative only.** A simulator runs on the host CPU with the host's disk, so

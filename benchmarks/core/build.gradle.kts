@@ -109,13 +109,13 @@ tasks.named<Test>("desktopTest") {
 // ---------------------------------------------------------------------------------------------
 // Synthea dataset
 //
-// ./gradlew :benchmarks:core:packageBenchmarkData -Pbenchmark.population=100
+// ./gradlew :benchmarks:core:packageBenchmarkData -Psynthea.population=100
 // ./gradlew :benchmarks:core:desktopTest -Pbenchmark.dataset=synthea
 // ---------------------------------------------------------------------------------------------
 
 val syntheaRelease = providers.gradleProperty("synthea.version").getOrElse("v4.0.0")
 val syntheaSha256 = providers.gradleProperty("synthea.sha256").get()
-val benchmarkPopulation = providers.gradleProperty("benchmark.population").getOrElse("100").toInt()
+val syntheaPopulation = providers.gradleProperty("synthea.population").getOrElse("100").toInt()
 val benchmarkSeed = providers.gradleProperty("benchmark.seed").getOrElse("20260819")
 
 // Outside the project tree so the jar survives `clean` and is shared between checkouts.
@@ -136,7 +136,7 @@ val syntheaRawOutput = layout.buildDirectory.dir("benchmark-data/raw")
 /**
  * Fails when generating would replace a packaged corpus of a different population.
  *
- * `generateSyntheaData` deletes its output first, and `benchmark.population` has a default.
+ * `generateSyntheaData` deletes its output first, and `synthea.population` has a default.
  */
 val guardBenchmarkCorpus by
   tasks.registering {
@@ -150,11 +150,11 @@ val guardBenchmarkCorpus by
           ?.get(1)
           ?.toInt()
           ?: return@doFirst
-      if (existing != benchmarkPopulation && !project.hasProperty("benchmark.regenerate")) {
+      if (existing != syntheaPopulation && !project.hasProperty("benchmark.regenerate")) {
         error(
           "A benchmark corpus of $existing patients is already packaged, but this run asks for " +
-            "$benchmarkPopulation and generating would delete it. Pass " +
-            "-Pbenchmark.population=$existing to use what is there, or " +
+            "$syntheaPopulation and generating would delete it. Pass " +
+            "-Psynthea.population=$existing to use what is there, or " +
             "-Pbenchmark.regenerate to replace it.",
         )
       }
@@ -170,7 +170,7 @@ val generateSyntheaData by
     classpath = files(syntheaJar)
     mainClass.set("App")
 
-    inputs.property("population", benchmarkPopulation)
+    inputs.property("population", syntheaPopulation)
     inputs.property("seed", benchmarkSeed)
     inputs.property("syntheaVersion", syntheaRelease)
     outputs.dir(syntheaRawOutput)
@@ -183,7 +183,7 @@ val generateSyntheaData by
           "-m",
           "pregnancy",
           "-p",
-          benchmarkPopulation.toString(),
+          syntheaPopulation.toString(),
           "-s",
           benchmarkSeed,
           "-cs",
@@ -212,7 +212,7 @@ val packageBenchmarkData by
     syntheaOutput.set(syntheaRawOutput)
     destination.set(benchmarkDataDir)
     syntheaVersion.set(syntheaRelease)
-    population.set(benchmarkPopulation)
+    population.set(syntheaPopulation)
     seed.set(benchmarkSeed)
   }
 

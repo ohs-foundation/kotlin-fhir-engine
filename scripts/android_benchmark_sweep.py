@@ -410,7 +410,7 @@ def gradle_command(workload_id, args, iterations, timeout_seconds):
         str(REPO_ROOT / "gradlew"),
         MACRO_TASK,
         "-Pbenchmark.dataset=synthea",
-        f"-Pbenchmark.population={args.population}",
+        f"-Psynthea.population={args.population}",
         f"{runner_arg}.class={class_for(workload_id)}",
         f"{runner_arg}.workload={workload_id}",
         f"{runner_arg}.profile={args.profile}",
@@ -524,7 +524,7 @@ def build_once(args):
         # A com.android.test module: its release output is the test APK.
         ":benchmarks:macro:assembleRelease",
         "-Pbenchmark.dataset=synthea",
-        f"-Pbenchmark.population={args.population}",
+        f"-Psynthea.population={args.population}",
         "--console=plain",
     ]
     if args.reuse_corpus:
