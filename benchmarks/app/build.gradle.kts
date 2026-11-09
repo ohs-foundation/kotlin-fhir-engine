@@ -25,7 +25,9 @@ android {
 
   buildTypes {
     release {
-      isMinifyEnabled = false
+      // Apps that ship the engine run R8, so measure minified code.
+      isMinifyEnabled = true
+      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
       // Macrobenchmark measures the release build, which must be signed to install.
       signingConfig = signingConfigs.getByName("debug")
     }

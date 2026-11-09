@@ -573,8 +573,6 @@ Before trusting a run:
 
 ## Known limitations
 
-- **Android numbers are from unminified code.** The driver app's release build has R8 off, while
-  an app shipping the engine usually runs it, so device timings may be higher than users see.
 - **A macrobenchmark passes whether or not it measured anything.** Nothing fails a run whose trace
   sections are all zero, so check the metrics rather than the exit code; see the Android section.
 
