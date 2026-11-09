@@ -33,11 +33,23 @@ import platform.posix.getenv
 
 internal actual fun benchmarkPlatformContext(): Any = Unit
 
-/** A fresh directory per call, so reopening the engine gives a cold database. */
-internal actual fun benchmarkStorageDirectory(): String? =
-  "${NSTemporaryDirectory()}fhir-benchmark-${databaseCounter++}"
+/**
+ * An empty directory per call, so reopening the engine gives a cold database. Deletes the previous
+ * one.
+ */
+@OptIn(ExperimentalForeignApi::class)
+internal actual fun benchmarkStorageDirectory(): String? {
+  val directory = "${NSTemporaryDirectory()}fhir-benchmark-${databaseCounter++}"
+  // The counter restarts per process, so an earlier run may have left this path behind.
+  listOfNotNull(previousDirectory, directory).forEach {
+    NSFileManager.defaultManager.removeItemAtPath(it, null)
+  }
+  previousDirectory = directory
+  return directory
+}
 
 private var databaseCounter = 0
+private var previousDirectory: String? = null
 
 internal actual fun platformDescriptor() =
   PlatformDescriptor(

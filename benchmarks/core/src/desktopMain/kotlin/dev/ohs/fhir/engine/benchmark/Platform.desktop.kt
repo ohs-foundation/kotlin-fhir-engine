@@ -21,17 +21,20 @@ import kotlin.time.Clock
 internal actual fun benchmarkPlatformContext(): Any = Unit
 
 /**
- * A fresh directory per call, so reopening the engine gives a cold database. Rooted at
- * `-Dbenchmark.storage.dir` when set.
+ * A fresh directory per call, so reopening the engine gives a cold database. Deletes the previous
+ * one. Rooted at `-Dbenchmark.storage.dir` when set.
  */
 internal actual fun benchmarkStorageDirectory(): String? {
+  previousDirectory?.deleteRecursively()
   val root = System.getProperty("benchmark.storage.dir")?.let(::File) ?: File("build/benchmark-db")
   val directory = File(root, "run-${databaseCounter++}-${System.nanoTime()}")
   directory.mkdirs()
+  previousDirectory = directory
   return directory.absolutePath
 }
 
 private var databaseCounter = 0
+private var previousDirectory: File? = null
 
 internal actual fun platformDescriptor() =
   PlatformDescriptor(
@@ -45,7 +48,7 @@ internal actual fun supportsFreshDatabase(): Boolean = true
 
 internal actual fun nowIso8601(): String = Clock.System.now().toString()
 
-/** No-op: [benchmarkStorageDirectory] hands out an unused directory per call. */
+/** No-op: [benchmarkStorageDirectory] hands out a new directory per call. */
 internal actual suspend fun deleteBenchmarkDatabase(platformContext: Any) = Unit
 
 internal actual suspend fun emitReport(fileName: String, json: String) {

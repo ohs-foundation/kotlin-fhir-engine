@@ -589,11 +589,6 @@ Before trusting a run:
   the noise floor — the file cache stays warm and the working set is small. It is likely to matter
   more on a device with real storage.
 
-- **A run leaves its databases behind.** `benchmarkStorageDirectory()` mints a new directory per
-  engine open and nothing removes them, so `benchmarks/core/build/benchmark-db` grows without
-  bound: a session of roughly a hundred runs left 749 directories and 6.2 GB. Delete the directory
-  between sweeps, and be aware that a full disk inflates every timing on the machine.
-
 ## Micro benchmarks
 
 The micro benchmarks in `:engine` measure pure-CPU functions and SQLite. What they found is in
