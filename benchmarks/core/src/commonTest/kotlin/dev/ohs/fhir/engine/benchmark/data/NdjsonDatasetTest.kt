@@ -264,10 +264,10 @@ class NdjsonDatasetCacheTest {
       "Patient.ndjson" to listOf(patient("p1"), patient("p2")),
     )
 
-  private suspend fun load(lines: FakeLines, cache: DatasetCache?) =
+  private suspend fun load(lines: FakeLines, cache: DatasetCache?, seed: Int = 1) =
     NdjsonDataset.load(
       fileNames = listOf("Organization.ndjson", "Patient.ndjson"),
-      seed = 1,
+      seed = seed,
       requestedPopulation = 2,
       lines = lines::invoke,
       cache = cache,
@@ -306,6 +306,17 @@ class NdjsonDatasetCacheTest {
     assertEquals(cold.resourceCount, warm.resourceCount)
     assertEquals(cold.manifest(), warm.manifest())
     assertEquals(cold.sampleOrganizationId, warm.sampleOrganizationId)
+  }
+
+  @Test
+  fun `a warm load fingerprints the current seed`() = runTest {
+    val cache = FakeCache()
+    load(FakeLines(corpus), cache, seed = 1)
+
+    val warm = load(FakeLines(corpus), cache, seed = 2)
+    val cold = load(FakeLines(corpus), cache = null, seed = 2)
+
+    assertEquals(cold.manifest().fingerprint, warm.manifest().fingerprint)
   }
 
   @Test

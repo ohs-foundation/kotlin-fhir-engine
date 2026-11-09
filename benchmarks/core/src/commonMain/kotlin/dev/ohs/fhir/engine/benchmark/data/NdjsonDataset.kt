@@ -112,7 +112,7 @@ private constructor(
           // Failures are reported by the run that wrote the cache.
           parseFailures = emptyList(),
           seed = seed,
-          fingerprint = metadata.fingerprint,
+          fingerprint = fingerprint(metadata.contentHash, requestedPopulation, seed),
         )
       }
       val counts = mutableMapOf<String, Int>()
@@ -162,9 +162,7 @@ private constructor(
         counts[type] = (counts[type] ?: 0) + count
       }
 
-      hash = hash * 31 + requestedPopulation
-      hash = hash * 31 + seed
-      val fingerprint = hash.toULong().toString(16).padStart(16, '0')
+      val fingerprint = fingerprint(hash, requestedPopulation, seed)
       // Synthea's observation codes vary with the seed, so the commonest is discovered.
       val code = observationCodes.maxByOrNull { it.value }?.key ?: "8867-4"
       if (cache != null && cacheKey != null) {
@@ -178,7 +176,7 @@ private constructor(
               sampleOrganizationId = organizationId,
               sampleFamilyName = familyName,
               sampleGivenName = givenName,
-              fingerprint = fingerprint,
+              contentHash = hash,
             ),
           ),
         )
@@ -196,6 +194,13 @@ private constructor(
         seed = seed,
         fingerprint = fingerprint,
       )
+    }
+
+    private fun fingerprint(contentHash: Long, population: Int, seed: Int): String {
+      var hash = contentHash
+      hash = hash * 31 + population
+      hash = hash * 31 + seed
+      return hash.toULong().toString(16).padStart(16, '0')
     }
 
     /** A previous scan, or null to scan again. An unreadable entry counts as a miss. */

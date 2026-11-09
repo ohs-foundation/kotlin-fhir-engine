@@ -147,7 +147,7 @@ object BenchmarkHarness {
         lines = ::dataFileLines,
         cache = ScratchFileCache,
         // Bump the version when the cached scan's shape changes.
-        cacheKey = "dataset-v2-$corpus.json",
+        cacheKey = "dataset-v3-$corpus.json",
       )
     if (dataset.parseFailures.isNotEmpty()) {
       println(
