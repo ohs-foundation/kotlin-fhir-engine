@@ -23,6 +23,7 @@ import dev.ohs.fhir.engine.get
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirString
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.toList
 
@@ -109,11 +110,12 @@ object CrudWorkloads {
       opsPerIteration = targets.size
     }
 
-    // The engine skips updates matching the stored copy; a monotonic revision guarantees a diff.
-    private var revision = 0
+    // The engine skips updates matching the stored copy. Clock-based, because macrobenchmark
+    // starts a new process per iteration over the same database.
+    private var revision = 0L
 
     override suspend fun beforeEach(env: BenchmarkEnv) {
-      revision++
+      revision = maxOf(revision + 1, Clock.System.now().toEpochMilliseconds())
     }
 
     override suspend fun run(env: BenchmarkEnv) {
