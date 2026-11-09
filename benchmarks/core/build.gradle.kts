@@ -42,7 +42,11 @@ kotlin {
     compilations.configureEach {
       compilerOptions.configure {
         freeCompilerArgs.add("-Xexpect-actual-classes")
-        optIn.addAll("kotlin.time.ExperimentalTime", "kotlin.uuid.ExperimentalUuidApi")
+        optIn.addAll(
+          "kotlin.time.ExperimentalTime",
+          "kotlin.uuid.ExperimentalUuidApi",
+          "dev.ohs.fhir.engine.FhirEngineTestApi",
+        )
       }
     }
   }
