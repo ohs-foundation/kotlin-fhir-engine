@@ -59,6 +59,10 @@ jobs:
           ./gradlew compileDebugKotlinAndroid :engine:compileAndroidMain compileKotlinDesktop
           compileKotlinJs compileKotlinWasmJs compileKotlinIosArm64 compileKotlinIosSimulatorArm64
 
+      - name: Check the codelab compiles
+        working-directory: codelabs
+        run: ./gradlew :androidApp:compileDebugKotlinAndroid
+
   test:
     name: Test ${{ matrix.name }}
     strategy:

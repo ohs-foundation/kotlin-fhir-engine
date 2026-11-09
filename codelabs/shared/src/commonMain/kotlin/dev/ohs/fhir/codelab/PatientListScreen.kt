@@ -105,7 +105,7 @@ private fun PatientItem(patient: Patient) {
   Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
     Text(name.orEmpty(), style = MaterialTheme.typography.titleMedium)
     Text(
-      listOfNotNull(patient.gender?.value?.name, patient.address.singleOrNull()?.city?.value)
+      listOfNotNull(patient.gender?.value?.display, patient.address.singleOrNull()?.city?.value)
         .joinToString(" · "),
       style = MaterialTheme.typography.bodyMedium,
     )
