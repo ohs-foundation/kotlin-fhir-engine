@@ -79,6 +79,12 @@ kotlin {
     withHostTestBuilder {}
     withDeviceTestBuilder { sourceSetTreeName = "test" }
       .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    optimization {
+      consumerKeepRules.apply {
+        publish = true
+        file("consumer-rules.pro")
+      }
+    }
   }
 
   // Benchmarks live in desktopBenchmark, associated with main so they can use internal
