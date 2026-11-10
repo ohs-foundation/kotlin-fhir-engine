@@ -113,7 +113,7 @@ object BenchmarkHarness {
   /** A prepared workload. [measureOnce] is the only part that should be timed. */
   class SingleRun internal constructor(val workload: Workload, private val env: BenchmarkEnv) {
 
-    /** The loaded dataset; the macrobenchmark path writes no report, so log this. */
+    /** The loaded dataset. The macrobenchmark path writes no report, so the caller logs this. */
     val datasetManifest: DatasetManifest
       get() = env.dataset.manifest()
 
@@ -130,7 +130,7 @@ object BenchmarkHarness {
   /** The dataset the config asks for. Fails rather than substituting synthetic data for Synthea. */
   suspend fun loadDataset(config: BenchmarkConfig): Dataset {
     if (config.datasetKind != DatasetKind.SYNTHEA.name.lowercase()) return syntheticDataset(config)
-    // Filter before reading: unused Synthea types are large enough to exhaust the heap.
+    // Filter before reading, so only the types the workloads query are parsed.
     val names =
       listDataFiles().filter {
         it.endsWith(".ndjson") && it.substringBefore(".") in NdjsonDataset.INCLUDED_TYPES
@@ -158,7 +158,7 @@ object BenchmarkHarness {
     if (dataset.patientIds.isEmpty()) {
       missingSyntheaData("${names.size} file(s) read, but none of them yielded a Patient")
     }
-    // Observations and conditions are generated on top of the corpus; `off` skips them.
+    // Observations and conditions are generated on top of the corpus. A mix of `off` skips them.
     val mix = ClinicalMix.parse(config.clinicalMix)
     if (mix.perPatient == 0) return dataset
     return AugmentedDataset(dataset, mix, seed = config.seed)
@@ -186,7 +186,7 @@ object BenchmarkHarness {
       "benchmark.dataset=synthea, but the Synthea data is not readable here: $detail. " +
         "Package it with `./gradlew :benchmarks:core:packageBenchmarkData`. On Android the " +
         "corpus travels inside the APK, so also reinstall the driver app with " +
-        "-Pbenchmark.dataset=synthea; on web it is served by Karma, so rerun the Gradle task " +
+        "-Pbenchmark.dataset=synthea. On web Karma serves the data, so rerun the Gradle task " +
         "rather than an already-running browser.",
     )
 
@@ -196,7 +196,9 @@ object BenchmarkHarness {
       seed = config.seed,
     )
 
-  /** [BenchmarkConfig.workloadIds] win over groups; `server` workloads need a server URL. */
+  /**
+   * [BenchmarkConfig.workloadIds] win over groups. `server` workloads are dropped without a URL.
+   */
   private fun selectWorkloads(config: BenchmarkConfig): List<Workload> {
     val selected =
       if (config.workloadIds.isNotEmpty()) {
@@ -214,7 +216,7 @@ object BenchmarkHarness {
     return rest
   }
 
-  /** Where the engine currently open was told to keep its database. */
+  /** The storage directory of the engine that is open now. */
   private var storageDirectory: String? = null
 
   /**

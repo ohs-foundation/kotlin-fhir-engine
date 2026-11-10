@@ -17,7 +17,10 @@ package dev.ohs.fhir.engine.benchmark
 
 import kotlinx.coroutines.flow.Flow
 
-/** Platform context for [dev.ohs.fhir.engine.FhirEngineProvider.init]; `Unit` off Android. */
+/**
+ * Platform context for [dev.ohs.fhir.engine.FhirEngineProvider.init]. The app `Context` on Android,
+ * `Unit` elsewhere.
+ */
 internal expect fun benchmarkPlatformContext(): Any
 
 /** Storage directory for the benchmark database, or null where the platform ignores it. */
@@ -31,7 +34,7 @@ internal expect fun supportsFreshDatabase(): Boolean
 /** Files under the packaged benchmark data directory, or empty where none is available. */
 internal expect suspend fun listDataFiles(): List<String>
 
-/** One line per NDJSON record, streamed so large files never sit in memory; empty if absent. */
+/** One line per NDJSON record, streamed so a large file never sits in memory. Empty if absent. */
 internal expect fun dataFileLines(relativePath: String): Flow<String>
 
 /** ISO-8601 timestamp for the report. */
@@ -43,7 +46,10 @@ internal expect suspend fun deleteBenchmarkDatabase(platformContext: Any)
 /** Writes [json] wherever this platform can be read from afterwards. */
 internal expect suspend fun emitReport(fileName: String, json: String)
 
-/** Persists corpus scan results across processes; null where the platform has nowhere to write. */
+/**
+ * Reads a corpus scan result saved by an earlier process. Null when there is none, or where the
+ * platform has nowhere to write.
+ */
 internal expect suspend fun readScratchFile(name: String): String?
 
 internal expect suspend fun writeScratchFile(name: String, contents: String)

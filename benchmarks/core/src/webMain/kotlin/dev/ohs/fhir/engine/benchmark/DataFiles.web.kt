@@ -20,10 +20,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
-/** Served by the middleware in `karma.config.d/benchmark-data.js`. */
+/** Served by the middleware in `karma.config.d/benchmark-server.js`. */
 private const val DATA_ROOT = "/benchmark-data"
 
-/** Derived from the served manifest; empty when no dataset was packaged. */
+/** One file per type in the served manifest. Empty when no dataset was packaged. */
 internal actual suspend fun listDataFiles(): List<String> {
   val manifest = httpGet("$DATA_ROOT/manifest.json") ?: return emptyList()
   val counts =
@@ -33,7 +33,7 @@ internal actual suspend fun listDataFiles(): List<String> {
   return counts.keys.map { "$it.ndjson" }.sorted()
 }
 
-/** Reads the whole body before splitting; web runs only use small corpora. */
+/** Reads the whole file before splitting it, which is fine because web runs use small corpora. */
 internal actual fun dataFileLines(relativePath: String): Flow<String> = flow {
   val contents = httpGet("$DATA_ROOT/$relativePath") ?: return@flow
   contents.lineSequence().forEach { emit(it) }

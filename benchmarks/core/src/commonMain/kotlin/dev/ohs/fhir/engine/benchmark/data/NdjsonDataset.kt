@@ -226,7 +226,7 @@ private constructor(
     private fun observationCode(observation: Observation): String? =
       observation.code.coding.firstOrNull()?.code?.value
 
-    /** The types the workloads touch; Synthea's larger billing and document types are skipped. */
+    /** The types the workloads query. Files of any other type are not read. */
     val INCLUDED_TYPES =
       setOf(
         "Organization",

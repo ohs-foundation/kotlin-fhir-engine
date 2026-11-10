@@ -1,4 +1,4 @@
-// A benchmark is one test that runs for minutes; Karma and Mocha defaults would end it early.
+// A benchmark is one test that runs for minutes. Karma and Mocha defaults would end it early.
 config.set({
   client: {
     ...(config.client || {}),

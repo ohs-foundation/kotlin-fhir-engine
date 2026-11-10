@@ -21,8 +21,9 @@ import kotlin.time.Clock
 internal actual fun benchmarkPlatformContext(): Any = Unit
 
 /**
- * A fresh directory per call, so reopening the engine gives a cold database. Deletes the previous
- * one. Rooted at `-Dbenchmark.storage.dir` when set.
+ * A new directory per call, so reopening the engine gives a cold database. Deletes the directory
+ * from the previous call. Created under `-Dbenchmark.storage.dir` when set, else
+ * `build/benchmark-db`.
  */
 internal actual fun benchmarkStorageDirectory(): String? {
   previousDirectory?.deleteRecursively()

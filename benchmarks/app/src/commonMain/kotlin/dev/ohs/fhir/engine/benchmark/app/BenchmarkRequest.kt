@@ -33,7 +33,7 @@ data class BenchmarkRequest(
   val serverUrl: String? = null,
   /** Exact workloads to run, instead of whole groups. */
   val workloadIds: List<String> = emptyList(),
-  /** Clinical resources generated per patient; blank means the default mix. */
+  /** Clinical resources generated per patient, e.g. `8x2`. Blank means the default mix. */
   val clinicalMix: String = "",
 ) {
 

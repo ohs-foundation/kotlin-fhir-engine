@@ -16,7 +16,8 @@
 package dev.ohs.fhir.engine.benchmark
 
 /**
- * Marks [block] as the measured region. On Android this emits the trace section
- * `TraceSectionMetric` reads; elsewhere it is inert and [BenchmarkRunner] does the timing.
+ * Marks [block] as the measured region. On Android it emits the trace section that macrobenchmark's
+ * `TraceSectionMetric` reads, and on web a `performance.measure`. On desktop and iOS it records
+ * nothing. [BenchmarkRunner] times the block itself wherever it runs.
  */
 internal expect suspend fun <T> benchmarkSpan(name: String, block: suspend () -> T): T

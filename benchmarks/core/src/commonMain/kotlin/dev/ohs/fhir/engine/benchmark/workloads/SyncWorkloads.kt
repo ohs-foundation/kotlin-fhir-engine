@@ -106,7 +106,7 @@ object SyncWorkloads {
     }
   }
 
-  /** Accumulates local changes, the table upload later walks. */
+  /** Fills the local changes table, which a later upload reads. */
   private object LocalChangeChurn : Workload {
     override val id = "sync.local_change_churn"
     override val group = "sync"

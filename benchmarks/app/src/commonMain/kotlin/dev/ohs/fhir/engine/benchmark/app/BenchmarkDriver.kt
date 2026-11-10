@@ -36,7 +36,7 @@ object BenchmarkDriver {
     return "ran ${report.results.size} workloads on ${report.platform.target}, $failed failed"
   }
 
-  /** Prepares one workload; the caller measures it. */
+  /** Prepares one workload. The caller measures it. */
   suspend fun prepareSingle(request: BenchmarkRequest): BenchmarkHarness.SingleRun {
     val workloadId = requireNotNull(request.workloadId) { "prepareSingle needs a workload id." }
     return BenchmarkHarness.setUpSingle(workloadId, request.toConfig())

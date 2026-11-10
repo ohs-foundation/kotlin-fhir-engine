@@ -33,7 +33,7 @@ abstract class FhirEngineMacrobenchmark {
   protected fun measure(workloadId: String) {
     benchmarkRule.measureRepeated(
       packageName = TARGET_PACKAGE,
-      // One launch emits the section once; Sum fails when it is missing.
+      // One launch emits the section once. When it is missing, Sum reports 0 and does not fail.
       metrics = listOf(TraceSectionMetric(workloadId, mode = TraceSectionMetric.Mode.Sum)),
       // Fixed, so adding a baseline profile does not change the numbers.
       compilationMode = CompilationMode.Full(),
@@ -58,7 +58,7 @@ abstract class FhirEngineMacrobenchmark {
         },
       )
 
-      // The measured section closes when the driver reports done; a failure also ends the wait.
+      // The measured section closes when the driver shows `done`. A failure also ends the wait.
       val settled =
         device.wait(
           Until.hasObject(
@@ -106,11 +106,11 @@ abstract class FhirEngineMacrobenchmark {
       androidx.test.platform.app.InstrumentationRegistry.getArguments()
         .getString("dataset", "synthetic")
 
-    /** Base URL for the `server` group, from `-Pbenchmark.server`; empty when unset. */
+    /** Base URL for the `server` group, from `-Pbenchmark.server`. Empty when unset. */
     val SERVER: String =
       androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("server", "")
 
-    /** Clinical resources generated per patient; `off` keeps the database corpus-only. */
+    /** Clinical resources generated per patient, e.g. `8x2`. `off` loads the corpus alone. */
     val MIX: String =
       androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("mix", "")
 
@@ -124,11 +124,14 @@ abstract class FhirEngineMacrobenchmark {
         .getString("timeoutMillis", "600000")
         .toLong()
 
-    /** Restricts a class to one workload id, for debugging a single measurement. */
+    /** Restricts the run to one workload id. The sweep script sets it for every run. */
     val ONLY: String? =
       androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("workload")
 
-    /** The group's workload ids, or just [ONLY] when it is in the group. */
+    /**
+     * The group's workload ids. When [ONLY] is set, only that id, or none when it belongs to
+     * another group.
+     */
     fun workloadIds(group: String): List<String> =
       Workloads.byGroup(group).map { it.id }.filter { ONLY == null || it == ONLY }
   }

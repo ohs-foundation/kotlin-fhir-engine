@@ -20,7 +20,7 @@ import android.os.Build
 import java.io.File
 import kotlin.time.Clock
 
-/** The Android `Context` the engine needs; the caller must set it before running. */
+/** The Android `Context` the engine needs. Set it to the application context before a run. */
 object AndroidBenchmarkContext {
   var context: Context? = null
 }
@@ -59,7 +59,7 @@ internal actual suspend fun emitReport(fileName: String, json: String) {
 /** Matches `DatabaseBuilder.android.kt`. */
 private const val ENGINE_DATABASE_NAME = "resources.db"
 
-/** App storage; persists across runs only while the driver app stays installed. */
+/** In the app's private storage. It survives between runs until the driver app is uninstalled. */
 private fun scratchDirectory(): File? =
   AndroidBenchmarkContext.context?.filesDir?.resolve("benchmark-scratch")?.apply { mkdirs() }
 

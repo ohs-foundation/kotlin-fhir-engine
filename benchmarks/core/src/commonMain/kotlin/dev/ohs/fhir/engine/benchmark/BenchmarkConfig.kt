@@ -17,7 +17,7 @@ package dev.ohs.fhir.engine.benchmark
 
 import kotlinx.serialization.Serializable
 
-/** Dataset sizes. Population is patient count; resource count is roughly 20-200x that. */
+/** Dataset size as a patient count. Each patient also brings encounters, observations and more. */
 enum class Profile(val population: Int) {
   SMOKE(10),
   STANDARD(100),
@@ -30,7 +30,7 @@ enum class Profile(val population: Int) {
   }
 }
 
-/** Which dataset backs the run. Recorded in the report; never compare numbers across kinds. */
+/** Which dataset backs the run. Recorded in the report. Never compare numbers across kinds. */
 enum class DatasetKind {
   /** Deterministic resources generated in common Kotlin. Runs anywhere, no tooling needed. */
   SYNTHETIC,

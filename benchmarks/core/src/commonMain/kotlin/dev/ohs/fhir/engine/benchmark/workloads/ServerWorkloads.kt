@@ -43,7 +43,8 @@ import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 /**
  * Sync against a real FHIR server, the only way to measure upload. Skipped unless
- * `-Pbenchmark.server` is set; see `benchmarks/tools/`. Numbers include the server and network.
+ * `-Pbenchmark.server` is set. `benchmarks/tools/` starts a local server. Numbers include the
+ * server and the network.
  */
 object ServerWorkloads {
 

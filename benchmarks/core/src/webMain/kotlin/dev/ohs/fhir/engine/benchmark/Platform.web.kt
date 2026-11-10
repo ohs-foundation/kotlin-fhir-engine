@@ -42,7 +42,7 @@ internal actual fun nowIso8601(): String = Clock.System.now().toString()
 
 internal actual suspend fun deleteBenchmarkDatabase(platformContext: Any) = Unit
 
-/** POSTs to the test server (`karma.config.d/benchmark-report.js`), else prints to the console. */
+/** POSTs to the test server in `karma.config.d/benchmark-server.js`, else prints to the console. */
 internal actual suspend fun emitReport(fileName: String, json: String) {
   // Zero means every span was lost.
   println("Performance timeline: ${webTimelineMeasureCount()} measures recorded")
@@ -59,7 +59,7 @@ internal expect fun webTargetName(): String
 /** `navigator.hardwareConcurrency`, or null where the browser withholds it. */
 internal expect fun webHardwareConcurrency(): Int?
 
-/** How many `performance.measure` entries the run produced; see `BenchmarkSpan.web.kt`. */
+/** How many `performance.measure` entries `BenchmarkSpan.web.kt` recorded in this run. */
 internal expect fun webTimelineMeasureCount(): Int
 
 internal expect fun webUserAgent(): String

@@ -40,7 +40,7 @@ data class ClinicalMix(val observations: Int = 8, val conditions: Int = 2) {
 
   companion object {
     /**
-     * Parses `<observations>x<conditions>` (e.g. `8x2`) or `off` for none; blank gives the default.
+     * Parses `<observations>x<conditions>`, e.g. `8x2`, or `off` for none. Blank gives the default.
      * Malformed input throws so a typo cannot silently change what a run measures.
      */
     fun parse(value: String?): ClinicalMix {
@@ -49,7 +49,7 @@ data class ClinicalMix(val observations: Int = 8, val conditions: Int = 2) {
       if (trimmed.equals("off", ignoreCase = true)) return ClinicalMix(0, 0)
       val parts = trimmed.lowercase().split("x")
       require(parts.size == 2) {
-        "benchmark.mix must be <observations>x<conditions> or off: $trimmed"
+        "benchmark.mix must be <observations>x<conditions>, such as 8x2, or off: $trimmed"
       }
       val observations = requireNotNull(parts[0].toIntOrNull()) { "Not a number: ${parts[0]}" }
       val conditions = requireNotNull(parts[1].toIntOrNull()) { "Not a number: ${parts[1]}" }
@@ -78,7 +78,7 @@ class AugmentedDataset(
 
   override val sampleOrganizationId: String = base.sampleOrganizationId
 
-  /** A generated code; the base corpus carries no observations. */
+  /** A generated code, because the base corpus carries no observations. */
   override val sampleObservationCode: String = OBSERVATION_CODES.first()
 
   override val sampleFamilyName: String = base.sampleFamilyName

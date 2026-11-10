@@ -34,8 +34,8 @@ import platform.posix.getenv
 internal actual fun benchmarkPlatformContext(): Any = Unit
 
 /**
- * An empty directory per call, so reopening the engine gives a cold database. Deletes the previous
- * one.
+ * An empty directory per call, so reopening the engine gives a cold database. Deletes the directory
+ * from the previous call.
  */
 @OptIn(ExperimentalForeignApi::class)
 internal actual fun benchmarkStorageDirectory(): String? {
@@ -65,8 +65,8 @@ internal actual fun nowIso8601(): String = Clock.System.now().toString()
 internal actual suspend fun deleteBenchmarkDatabase(platformContext: Any) = Unit
 
 /**
- * Writes to `BENCHMARK_REPORT_DIR` on the shared host filesystem, else the temporary directory;
- * prints to the console if the write fails.
+ * Writes to `BENCHMARK_REPORT_DIR` on the shared host filesystem, or to the temporary directory
+ * when it is unset. Prints the report to the console if the write fails.
  */
 @OptIn(ExperimentalForeignApi::class)
 internal actual suspend fun emitReport(fileName: String, json: String) {

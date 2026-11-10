@@ -24,7 +24,9 @@ import platform.posix.getenv
 private fun env(name: String): String? =
   getenv(name)?.toKString()?.trim()?.takeIf { it.isNotEmpty() }
 
-/** Small defaults: a simulator run checks the engine works, it is not a measurement. */
+/**
+ * Small defaults, because a simulator run checks that the engine works. It is not a measurement.
+ */
 internal actual suspend fun benchmarkConfigFromEnvironment(): BenchmarkConfig =
   BenchmarkConfig.of(
     profile = Profile.fromString(env("BENCHMARK_PROFILE") ?: Profile.SMOKE.name),

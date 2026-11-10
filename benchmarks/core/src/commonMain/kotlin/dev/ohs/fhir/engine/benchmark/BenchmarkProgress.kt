@@ -17,7 +17,7 @@ package dev.ohs.fhir.engine.benchmark
 
 /**
  * Where a run has got to. Events fire outside [benchmarkSpan], but work a listener schedules
- * elsewhere can land inside the next span; keep the listener empty for clean numbers.
+ * elsewhere can land inside the next span. Keep the listener empty for clean numbers.
  */
 sealed interface BenchmarkProgress {
 

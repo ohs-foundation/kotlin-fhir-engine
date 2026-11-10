@@ -23,8 +23,8 @@ import kotlinx.coroutines.test.runTest
 /**
  * In-process benchmark entry point for desktop, iOS and web.
  *
- * A test because every Kotlin target has a test runner; it asserts only that the workloads ran.
- * Android runs the same workloads through macrobenchmark instead.
+ * Written as a test because every Kotlin target has a test runner. It asserts only that the
+ * workloads ran. Android runs the same workloads through macrobenchmark instead.
  *
  * Setup is inside `runTest`, not `@BeforeTest`: on Kotlin/Wasm the framework does not await the
  * `runTest` Promise for `@BeforeTest`.

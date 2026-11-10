@@ -23,8 +23,9 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 /**
- * Runs workloads in-process, for desktop, iOS and web. Android uses macrobenchmark instead, which
- * owns iteration control but executes the same [Workload] objects.
+ * Runs workloads in-process and times them. Used on desktop, iOS and web, and by the Android driver
+ * app for a group run. Macrobenchmark instead runs one [Workload] per launch and controls the
+ * iterations itself.
  */
 class BenchmarkRunner(
   private val config: BenchmarkConfig,
@@ -101,7 +102,7 @@ class BenchmarkRunner(
         medianMillisPerOp = statistics.median / workload.opsPerIteration,
       )
     } catch (e: CancellationException) {
-      // Cancellation ends the run; it is not a workload failure.
+      // Cancellation ends the whole run. It is not a workload failure.
       throw e
     } catch (e: Throwable) {
       WorkloadResult(

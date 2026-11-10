@@ -45,8 +45,8 @@ import dev.ohs.fhir.engine.benchmark.RunState
 /**
  * The group-run progress screen.
  *
- * Nothing here animates, since recomposition during a measured span perturbs it. The exception is
- * [elapsedSeconds], which the caller ticks once a second.
+ * Nothing here animates, because recomposition during a measured span adds to its time. The
+ * exception is [elapsedSeconds], which the caller ticks once a second.
  */
 @Composable
 fun ProgressScreen(state: RunState, elapsedSeconds: Long) {
@@ -167,7 +167,7 @@ private fun formatElapsed(totalSeconds: Long): String {
   return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
 }
 
-/** Milliseconds below one second, seconds above; common Kotlin has no `String.format`. */
+/** `850.0 ms` below one second, `1.2 s` above. Common Kotlin has no `String.format`. */
 private fun formatMillis(value: Double): String =
   if (value >= 1000.0) "${oneDecimal(value / 1000.0)} s" else "${oneDecimal(value)} ms"
 

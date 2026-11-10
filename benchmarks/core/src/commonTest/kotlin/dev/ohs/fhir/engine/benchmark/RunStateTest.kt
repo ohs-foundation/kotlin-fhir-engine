@@ -118,7 +118,7 @@ class RunStateTest {
 
   @Test
   fun finishingAWorkloadMidRunGoesBackToPreparing() {
-    // The runner prepares the next workload immediately; no measurement is in flight.
+    // The runner prepares the next workload right away, so no measurement is in flight.
     val state =
       fold(
         BenchmarkProgress.Iterating("crud.create", "crud", 0, 2, 0, 1, 2),

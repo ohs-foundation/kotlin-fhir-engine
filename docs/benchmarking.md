@@ -1,27 +1,27 @@
 # Benchmarking
 
-Measures the engine's CRUD, Search DSL and sync paths across the platforms it ships on. Run
-manually; only the micro benchmarks run in CI.
+These benchmarks measure the KMP engine's CRUD, Search DSL and sync paths on every platform it ships
+on. You run them by hand. Only the micro benchmarks run in CI.
 
 ## Modules
 
 | Module | What it is |
 |---|---|
 | `:benchmarks:core` | The workload catalogue and the in-process runner. Every platform runs these same workloads. |
-| `:benchmarks:app` | A driver app launched by intent, so Android can be measured as a real app. |
-| `:benchmarks:macro` | Macrobenchmark that drives the app and reads trace sections back. |
-| `:engine` (`desktopBenchmark`) | JMH micro-benchmarks of the engine's internals and of SQLite itself. See [Micro benchmarks](#micro-benchmarks). |
+| `:benchmarks:app` | A driver app started by an intent, so Android measures the engine inside a real app. |
+| `:benchmarks:macro` | The macrobenchmark that drives the app and reads its trace sections. |
+| `:engine` (`desktopBenchmark`) | JMH micro benchmarks of the engine's internals and of SQLite itself. See [Micro benchmarks](#micro-benchmarks). |
 
-Workloads are defined once, in `:benchmarks:core`. Neither of the other modules defines its own.
+Every workload is defined once, in `:benchmarks:core`. The other modules define none of their own.
 
 ## Quick start
 
 ```bash
-# Desktop — fastest, no device needed
+# Desktop. The fastest option, and it needs no device.
 ./gradlew :benchmarks:core:desktopTest -Pbenchmark.profile=standard
 ```
 
-The report prints as a table and is written to
+The report prints as a table. It is also written to
 `benchmarks/core/build/reports/benchmarks/desktop-<timestamp>.json`.
 
 ## Desktop
@@ -30,6 +30,7 @@ The report prints as a table and is written to
 ./gradlew :benchmarks:core:desktopTest                              # standard profile
 ./gradlew :benchmarks:core:desktopTest -Pbenchmark.profile=smoke    # quick check
 ./gradlew :benchmarks:core:desktopTest -Pbenchmark.groups=search    # one group
+./gradlew :benchmarks:core:desktopTest -Pbenchmark.workloads=crud.get_by_id   # one workload
 ```
 
 | Flag | Default | Meaning |
@@ -37,23 +38,27 @@ The report prints as a table and is written to
 | `-Pbenchmark.profile` | `standard` | `smoke` (10 patients), `standard` (100), `large` (1000) |
 | `-Pbenchmark.groups` | `crud,search,sync` | Comma-separated. `server` is never a default. |
 | `-Pbenchmark.dataset` | `synthetic` | `synthetic` or `synthea` |
-| `-Pbenchmark.warmup` | `2` | Discarded iterations |
+| `-Pbenchmark.warmup` | `2` | Iterations that run but are not counted |
 | `-Pbenchmark.iterations` | `5` | Measured iterations |
 | `-Pbenchmark.seed` | `20260819` | Dataset seed. Changing it changes the fingerprint. |
-| `-Pbenchmark.workloads` | none | Comma-separated workload ids. Beats `groups`; the fastest way to measure one thing. |
-| `-Pbenchmark.population` | from the profile | Patient count, for walking a scaling curve without a new profile. |
-| `-Pbenchmark.mix` | `8x2` | Generated clinical volume per patient, `<observations>x<conditions>`, or `off`. |
-| `-Pbenchmark.coldcache` | `false` | Reopen the database between iterations of read-only workloads, so they stop measuring warm pages. |
-| `-Pbenchmark.server` | none | Base URL for the `server` group, which is skipped without it |
-| `-Pbenchmark.report.dir` | `build/reports/benchmarks` | Where the JSON lands |
+| `-Pbenchmark.workloads` | none | Comma-separated workload ids. Overrides `groups`. The fastest way to measure one thing. |
+| `-Pbenchmark.population` | from the profile | Patient count. Use it to measure several sizes without adding a profile, for example `500`. |
+| `-Pbenchmark.mix` | `8x2` | Generated clinical resources per patient, as `<observations>x<conditions>`, or `off`. |
+| `-Pbenchmark.coldcache` | `false` | Reopen the database between iterations of read-only workloads, so they do not read warm pages. |
+| `-Pbenchmark.server` | none | Base URL for the `server` group. Without it, the group is skipped. |
+| `-Pbenchmark.report.dir` | `build/reports/benchmarks` | Where the JSON report is written |
 | `-Pbenchmark.data.dir` | the packaged output | Where the Synthea corpus is read from |
 | `-Pbenchmark.storage.dir` | `build/benchmark-db` | Where the engine's database file goes |
 
-The first ten also work on `jsBrowserTest`, `wasmJsBrowserTest` and `iosSimulatorArm64Test`;
-web cannot reopen a database, so `-Pbenchmark.coldcache` is recorded but has no effect there.
-`-Pbenchmark.server` works on Android and iOS but not on web. The three directory flags are desktop-only —
-[Web](#web) and [iOS](#ios) say where those paths come from instead. Browser runs also have their
-own lighter defaults.
+The first ten flags also work on `jsBrowserTest`, `wasmJsBrowserTest` and `iosSimulatorArm64Test`.
+Web cannot reopen a database, so on web `-Pbenchmark.coldcache` is recorded in the report but has no
+effect. `-Pbenchmark.server` works on Android and iOS, but not on web.
+
+The three directory flags work on desktop only. The [Web](#web) and [iOS](#ios) sections say where
+those paths come from instead.
+
+Web and iOS use lighter defaults than desktop: the `smoke` profile, 1 warmup and 3 measured
+iterations.
 
 ## Synthea data
 
@@ -62,20 +67,23 @@ records instead:
 
 ```bash
 ./gradlew :benchmarks:core:packageBenchmarkData                       # download, generate, package
-./gradlew :benchmarks:core:desktopTest -Pbenchmark.dataset=synthea    # both steps, if not yet built
+./gradlew :benchmarks:core:desktopTest -Pbenchmark.dataset=synthea    # packages first if needed
 ```
 
-Asking for `synthea` and not getting it is an error, not a downgrade: every platform fails the run
-when the corpus is missing or holds no `Patient`, rather than measuring synthetic data in its place.
+If you ask for `synthea` and the corpus is missing or holds no `Patient`, the run fails. No platform
+measures the synthetic data in its place.
 
-The first run downloads a ~200 MB jar into `~/.gradle/caches/synthea/<version>/`, outside the
-project so it survives `clean`. The version and its SHA-256 are pinned in `gradle.properties`;
-changing either changes the report fingerprint and makes earlier reports incomparable.
+The first run downloads a jar of about 200 MB into `~/.gradle/caches/synthea/<version>/`. That
+folder is outside the project, so the jar survives `clean`. The version and its SHA-256 are pinned in
+`gradle.properties`. Changing either one changes the report fingerprint, so earlier reports are no
+longer comparable.
 
-**Regenerating destroys what is already packaged.** `generateSyntheaData` deletes its output before
-running, and the population comes from `synthea.population`, which defaults to `10`. A command
-that forgets the flag would therefore replace a 50,000-patient corpus that took half an hour to
-build. `guardBenchmarkCorpus` fails the build instead:
+### Regenerating deletes the packaged corpus
+
+`generateSyntheaData` deletes its output before it runs. The population comes from
+`synthea.population`, which defaults to `10`. So a command that forgets the flag would replace a
+50,000-patient corpus that took half an hour to build. `guardBenchmarkCorpus` stops the build
+instead:
 
 ```
 A benchmark corpus of 50000 patients is already packaged, but this run asks for 10 and
@@ -85,15 +93,20 @@ generating would delete it. Pass -Psynthea.population=50000 to use what is there
 
 ### What the corpus contains, and what is generated
 
-Synthea runs with `-m pregnancy` and exports patients only. The full module set produces about 131
-resources per patient — roughly 5 GB at 50,000 patients, and over half a day to insert on a
-benchmark tablet, most of it observations no query would otherwise need in that volume.
+With every module, Synthea produces about 131 resources per patient. That is roughly 5 GB at 50,000
+patients, and more than half a day to insert on a benchmark tablet. Most of it is observations that
+no query needs in that volume.
 
-So the corpus carries patients, encounters, organizations and practitioners; the observations and
-conditions the search workloads query are **generated in code** against its real patient ids
-(`AugmentedDataset`). That makes the per-patient clinical volume a number this repository sets
-rather than one Synthea decides. It is 8 observations and 2 conditions by default, and
-`-Pbenchmark.mix` sets it: `12x3` for more, `off` to generate nothing and measure the corpus alone.
+So Synthea runs with one module (`-m pregnancy`) and `--exporter.fhir.included_resources=Patient`.
+The corpus then holds patients, about one encounter per patient, and Synthea's organizations and
+practitioners. For example, `synthea.population=10` gives 10 Patients, 10 Encounters, 27
+Organizations, 27 Practitioners and 1 Location. The Location is not loaded.
+
+The observations and conditions that the search workloads query are generated in code, against the
+corpus's real patient ids (`AugmentedDataset`). This repository sets the clinical volume per
+patient, not Synthea. The default is 8 observations and 2 conditions. `-Pbenchmark.mix` changes it.
+For example, `12x3` generates more, and `off` generates nothing so the run measures the corpus
+alone.
 
 | `-Psynthea.population` | From the corpus | Generated | Total loaded |
 |---|---|---|---|
@@ -101,46 +114,46 @@ rather than one Synthea decides. It is 8 observations and 2 conditions by defaul
 | `500` | ~2,350 | 5,000 | ~7,350 |
 | `50000` | ~167,000 | 500,000 | ~667,000 |
 
-The report records this: the dataset kind becomes `synthea+generated` and the fingerprint gains the
-mix, so a run with a different mix over the same corpus is never mistaken for a comparable one.
+The report records the mix. The dataset kind becomes `synthea+generated`, and the fingerprint
+includes the mix. Two runs over the same corpus with different mixes therefore never look
+comparable.
 
-Only the resource types the workloads touch are loaded. Synthea also emits `Claim`,
-`ExplanationOfBenefit` and `DocumentReference`, which together dwarf everything else and which no
-query looks at; loading them exhausts the heap for no benefit.
+Only the resource types the workloads query are loaded. `NdjsonDataset.INCLUDED_TYPES` lists them.
 
 ### Reading a corpus larger than memory
 
-The corpus is streamed, never held. A 50,000-patient corpus parses to more than the 256 MB heap a
-normal Android app gets, so `NdjsonDataset` keeps only counts, patient ids and a fingerprint, and
-goes back to the files whenever the resources themselves are needed.
+The corpus is streamed. It is never held in memory. A 50,000-patient corpus parses to more than the
+256 MB heap a normal Android app gets. So `NdjsonDataset` keeps only the counts, the patient ids and
+a fingerprint, and reads the files again whenever it needs the resources.
 
-That scan still costs minutes at 50,000 patients, and every macrobenchmark iteration is a fresh
-process. It is therefore cached beside the app, keyed by the corpus manifest, so only the first
-process pays it.
+That scan still takes minutes at 50,000 patients, and every macrobenchmark iteration is a new
+process. So the scan result is cached next to the app, keyed by the corpus manifest. Only the first
+process pays for the scan.
 
-Synthea's own output is not reproducible file-for-file — it stamps a run timestamp into some
-filenames, e.g. `Organization.1787101630467.ndjson` — so packaging merges everything for a type
-into `<Type>.ndjson` and writes a `manifest.json` beside it.
+Synthea's file names change between runs, because some include a run timestamp, for example
+`Organization.1787101630467.ndjson`. Packaging therefore merges each type into one
+`<Type>.ndjson` and writes a `manifest.json` next to them.
 
-**A pinned seed does not give a reproducible corpus.** Two runs at the same `synthea.version`,
-`benchmark.seed` and `synthea.population` have produced different resource counts, and so
-different fingerprints. Pinning narrows the variation; it does not remove it. The fingerprint
-recorded in the report, not the seed, is what says whether two reports are comparable — regenerate
-the dataset only when you are ready to rebaseline.
+### A pinned seed does not give a reproducible corpus
 
-Parsing is lenient. Synthea emits US Core profiles and extensions the model does not carry, and a
-strict parse would reject the corpus. Lines that still fail are counted and printed rather than
-silently dropped.
+Two runs with the same `synthea.version`, `benchmark.seed` and `synthea.population` have produced
+different resource counts, and so different fingerprints. Pinning reduces the variation but does not
+remove it. Use the fingerprint in the report, not the seed, to decide whether two reports are
+comparable. Regenerate the dataset only when you are ready to start a new baseline.
+
+Parsing is lenient. Synthea emits US Core profiles and extensions that the model does not carry, and
+a strict parse would reject the corpus. Lines that still fail are counted and printed. They are not
+dropped silently.
 
 ## Android
 
-Use a **physical device**. Emulator numbers are host-bound and meaningless; an emulator is only good
-for checking that the plumbing works.
+Use a physical device. Emulator numbers depend on the host and mean nothing. An emulator is only
+useful to check that the setup works.
 
-Keep the device awake. Android freezes cached background processes, so if the screen sleeps during a
-long workload the run stalls at 0% CPU and the next launch cannot be confirmed. The driver app holds
-the screen on and the harness wakes the device, but a device that sleeps for other reasons — low
-battery, a policy — will still stall.
+Keep the device awake. Android freezes cached background processes. If the screen sleeps during a
+long workload, the run stalls at 0% CPU and the next launch cannot be confirmed. The driver app keeps
+the screen on and the harness wakes the device. A device that sleeps for another reason, such as low
+battery or a device policy, still stalls.
 
 ### The driver app on its own
 
@@ -161,26 +174,32 @@ adb logcat -d -s BenchmarkDriver
 
 ### Watching a run
 
-A group run shows live progress on the device: which workload is in flight, warmup versus measured
-iteration, elapsed time, and each finished workload's median as it lands. The header names the
-phase, so the stretch after the last workload reads `reporting` while the JSON is being written
-rather than looking like a stall. When the run ends the screen is the results table.
+A group run shows its progress on the device screen:
 
-Completions are also written to logcat:
+- the workload in progress
+- whether the iteration is a warmup or a measured one
+- the elapsed time
+- each finished workload's median, as it finishes
+
+The header names the current phase. After the last workload it reads `reporting` while the JSON is
+written, so that stretch does not look like a stall. When the run ends, the screen shows the results
+table.
+
+Each finished workload is also written to logcat:
 
 ```bash
 adb logcat -s BenchmarkDriver
 ```
 
-A single-workload run (`-e workload <id>`) keeps the plain status text instead, because
-macrobenchmark waits on that view and must not pay for a UI. That view reports
-`starting` → `ready` → `done`, or `failed <exception>`. `ready` marks the end of untimed setup.
+A single-workload run (`-e workload <id>`) shows a plain status text instead. Macrobenchmark waits
+on that text, and the run must not pay for a UI. The status goes `starting`, `ready`, `done`, or
+`failed <exception>`. `ready` means the untimed setup is finished.
 
-The screen costs the numbers a little. The elapsed clock ticks once a second, and each iteration
-event redraws the current row; both can land while a workload is being measured, so the app's own
-in-process numbers carry a small amount of UI work. Macrobenchmark drives the single-workload path,
-never renders this screen, and is the authoritative Android measurement — treat the app's
-group-mode report as indicative.
+The progress screen costs the numbers a little. The elapsed clock ticks once a second, and each
+iteration redraws the current row. Both can happen while a workload is measured, so the app's own
+numbers include a small amount of UI work. Macrobenchmark drives the single-workload path and never
+draws the progress screen. Treat macrobenchmark as the real Android measurement, and the app's group
+report as a rough guide.
 
 ### Macrobenchmark
 
@@ -197,10 +216,10 @@ One class at a time:
 ```
 
 Each class runs one test case per workload in its group, so a failing workload does not stop the
-rest. The app is compiled ahead of time (`CompilationMode.Full()`) on every run.
+others. Every run compiles the app ahead of time (`CompilationMode.Full()`).
 
-Results land in
-`benchmarks/macro/build/outputs/connected_android_test_additional_output/`, alongside the Perfetto
+Results are written to
+`benchmarks/macro/build/outputs/connected_android_test_additional_output/`, next to the Perfetto
 traces.
 
 ### Synthea on Android
@@ -209,35 +228,38 @@ traces.
 ./gradlew :benchmarks:macro:connectedReleaseAndroidTest -Pbenchmark.dataset=synthea
 ```
 
-One flag does both jobs: it stages the packaged data into the driver app's assets and tells the run
-to use it. Android cannot read the host filesystem, and `/data/local/tmp` is unreadable to an app
-from API 30, so the corpus travels inside the APK — only the types a workload queries, about
-5.7 MB at `synthea.population=10`, which compresses to roughly 1 MB of APK.
+This one flag does two things. It copies the packaged data into the driver app's assets, and it
+tells the run to use that data. Android cannot read the host filesystem, and from API 30 an app
+cannot read `/data/local/tmp`. So the corpus is shipped inside the APK. Only the types a workload
+queries are included. At `synthea.population=10` that is about 5.7 MB, which compresses to roughly
+1 MB of APK.
 
-**A Synthea run that cannot find the data fails.** Nothing substitutes the synthetic dataset for
-it, so a build without the staged assets stops the run:
+A Synthea run that cannot find the data fails. The synthetic dataset is never used in its place.
+A build without the copied assets stops the run with:
 
 ```
 IllegalStateException: benchmark.dataset=synthea, but the Synthea data is not readable here: …
 ```
 
-The driver puts that in its status view and in logcat, and the macrobenchmark's wait ends on it
-rather than running to the timeout. Read the message with:
+The driver shows that message in its status view and in logcat. Macrobenchmark stops waiting as
+soon as it appears, instead of running to the timeout. Read the message with:
 
 ```bash
 adb logcat -d -s BenchmarkDriver
 ```
 
-On a run that does start, the driver logs what loaded, which is the only record of the dataset on
-the single-workload path because it writes no report:
+When a run starts, the driver logs which dataset it loaded. The single-workload path writes no
+report, so this log line is its only record of the dataset:
 
 ```bash
 adb logcat -d -s BenchmarkDriver | grep dataset=
 # dataset=synthea population=11 fingerprint=6ae5c742bfc713c6
 ```
 
-**Check that every metric is non-zero before believing a run.** A macrobenchmark passes whether or
-not it measured anything, so a green run proves nothing on its own:
+### Check that every metric is non-zero
+
+A macrobenchmark passes whether or not it measured anything. A green run proves nothing on its own.
+Check the metrics with:
 
 ```bash
 python3 - <<'EOF'
@@ -251,27 +273,25 @@ for b in json.load(open(f))['benchmarks']:
 EOF
 ```
 
-A zero means the trace section never formed a closed slice. `atrace` pairs begin and end **per
-thread**, so anything that lets the measured block resume on a different thread than it started on
-breaks the pairing silently — the name still appears in the trace, but nothing matches it. The
-Android span therefore runs on one dedicated thread; see `BenchmarkSpan.android.kt`.
+A zero means the trace section never became a closed slice. `atrace` pairs a section's begin and
+end per thread. If the measured block resumes on a different thread than it started on, the pair
+breaks without any error. The section name still appears in the trace, but nothing matches it. For
+that reason the Android span runs on one dedicated thread. See `BenchmarkSpan.android.kt`.
 
-**On an emulator**, macrobenchmark refuses to run without:
+On an emulator, macrobenchmark refuses to run unless you pass:
 
 ```bash
 -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR,UNLOCKED,DEBUGGABLE,LOW-BATTERY
 ```
 
-Suppressing those does not make the numbers meaningful. It only lets the run proceed.
+This flag only lets the run continue. It does not make the numbers meaningful.
 
 ### Sweeping every workload in isolation
 
-At a large corpus the interesting question is which workloads survive, not only how fast they are.
-One `connectedReleaseAndroidTest` cannot answer it: the six crud workloads share a single `@Test`,
-so the first `OutOfMemoryError` ends the other five before they start.
+With a large corpus, the first question is which workloads survive, not only how fast they are.
 
-`scripts/android_benchmark_sweep.py` runs one workload per Gradle invocation and aggregates the
-results:
+`scripts/android_benchmark_sweep.py` runs one workload per Gradle invocation, gives each one its own
+timeout, classifies the result, and collects all results in one summary:
 
 ```bash
 scripts/android_benchmark_sweep.py --population 50000
@@ -280,57 +300,65 @@ scripts/android_benchmark_sweep.py --only crud.create_batch --reuse-corpus
 scripts/android_benchmark_sweep.py --groups server --server http://localhost:8080/fhir
 ```
 
-Two phases. **Triage** runs every workload once, to find what survives. **Full** then reruns only
-the survivors at measured iterations. At 50,000 patients that is the difference between learning
-what breaks in an hour and learning it at the end of a day; `--triage-only` stops after the first
-pass.
+The sweep has two phases:
+
+1. Triage runs every workload once, to find which ones survive.
+2. Full reruns only the survivors, with the measured number of iterations.
+
+At 50,000 patients this means you learn what breaks within an hour, not at the end of a day.
+`--triage-only` stops after the first phase.
 
 | Flag | Default | Meaning |
 |---|---|---|
 | `--population` | `50000` | Synthea patients |
-| `--profile` | `standard` | Forwarded to the driver |
+| `--profile` | `standard` | Passed to the driver |
 | `--timeout` | `30` | Wall-clock minutes per workload |
-| `--triage-iterations` | `1` | Iterations in the triage pass |
-| `--full-iterations` | `5` | Iterations in the full pass |
+| `--triage-iterations` | `1` | Iterations in the triage phase |
+| `--full-iterations` | `5` | Iterations in the full phase |
 | `--only` | all | Workload ids to run instead of the whole catalogue |
-| `--groups` | all | Restrict to `crud`, `search`, `sync` or `server` |
-| `--server` | none | Base URL of a FHIR server; the `server` group needs it |
-| `--reuse-corpus` | off | Use the packaged corpus on disk, skipping generation |
+| `--groups` | all | Limit the run to `crud`, `search`, `sync` or `server` |
+| `--server` | none | Base URL of a FHIR server. The `server` group needs it. |
+| `--reuse-corpus` | off | Use the packaged corpus on disk and skip generation |
 | `--dry-run` | off | Print the Gradle commands and stop |
 
-Each workload gets two timeouts: an outer wall clock that kills the process group, and the driver's
-own wait set below it, so the test reports which workload stalled rather than being killed
-mid-sentence.
+Each workload has two timeouts. The outer one is a wall clock that kills the whole process group.
+The driver's own wait is shorter, so the test reports which workload stalled before the outer
+timeout kills it.
 
-The sweep passes `-Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true`. Without it AGP
-uninstalls the driver after every workload, taking the seeded database and the cached corpus scan
-with it, and each of the 31 workloads starts from an empty database. Read-only workloads
-(`Isolation.NONE`) keep whatever the previous one left, so the corpus is inserted once rather than
-once per workload — measured at 580s down to 70s between iterations on a Galaxy Tab A9.
+The sweep passes `-Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true`. Without that
+flag, AGP uninstalls the driver after every workload. The uninstall removes the seeded database and
+the cached corpus scan, and each of the 31 workloads starts from an empty database. With the flag,
+read-only workloads (`Isolation.NONE`) reuse the database the previous workload left, so the corpus
+is inserted once instead of once per workload. On a Galaxy Tab A9 this cut the time between
+iterations from 580 s to 70 s.
 
 Every run is classified from its logcat, its Gradle log and its metrics:
 
 | Status | Meaning |
 |---|---|
 | `ok` | Passed, and the trace section measured something |
-| `no-metric` | Passed but measured zero — see the sanity check above |
-| `oom` | `OutOfMemoryError`, or the low-memory killer took the driver |
-| `timeout` | Ran past the clock with no out-of-memory evidence |
-| `failed` | Anything else; the first exception line is kept |
+| `no-metric` | Passed but measured zero. See [Check that every metric is non-zero](#check-that-every-metric-is-non-zero). |
+| `oom` | `OutOfMemoryError`, or the low-memory killer stopped the driver |
+| `timeout` | Ran past the clock with no sign of running out of memory |
+| `failed` | Anything else. The first exception line is kept. |
 | `skipped` | The `server` group when no `--server` was given |
 
-Out of memory is checked before the timeout it causes. When the driver dies its status view never
-settles and the wait runs to the clock, so reporting a timeout would name the symptom and hide the
-cause.
+The sweep checks for out of memory before it checks for a timeout. When the driver dies, its status
+view never settles and the wait runs until the clock. Reporting a timeout would name the symptom and
+hide the cause.
 
-Results land under `benchmarks/macro/build/sweeps/<timestamp>/`: `summary.json` and `summary.txt`
-at the top, and per workload per phase the `benchmarkData.json`, the Gradle log and the logcat.
-Each row records the driver's `dataset=… population=… fingerprint=…` line, so a report proves which
-corpus it measured. Rows whose workload queries a resource type the corpus does not contain are
-flagged — without that, an empty result set reads as a fast one.
+Results are written under `benchmarks/macro/build/sweeps/<timestamp>/`:
 
-The workload list is read from the catalogue sources rather than copied, and the script fails if a
-group comes back empty, so a rename cannot silently shrink the sweep. Its own logic is tested:
+- `summary.json` and `summary.txt` at the top
+- for each workload and phase, the `benchmarkData.json`, the Gradle log and the logcat
+
+Each row records the driver's `dataset=… population=… fingerprint=…` line, so the summary shows
+which corpus was measured. A row is flagged when its workload queries a resource type the corpus
+does not contain. Without the flag, an empty result would look like a fast one.
+
+The sweep reads the workload list from the catalogue sources instead of keeping its own copy. It
+fails if a group comes back empty, so renaming a workload cannot silently shrink the sweep. The
+script's own logic has tests:
 
 ```bash
 python3 -m unittest discover -s scripts -t scripts
@@ -338,7 +366,7 @@ python3 -m unittest discover -s scripts -t scripts
 
 ## Web
 
-Needs a Chromium-based browser. Chromium satisfies Karma's `CHROME_BIN` directly:
+Web needs a Chromium-based browser. Chromium works as Karma's `CHROME_BIN` directly:
 
 ```bash
 export CHROME_BIN=/Applications/Chromium.app/Contents/MacOS/Chromium
@@ -346,34 +374,34 @@ export CHROME_BIN=/Applications/Chromium.app/Contents/MacOS/Chromium
 ./gradlew :benchmarks:core:jsBrowserTest
 ```
 
-Both take the same `-Pbenchmark.*` flags as desktop, `-Pbenchmark.dataset=synthea` included:
+Both tasks take the same `-Pbenchmark.*` flags as desktop, including `-Pbenchmark.dataset=synthea`:
 
 ```bash
 ./gradlew :benchmarks:core:jsBrowserTest -Pbenchmark.profile=smoke -Pbenchmark.dataset=synthea
 ```
 
-With no flags a browser run uses the smoke profile, 1 warmup and 3 measured iterations, rather than
-desktop's heavier defaults: a browser over OPFS is the slowest target by a wide margin.
+Without flags, a browser run uses the `smoke` profile, 1 warmup and 3 measured iterations. Desktop's
+defaults are heavier. A browser over OPFS is by far the slowest target.
 
-The report lands in `benchmarks/core/build/reports/benchmarks/<js|wasmJs>-<timestamp>.json`,
-alongside desktop's. Each workload is also marked on the browser's performance timeline under its
-own id, readable with `performance.getEntriesByType("measure")`.
+The report is written to `benchmarks/core/build/reports/benchmarks/<js|wasmJs>-<timestamp>.json`,
+next to desktop's. Each workload is also marked on the browser's performance timeline under its own
+id. Read the marks with `performance.getEntriesByType("measure")`.
 
-A browser can read neither `-P` properties nor the filesystem, so the Karma server stands in for
-both. `benchmarks/core/karma.config.d/benchmark-server.js` serves the run config and the packaged
-Synthea data, and receives the finished report. `-Pbenchmark.data.dir` and `-Pbenchmark.report.dir`
-therefore do not apply on web; both paths are fixed.
+A browser can read neither `-P` properties nor the filesystem, so the Karma server does both jobs.
+`benchmarks/core/karma.config.d/benchmark-server.js` serves the run config and the packaged Synthea
+data, and receives the finished report. That is why `-Pbenchmark.data.dir` and
+`-Pbenchmark.report.dir` do not apply on web. Both paths are fixed.
 
 ## Sync against a real server
 
-The `server` group is the only way upload is measured at all. `syncUpload` drives patch generation,
-patch ordering and bundle generation through `internal` types, so an external caller can only ever
-report failure — a real server is not a convenience here, it is the only route.
+The `server` group is the only way to measure upload. `syncUpload` uses `internal` types for patch
+generation, patch ordering and bundle generation. A caller outside the KMP engine can only report
+failure through it. So a real server is required for upload, not just convenient.
 
 ```bash
-benchmarks/tools/start-benchmark-server.sh          # HAPI in docker, waits until it answers
+benchmarks/tools/start-benchmark-server.sh          # HAPI in Docker. Waits until it answers.
 ./gradlew :benchmarks:core:packageBenchmarkData     # only needed for server.download
-benchmarks/tools/populate-benchmark-server.sh       # ditto
+benchmarks/tools/populate-benchmark-server.sh       # only needed for server.download
 
 ./gradlew :benchmarks:core:desktopTest \
   -Pbenchmark.groups=server \
@@ -384,48 +412,50 @@ benchmarks/tools/stop-benchmark-server.sh
 
 ### Loading the server
 
-`populate-benchmark-server.sh` only matters for `server.download`; the two upload workloads
-generate their own patients. It sends transaction bundles rather than one request per resource,
-which at 50,000 patients is the difference between roughly 840 requests and 167,000:
+`populate-benchmark-server.sh` only matters for `server.download`. The two upload workloads create
+their own patients. The script sends transaction bundles instead of one request per resource. At
+50,000 patients that is roughly 840 requests instead of 167,000:
 
 ```
 Loaded 2,673 resources in 5s (538/s) into http://localhost:8080/fhir
 ```
 
-Two properties of the corpus make that work. `--exporter.fhir.bulk_data=true` resolves every
-reference to a literal `Type/id`, so entries carry no `urn:uuid` placeholders needing rewrites; and
-entries are `PUT` at those ids, so the server keeps the corpus's identifiers and a repeated load
-updates rather than duplicates.
+Two properties of the corpus make this work:
 
-Synthea re-emits an organization or practitioner once per resource referencing it — about two
-thirds of those two files are repeats — and a transaction bundle carrying one id twice is rejected
-outright with `HAPI-0535`. The loader drops repeats as it streams, which is why a 1,165-line
-`Organization.ndjson` lands as 405 rows.
+- `--exporter.fhir.bulk_data=true` makes every reference a literal `Type/id`, so no entry carries a
+  `urn:uuid` placeholder that would need rewriting.
+- Entries are sent as `PUT` at those ids. The server keeps the corpus's ids, and loading twice
+  updates the resources instead of duplicating them.
 
-`-Pbenchmark.server` can point at any reachable FHIR server; the script is a convenience, not a
-requirement. Without the flag the `server` workloads are skipped and the run says so, rather than
-passing silently with nothing measured.
+Synthea writes an organization or practitioner again for every resource that references it. About
+two thirds of those two files are repeats. HAPI rejects a transaction bundle that carries the same
+id twice, with `HAPI-0535`. The loader drops repeats as it streams. That is why a 1,165-line
+`Organization.ndjson` becomes 405 rows.
+
+`-Pbenchmark.server` can point at any reachable FHIR server. The script is a convenience, not a
+requirement. Without the flag, the `server` workloads are skipped and the run says so. It does not
+pass with nothing measured.
 
 ### On a device
 
 The same group runs on Android, through `FhirEngineServerMacrobenchmark`. Two things differ from
 desktop.
 
-A phone resolves `localhost` to itself, so a server on the host has to be forwarded first:
+First, a phone resolves `localhost` to itself. A server on the host must be forwarded:
 
 ```bash
 adb reverse tcp:8080 tcp:8080
 ```
 
-The forward belongs to the adb connection rather than to the app, so it survives the process
-restart macrobenchmark does between iterations. `scripts/android_benchmark_sweep.py` sets it up
-itself when `--server` names a loopback URL:
+The forward belongs to the adb connection, not to the app, so it survives the process restart that
+macrobenchmark does between iterations. `scripts/android_benchmark_sweep.py` sets the forward up
+itself when `--server` is a loopback URL:
 
 ```bash
 scripts/android_benchmark_sweep.py --groups server --server http://localhost:8080/fhir
 ```
 
-Driving Gradle directly needs the URL forwarded to the instrumentation as well as to the build:
+Second, when you run Gradle directly, pass the URL to both the build and the instrumentation:
 
 ```bash
 ./gradlew :benchmarks:macro:connectedReleaseAndroidTest \
@@ -433,28 +463,28 @@ Driving Gradle directly needs the URL forwarded to the instrumentation as well a
   -Pandroid.testInstrumentationRunnerArguments.class=dev.ohs.fhir.engine.benchmark.macro.FhirEngineServerMacrobenchmark
 ```
 
-Without a URL the class is skipped by an `assumeTrue` rather than failed, so a sweep that runs
-every class does not report the group as broken when the run simply did not ask for a server.
+Without a URL, an `assumeTrue` skips the class instead of failing it. A sweep that runs every class
+therefore does not report the group as broken when the run did not ask for a server.
 
-The driver app declares `INTERNET` and permits cleartext traffic, which a local HAPI needs. It is
-a measurement driver and is never published, so cleartext is permitted outright rather than
-through a config that would have to be edited per server.
+The driver app declares `INTERNET` and allows cleartext traffic, which a local HAPI needs. The app
+is only a measurement driver and is never published. So it allows cleartext for every host, instead
+of using a network config that would need editing for each server.
 
-Upload ids carry a per-process token, because macrobenchmark restarts the driver between
-iterations and anything counted in memory would restart at the same value. Reusing an id is not a
-failure the run would report: the server already holds the resource, so the `PUT` lands as an
-update and `server.upload_creates` measures update cost under a create's name.
+Upload ids include a token that is unique to each process. Macrobenchmark restarts the driver
+between iterations, so a counter kept in memory would start again at the same value. Reusing an id
+does not fail the run. The server already holds that resource, so the `PUT` becomes an update, and
+`server.upload_creates` would measure update cost under a create's name.
 
 | Workload | What it measures |
 |---|---|
 | `server.upload_creates` | New resources: patch generation, bundling, POST, consolidation |
 | `server.upload_updates` | Updates, so the patch generator diffs against a stored resource |
-| `server.download` | Download against a real server: paging, parsing, conflict resolution |
+| `server.download` | Download from a real server: paging, parsing, conflict resolution |
 
-**These numbers include the server and the network.** They are comparable only to another run
-against the same server on the same machine — never to the server-free `sync` group, and never
-across machines. Restart the server between comparable runs: uploads accumulate, and a server with
-a million rows answers differently from an empty one.
+These numbers include the server and the network. Compare them only with another run against the
+same server on the same machine. Never compare them with the `sync` group, which runs without a
+server, and never across machines. Restart the server between runs you want to compare. Uploads
+pile up, and a server with a million rows answers differently from an empty one.
 
 ## iOS
 
@@ -463,31 +493,35 @@ a million rows answers differently from an empty one.
 ./gradlew :benchmarks:core:iosSimulatorArm64Test -Pbenchmark.dataset=synthea
 ```
 
-The report lands in `benchmarks/core/build/reports/benchmarks/ios-<timestamp>.json` like every other
-platform's. A simulator shares the host filesystem, so both the report and the Synthea directory are
-ordinary host paths handed to the harness through `BENCHMARK_REPORT_DIR` and `BENCHMARK_DATA_DIR`.
+The report is written to `benchmarks/core/build/reports/benchmarks/ios-<timestamp>.json`, like
+every other platform's. A simulator shares the host filesystem. So the report folder and the Synthea
+folder are normal host paths, passed to the harness through `BENCHMARK_REPORT_DIR` and
+`BENCHMARK_DATA_DIR`.
 
-A Synthea run on the simulator takes about 20 minutes at `synthea.population=10`, most of it
-seeding the corpus for the fresh-database CRUD workloads.
+A Synthea run on the simulator takes about 20 minutes at `synthea.population=10`. Most of that time
+goes into seeding the corpus for the fresh-database CRUD workloads.
 
-**Simulator numbers are indicative only.** A simulator runs on the host CPU with the host's disk, so
-these say whether the engine works on the platform and roughly where the costs sit — not what an
-iPhone would do. A real device needs the data bundled into the test app, which this harness does not
-do.
+Simulator numbers are only a rough guide. A simulator runs on the host CPU and the host disk. Its
+numbers show that the KMP engine works on iOS and roughly where the costs are. They do not show what
+an iPhone would do. A real device needs the data bundled into the test app, and this harness does
+not do that.
 
 ## Sample results
 
-##### [**_SM-X135G — Samsung Galaxy Tab A9_**](https://www.gsmarena.com/samsung_galaxy_tab_a9-12558.php)
+##### [SM-X135G, Samsung Galaxy Tab A9](https://www.gsmarena.com/samsung_galaxy_tab_a9-12558.php)
 
-**CPU** - Octa-core (2x2.2 GHz Cortex-A76 & 6x2.0 GHz Cortex-A55) — MediaTek Helio G99
+CPU: MediaTek Helio G99, octa-core (2x2.2 GHz Cortex-A76 and 6x2.0 GHz Cortex-A55)
 
 API 36 (Android 16)
 
-*_Dataset: the android-fhir `bulk_data` corpus — 20,000 patients, 67,959 resources (Patient/Encounter/Organization/Practitioner), generated clinical mix off. Single measured iteration per workload._*
+Dataset: the android-fhir `bulk_data` corpus. 20,000 patients and 67,959 resources (Patient,
+Encounter, Organization, Practitioner). Generated clinical mix off. One measured iteration per
+workload.
 
 ###### Data Access API results
 
-Generated from `crud.*` workloads in `benchmarks/core`, driven per-workload by `FhirEngineCrudMacrobenchmark`; whole-dataset inserts run through the in-process harness.
+From the `crud.*` workloads in `benchmarks/core`, driven one workload at a time by
+`FhirEngineCrudMacrobenchmark`. The whole-dataset inserts ran through the in-process harness.
 
 | API | Average duration (ms) | Notes |
 |:----|----------------------:|-------|
@@ -500,7 +534,7 @@ Generated from `crud.*` workloads in `benchmarks/core`, driven per-workload by `
 
 ###### Search DSL API
 
-Generated from `search.*` workloads; each figure is the average of 20 repeats of the query.
+From the `search.*` workloads. Each figure is the average of 20 repeats of the query.
 
 | | Population size | Average duration (ms) | Notes |
 |--|----------------:|----------------------:|-------|
@@ -527,8 +561,8 @@ Generated from `search.*` workloads; each figure is the average of 20 repeats of
 | risk_assessment_by_probability | 20k | ~10.70 | number comparison † |
 | risk_assessment_probability_or_status | 20k | ~6.66 | number OR token † |
 
-*\* the dataset carries no Observation or Condition resources, so these query empty tables*  
-*† measured against 200 seeded RiskAssessments*
+*\* The dataset has no Observation or Condition resources, so these queries run against empty tables.*  
+*† Measured against 200 seeded RiskAssessments.*
 
 ###### Sync API results
 
@@ -544,53 +578,53 @@ Against a local HAPI holding 37,884 resources, reached over `adb reverse`.
 
 ## Reading the results
 
-Every report records the platform and a dataset `fingerprint`. **Two reports are comparable only if
-both match.** Different platform, different seed, different population, or a different dataset kind
-all mean the numbers are measuring different things.
+Every report records the platform and a dataset `fingerprint`. Two reports are comparable only if
+both values match. A different platform, seed, population or dataset kind means the numbers measure
+different things.
 
-Per workload the report carries the raw `samplesMillis` plus min/median/p90/max/mean/stdDev and
-`medianMillisPerOp`. Prefer the median.
+For each workload the report has the raw `samplesMillis`, plus `min`, `median`, `p90`, `max`,
+`mean`, `stdDev` and `medianMillisPerOp`. Use the median.
 
-`p90` is **null unless at least 10 iterations were measured**, and the default is 5. Below ten
-samples nothing falls in the top decile, so an interpolated p90 is a relabelled maximum rather than
-a tail figure. Raise `-Pbenchmark.iterations` to 10 or more when you want one. Use `stdDev` — the
-sample standard deviation, corrected for sample size — to judge how noisy a shorter run was.
+`p90` is null unless at least 10 iterations were measured. The default is 5. With fewer than ten
+samples, no sample falls in the top tenth, so an interpolated p90 is just the maximum under another
+name. For a p90, pass `-Pbenchmark.iterations=10` or more. To judge how noisy a shorter run was, use
+`stdDev`, the sample standard deviation (divided by n-1).
 
 ### Sanity checks
 
-Before trusting a run:
+Before you trust a run:
 
-- **The search medians must show a spread.** If they are all alike and fast, the page cache was
-  never disturbed and the search numbers mean nothing. On desktop at `standard` the spread is
-  roughly 0.6 ms to 108 ms.
-- **Every macrobenchmark `TraceSectionMetric` must be non-zero.** A zero means the section never
-  reached the trace — usually a debuggable build, a missing `<profileable>`, or a workload id that
-  does not match the span name. This fails silently.
-- **`isolationNote` must be null.** When set, the platform could not honour the isolation the
-  workload asked for and the number is weaker than it looks.
-- **Run the same profile twice.** Median-over-median drift should be well under whatever threshold
+- The search medians must spread out. If they are all similar and fast, the page cache was never
+  disturbed and the search numbers mean nothing. On desktop at `standard`, they range from roughly
+  0.6 ms to 108 ms.
+- Every macrobenchmark `TraceSectionMetric` must be non-zero. A zero means the section never reached
+  the trace. The usual causes are a debuggable build, a missing `<profileable>`, or a workload id
+  that does not match the span name. Nothing reports this failure.
+- `isolationNote` must be null. When it is set, the platform could not give the workload the
+  isolation it asked for, and the number is weaker than it looks.
+- Run the same profile twice. The change between the two medians should be well under the threshold
   you want to gate on. Macrobenchmark's own variance is roughly 5–10%.
 
 ## Known limitations
 
-- **A macrobenchmark passes whether or not it measured anything.** Nothing fails a run whose trace
-  sections are all zero, so check the metrics rather than the exit code; see the Android section.
-
-- **Web has no in-process reset.** Closing the database wedges the SQLite Web Worker; not closing
-  leaves it holding the exclusive OPFS handle so a reopen never completes. `FRESH_DATABASE`
-  therefore degrades to `CLEAR_TABLES` on web, which the report records. A genuinely cold web
-  measurement needs a page reload.
-- **Upload sync needs a real server.** `syncUpload` expects response mapping types that are
-  `internal`, so an external caller can only report failure. The `server` group covers upload
-  against a running FHIR server; there is no in-process equivalent.
-- **`js`/`wasmJs` have two pre-existing `FhirEngineImplTest` failures** unrelated to benchmarking.
-
-- **A cold cache is only as cold as SQLite's.** `-Pbenchmark.coldcache` reopens the database, which
-  drops SQLite's page cache but not the operating system's file cache, so it is a colder read than
-  the default rather than a genuinely cold one. Web cannot reopen in-process at all and says so in
-  the report. Measured on desktop at 20,000 patients it moves search medians by under 6%, inside
-  the noise floor — the file cache stays warm and the working set is small. It is likely to matter
-  more on a device with real storage.
+- A macrobenchmark passes whether or not it measured anything. A run whose trace sections are all
+  zero does not fail, so check the metrics, not the exit code. See
+  [Check that every metric is non-zero](#check-that-every-metric-is-non-zero).
+- Web cannot reset the database in-process. Closing the database breaks the SQLite Web Worker. Not
+  closing it leaves the worker holding the exclusive OPFS handle, so a reopen never completes.
+  `FRESH_DATABASE` therefore falls back to `CLEAR_TABLES` on web, and the report records that. A
+  truly cold web measurement needs a page reload.
+- Upload sync needs a real server. `syncUpload` expects response mapping types that are `internal`,
+  so a caller outside the KMP engine can only report failure. The `server` group measures upload
+  against a running FHIR server. There is no in-process equivalent.
+- `js` and `wasmJs` have two existing `FhirEngineImplTest` failures that are unrelated to
+  benchmarking.
+- A cold cache is only as cold as SQLite's cache. `-Pbenchmark.coldcache` reopens the database. That
+  drops SQLite's page cache but not the operating system's file cache. So the read is colder than
+  the default, but not truly cold. Web cannot reopen in-process at all, and the report says so. On
+  desktop at 20,000 patients, the flag moved search medians by under 6%, which is inside the noise.
+  The file cache stays warm and the working set is small. The flag is likely to matter more on a
+  device with real storage.
 
 ## Micro benchmarks
 

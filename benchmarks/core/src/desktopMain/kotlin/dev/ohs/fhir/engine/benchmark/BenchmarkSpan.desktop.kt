@@ -15,5 +15,5 @@
  */
 package dev.ohs.fhir.engine.benchmark
 
-/** No tracing on desktop; [BenchmarkRunner] times the block directly. */
+/** No tracing on desktop. [BenchmarkRunner] times the block itself. */
 internal actual suspend fun <T> benchmarkSpan(name: String, block: suspend () -> T): T = block()

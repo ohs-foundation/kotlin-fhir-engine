@@ -17,7 +17,7 @@ package dev.ohs.fhir.engine.benchmark.workloads
 
 import dev.ohs.fhir.engine.benchmark.Workload
 
-/** The single catalogue. Both the in-process runner and Android read from here. */
+/** The single catalogue. The in-process runner and the macrobenchmark both read from here. */
 object Workloads {
 
   fun all(): List<Workload> =

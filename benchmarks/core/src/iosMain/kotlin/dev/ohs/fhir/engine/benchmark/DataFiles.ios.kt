@@ -31,8 +31,8 @@ import platform.posix.getenv
 import platform.posix.memcpy
 
 /**
- * A host directory set by the Gradle test task; readable because the simulator shares the host
- * filesystem.
+ * A host directory set by the Gradle test task. The simulator can read it because it shares the
+ * host filesystem.
  */
 @OptIn(ExperimentalForeignApi::class)
 private fun dataDirectory(): String? =

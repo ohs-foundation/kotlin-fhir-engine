@@ -278,7 +278,10 @@ object SearchWorkloads {
     }
   }
 
-  /** Repeats after the first run warm, so these measure throughput, not cold queries. */
+  /**
+   * Query repeats per iteration. Every repeat after the first runs warm, so these measure
+   * throughput, not cold queries.
+   */
   private const val QUERY_REPEATS = 20
 
   private const val RISK_ASSESSMENTS = 200

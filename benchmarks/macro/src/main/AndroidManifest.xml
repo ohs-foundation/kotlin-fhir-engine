@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Lets the harness read the driver app's status view across the process boundary. -->
+  <!-- Lets macrobenchmark look up the driver app's package. androidx.benchmark:benchmark-macro
+       also declares it. -->
   <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 </manifest>

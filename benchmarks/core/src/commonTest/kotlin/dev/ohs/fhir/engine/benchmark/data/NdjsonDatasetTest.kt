@@ -171,7 +171,7 @@ class NdjsonDatasetTest {
 
   @Test
   fun `re-reads the corpus instead of holding it`() = runTest {
-    // The parsed corpus does not fit in a phone's heap; only counts and ids are held.
+    // The parsed corpus does not fit in a phone's heap, so only counts and ids are held.
     val lines = FakeLines(mapOf("Patient.ndjson" to listOf(patient("p1"), patient("p2"))))
     val dataset =
       NdjsonDataset.load(

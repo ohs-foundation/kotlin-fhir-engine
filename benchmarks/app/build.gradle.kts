@@ -9,8 +9,8 @@ plugins {
   alias(libs.plugins.kotlin.compose)
 }
 
-// Only Android has a Compose UI; desktop and web print to a console. Compose does not initialise
-// on the single-workload macrobenchmark path.
+// Only Android has a Compose UI. Desktop and web print to a console. A single-workload
+// macrobenchmark launch does not start Compose.
 android {
   namespace = "dev.ohs.fhir.engine.benchmark.app"
   compileSdk = 36
@@ -78,7 +78,8 @@ kotlin {
     commonTest.dependencies { implementation(libs.kotlin.test) }
     androidMain.dependencies {
       implementation(libs.kotlinx.coroutines.android)
-      // Macrobenchmark drives profile compilation through this; API 34+ needs 1.4.0+.
+      // Macrobenchmark sends broadcasts to this library in the app, e.g. to install a profile or
+      // drop the shader cache. API 34+ needs version 1.4.0+.
       implementation(libs.androidx.profileinstaller)
       implementation(libs.androidx.activity.compose)
       implementation(compose.foundation)
@@ -89,7 +90,7 @@ kotlin {
   }
 }
 
-/** Copies benchmark reports off the device; the app writes them where `adb pull` needs no root. */
+/** Copies benchmark reports off the device. The app writes them where `adb pull` needs no root. */
 val pullBenchmarkReports by
   tasks.registering {
     group = "verification"
@@ -129,7 +130,7 @@ val pullBenchmarkReports by
       if (pulled.isEmpty()) {
         logger.warn(
           "No benchmark reports found on the device. Run the driver app with -e groups <group> " +
-            "first; a single-workload run measures through a trace and writes no report.",
+            "first. A single-workload run measures through a trace and writes no report.",
         )
       } else {
         logger.lifecycle("Pulled ${pulled.size} report(s) to ${destination.absolutePath}")
@@ -164,7 +165,7 @@ val benchmarkAssetTypes =
 /**
  * Copies the packaged corpus into one variant's assets.
  *
- * Registered through the variant API so asset merge, lint and packaging depend on it; AGP 8.13
+ * Registered through the variant API so asset merge, lint and packaging depend on it. AGP 8.13
  * drops the task dependency of a `Sync` wired through `assets.srcDir`.
  */
 abstract class StageBenchmarkAssets @Inject constructor(private val fs: FileSystemOperations) :

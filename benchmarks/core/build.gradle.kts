@@ -182,8 +182,8 @@ val generateSyntheaData by
     argumentProviders.add(
       CommandLineArgumentProvider {
         listOf(
-          // One module and Patient-only export keep the corpus small. Clinical resources come
-          // from AugmentedDataset.
+          // One module and included_resources=Patient keep the corpus small. Clinical resources
+          // come from AugmentedDataset.
           "-m",
           "pregnancy",
           "-p",
@@ -277,7 +277,7 @@ val writeWebBenchmarkConfig by
         } else {
           "synthetic"
         }
-      // Browser defaults are smaller than desktop's; OPFS is the slowest target.
+      // Browser defaults are smaller than desktop's, because OPFS is the slowest target.
       val config =
         mapOf(
           "profile" to (webBenchmarkProperties["benchmark.profile"] ?: "smoke").lowercase(),

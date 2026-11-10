@@ -19,7 +19,7 @@ import java.io.File
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-/** Set by the Gradle task that packages the data; see `benchmarks/core/build.gradle.kts`. */
+/** `-Dbenchmark.data.dir`. The `desktopTest` task sets it for a Synthea run. */
 private fun dataDirectory(): File? =
   System.getProperty("benchmark.data.dir")?.let(::File)?.takeIf { it.isDirectory }
 

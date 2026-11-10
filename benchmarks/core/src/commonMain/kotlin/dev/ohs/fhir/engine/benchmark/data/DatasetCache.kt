@@ -36,6 +36,6 @@ internal data class DatasetMetadata(
   val sampleOrganizationId: String,
   val sampleFamilyName: String,
   val sampleGivenName: String,
-  /** The corpus alone; the fingerprint adds the current run's seed and population. */
+  /** A hash of the corpus alone. The fingerprint adds the current run's seed and population. */
   val contentHash: Long,
 )

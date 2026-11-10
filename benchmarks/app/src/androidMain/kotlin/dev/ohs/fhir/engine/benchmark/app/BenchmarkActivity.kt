@@ -56,8 +56,8 @@ class BenchmarkActivity : ComponentActivity() {
   private var tickerJob: Job? = null
 
   /**
-   * Bumped per launch. A cancelled run executes until its next suspension point; its display
-   * updates are dropped when its epoch is stale.
+   * Increased on every launch. A cancelled run keeps executing until its next suspension point. Its
+   * display updates are dropped once a newer launch has increased the epoch.
    */
   @Volatile private var runEpoch = 0
 
@@ -80,7 +80,7 @@ class BenchmarkActivity : ComponentActivity() {
     start(intent)
   }
 
-  /** `singleTop` relaunches reuse this instance; the display is reset for the new run. */
+  /** A `singleTop` relaunch reuses this activity, so the display is reset for the new run. */
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
@@ -190,7 +190,7 @@ class BenchmarkActivity : ComponentActivity() {
         Log.i(TAG, BenchmarkDriver.summarise(report))
       }
     } catch (e: CancellationException) {
-      // A newer launch owns the display now; a failure here would overwrite it.
+      // A newer launch owns the display now. Reporting this as a failure would overwrite it.
       throw e
     } catch (e: Throwable) {
       // Shown in the view so a waiting harness sees the failure.

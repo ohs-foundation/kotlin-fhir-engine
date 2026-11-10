@@ -21,8 +21,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * Asset directory where `stageBenchmarkAssets` puts the Synthea data; an app cannot read the host
- * filesystem or, from API 30, `/data/local/tmp`.
+ * Asset directory where the `stage<Variant>BenchmarkAssets` task puts the Synthea data. The data
+ * travels as assets because an app cannot read the host filesystem, or `/data/local/tmp` from
+ * API 30.
  */
 private const val ASSET_DIRECTORY = "bulk_data"
 
@@ -38,8 +39,8 @@ internal actual suspend fun listDataFiles(): List<String> {
 }
 
 /**
- * Streamed, since a whole file can exceed the heap. A missing asset yields nothing; a read failure
- * mid-file throws.
+ * Streamed, because a whole file can exceed the heap. A missing asset yields no lines. A read
+ * failure partway through the file throws.
  */
 internal actual fun dataFileLines(relativePath: String): Flow<String> = flow {
   val context = assets() ?: return@flow

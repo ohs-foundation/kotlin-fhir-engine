@@ -31,7 +31,10 @@ import dev.ohs.fhir.model.r4.String as FhirString
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-/** Disturbs SQLite's page cache by reading untouched tables; ports android-fhir's equivalent. */
+/**
+ * Reads one Organization and one Practitioner, so SQLite's page cache holds other pages before the
+ * next iteration. Ports android-fhir's version.
+ */
 internal suspend fun FhirEngine.evictPageCache() {
   search<Organization> { count = 1 }
   search<Practitioner> { count = 1 }
@@ -116,7 +119,7 @@ internal suspend fun BenchmarkEnv.seedDatasetIfEmpty() {
 
 private const val SEED_MARKER_ID = "benchmark-seed"
 
-/** Shuffled so reads avoid sequential page access; fixed so every platform touches the same ids. */
+/** Shuffled so reads avoid sequential page access. Seeded, so every platform reads the same ids. */
 internal fun BenchmarkEnv.crudTargetIds(limit: Int): List<String> =
   dataset.patientIds.shuffled(kotlin.random.Random(CRUD_SHUFFLE_SEED)).take(limit)
 

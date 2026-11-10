@@ -41,7 +41,7 @@ interface Dataset {
   /** Patient ids in insertion order. */
   val patientIds: List<String>
 
-  /** A [code] value that matches roughly one observation per patient. */
+  /** An Observation `code`, e.g. a LOINC code, that roughly one observation per patient has. */
   val sampleObservationCode: String
 
   /** An organization id that a meaningful share of patients reference. */

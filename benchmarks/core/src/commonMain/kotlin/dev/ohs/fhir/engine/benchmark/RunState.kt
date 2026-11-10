@@ -38,7 +38,7 @@ data class CurrentWorkload(
   val group: String,
   val index: Int,
   val total: Int,
-  /** Null while preparing; set once iterations begin. */
+  /** Null while preparing. Set once iterations begin, e.g. `warmup 1/2`. */
   val iterationLabel: String? = null,
 )
 

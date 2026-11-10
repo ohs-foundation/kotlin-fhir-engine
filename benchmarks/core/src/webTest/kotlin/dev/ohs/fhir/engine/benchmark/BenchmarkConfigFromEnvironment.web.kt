@@ -18,9 +18,9 @@ package dev.ohs.fhir.engine.benchmark
 import kotlinx.serialization.json.Json
 
 /**
- * Fetches the `-Pbenchmark.*` values from the test server; see
- * `karma.config.d/benchmark-config.js`. Falls back to small defaults because browsers over OPFS are
- * the slowest target.
+ * Fetches the `-Pbenchmark.*` values from the test server in `karma.config.d/benchmark-server.js`.
+ * Falls back to defaults when the config cannot be fetched or parsed. The defaults are small
+ * because a browser writing to OPFS is the slowest target.
  */
 internal actual suspend fun benchmarkConfigFromEnvironment(): BenchmarkConfig {
   val json = httpGet("/benchmark-config") ?: return browserDefaults()

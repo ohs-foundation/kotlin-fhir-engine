@@ -6,7 +6,7 @@ set -euo pipefail
 CONTAINER_NAME="${CONTAINER_NAME:-fhir-benchmark-server}"
 
 if ! command -v docker >/dev/null 2>&1; then
-  echo "docker is not on PATH; nothing to stop." >&2
+  echo "docker is not on PATH, so there is nothing to stop." >&2
   exit 0
 fi
 

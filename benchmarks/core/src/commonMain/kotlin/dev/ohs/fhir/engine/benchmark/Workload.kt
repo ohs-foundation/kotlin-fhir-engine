@@ -18,7 +18,7 @@ package dev.ohs.fhir.engine.benchmark
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.benchmark.data.Dataset
 
-/** How a workload's database is reset between iterations; the choice changes what is measured. */
+/** How a workload's database is reset between iterations. The choice changes what is measured. */
 enum class Isolation {
   /** Leave the database alone. For read-only workloads. */
   NONE,
@@ -51,13 +51,16 @@ class BenchmarkEnv(
 
 /** One measured unit of work. Only [run] is timed. */
 interface Workload {
-  /** Stable identifier, e.g. `search.observation_by_code`; also the trace-section name. */
+  /** Stable identifier, e.g. `search.observation_by_code`. Also the trace section name. */
   val id: String
 
   /** `crud`, `search`, `sync` or `server`. */
   val group: String
 
-  /** Large enough to rise above Android's trace noise floor. */
+  /**
+   * Operations in one iteration, e.g. 500 reads. Kept large so the measured time rises above
+   * Android's trace noise floor.
+   */
   val opsPerIteration: Int
 
   val isolation: Isolation
