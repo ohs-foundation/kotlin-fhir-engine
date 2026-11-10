@@ -79,6 +79,12 @@ kotlin {
     withHostTestBuilder {}
     withDeviceTestBuilder { sourceSetTreeName = "test" }
       .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    optimization {
+      consumerKeepRules.apply {
+        publish = true
+        file("consumer-rules.pro")
+      }
+    }
   }
 
   // Benchmarks live in desktopBenchmark, associated with main so they can use internal
@@ -131,7 +137,11 @@ kotlin {
     compilations.configureEach {
       compilerOptions.configure {
         freeCompilerArgs.add("-Xexpect-actual-classes")
-        optIn.addAll("kotlin.time.ExperimentalTime", "kotlin.uuid.ExperimentalUuidApi")
+        optIn.addAll(
+          "kotlin.time.ExperimentalTime",
+          "kotlin.uuid.ExperimentalUuidApi",
+          "dev.ohs.fhir.engine.FhirEngineTestApi",
+        )
       }
     }
   }
