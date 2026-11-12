@@ -7,7 +7,7 @@ again.
 This page is generated from the test code. After adding or removing an `@Ignore`, run
 `python3 scripts/ignored_tests.py`. CI fails when the page is out of date.
 
-35 ignored tests.
+34 ignored tests.
 
 | Test | Runs on | Why |
 |---|---|---|
@@ -25,7 +25,6 @@ This page is generated from the test code. After adding or removing an `@Ignore`
 | `ResourceIndexerTest.index_location` | every platform | fhir-path unwraps Enumeration/Code to a bare String, dropping the code system, so coded values are indexed with a null system. Enable once fhir-path preserves it. |
 | `SearchTest.search_filter_quantity_canonical_match` | every platform | kotlin-fhir-path canonicalizes mg to g1, where android-fhir's UCUM service gives g, so a database indexed by android-fhir would not match. Enable once the canonical unit matches. |
 | `DownloaderImplTest.downloaderShouldKeepTheCauseOfAFailureWithoutAMessage` | every platform | ResourceSyncException keeps only the exception message, so a failure without one reaches the app as Unknown Exception. Enable once the exception itself is kept. |
-| `KtorHttpServiceTest.should_keep_base_url_path_without_trailing_slash` | every platform | Ktor's DefaultRequest drops the base URL path when it has no trailing slash, so the request goes to /Patient. Enable once the base URL keeps its path. |
 | `DatabaseImplSearchTest.search_date_equals_fractionalSeconds` | desktop | The indexer throws ArithmeticException on a dateTime with fractional seconds, so the insert fails. |
 | `DatabaseImplSearchTest.search_dateTime_equals_sameSecond` | desktop | A dateTime is indexed as a one second range but eq searches a single instant, so nothing matches. |
 | `DatabaseImplSearchTest.search_token_emptySystem_matchesCodeOnly` | desktop | An empty system drops the system clause but still binds its argument, so SQLite throws column index out of range. |
