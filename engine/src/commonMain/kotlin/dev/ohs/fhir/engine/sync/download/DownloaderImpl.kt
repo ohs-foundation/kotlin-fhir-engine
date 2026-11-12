@@ -55,7 +55,7 @@ internal class DownloaderImpl(
         } catch (exception: Exception) {
           Logger.e(exception) { exception.message ?: "Error downloading resource" }
           DownloadState.Failure(
-            ResourceSyncException(resourceTypeToDownload, exception.message ?: "Unknown Exception"),
+            ResourceSyncException(resourceTypeToDownload, exception),
           )
         }
       emit(downloadState)

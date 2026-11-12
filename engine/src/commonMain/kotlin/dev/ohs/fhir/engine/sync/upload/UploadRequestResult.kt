@@ -137,7 +137,7 @@ internal class Uploader(
         mappedUploadRequest.localChanges,
         ResourceSyncException(
           ResourceType.valueOf(mappedUploadRequest.generatedRequest.resource::class.simpleName!!),
-          e.message ?: "Unknown Exception",
+          e,
         ),
       )
     }

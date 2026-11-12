@@ -36,7 +36,7 @@ import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.string.shouldContain
-import kotlin.test.Ignore
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.toList
@@ -297,9 +297,6 @@ class DownloaderImplTest {
       listOf(1, 2, 4)
   }
 
-  // ResourceSyncException keeps only the exception message, so a failure without one reaches the
-  // app as Unknown Exception. Enable once the exception itself is kept.
-  @Ignore
   @Test
   fun downloaderShouldKeepTheCauseOfAFailureWithoutAMessage() = runTest {
     val testDataSource =
@@ -317,6 +314,7 @@ class DownloaderImplTest {
     val failure = downloader.download().toList().filterIsInstance<DownloadState.Failure>().single()
 
     failure.syncError.exceptionStacktrace.shouldNotBeNull() shouldContain "IllegalStateException"
+    failure.syncError.exception.shouldBeInstanceOf<IllegalStateException>()
   }
 
   companion object {

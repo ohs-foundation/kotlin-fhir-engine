@@ -20,7 +20,7 @@ supported yet** are features the KMP engine doesn't have.
 | Sync | `FhirEngine.getLastSyncTimeStamp()` always returns `null`. | On Android, `Sync.getLastSyncTimestamp(context)` returns the saved time. Other platforms have none yet. |  |
 | Sync | Every resource the server returns is changed before it's stored. A step meant to repair invalid server data runs on every response. It drops narratives (`text`), and cuts the time off any field whose name ends in `Date`, such as `Condition.recordedDate`. | None | [#128](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/128) |
 | Sync | A base URL without a trailing `/` loses its path. With `https://hapi.fhir.org/baseR4`, requests go to `https://hapi.fhir.org/Patient`. | End the base URL with `/`. | [#90](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/90) |
-| Sync | A sync error keeps only the exception message. The exception's type and stack trace are lost, and a failure without a message reaches the app as `Unknown Exception`. | None | [#91](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/91) |
+| Sync | On Android, a sync status read through `Sync` has no exception object. The status is saved and read back, and only `exceptionMessage` and `exceptionStacktrace` survive that. | None |  |
 | Sync | `httpCache` keeps an unlimited cache in memory. `cacheDir` and `maxSize` are ignored, where android-fhir keeps a disk cache of `maxSize`. | None | [#131](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/131) |
 
 ## Not supported yet
