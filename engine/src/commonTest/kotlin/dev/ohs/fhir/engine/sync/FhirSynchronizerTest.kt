@@ -39,6 +39,9 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -48,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.toInstant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FhirSynchronizerTest {
@@ -77,6 +81,18 @@ class FhirSynchronizerTest {
       assertEquals(SyncJobStatus.InProgress(SyncOperation.UPLOAD, 1, 1), emitted[3])
       assertIs<SyncJobStatus.Succeeded>(emitted[4])
       assertIs<SyncJobStatus.Succeeded>(result)
+    }
+
+  @Test
+  fun synchronize_setsTheEngineLastSyncTimeStamp() =
+    runTest(UnconfinedTestDispatcher()) {
+      val engine = engineWithOnePatient()
+      val before = Clock.System.now()
+
+      synchronizer(engine, downloader(DownloadState.Success(listOf(), 10, 10))).synchronize()
+
+      val lastSync = assertNotNull(engine.getLastSyncTimeStamp())
+      assertTrue(lastSync.dateTime.toInstant(lastSync.offset) >= before)
     }
 
   @Test
@@ -218,7 +234,7 @@ class FhirSynchronizerTest {
         DatabaseConfig(inMemory = true),
       )
     databases.add(database)
-    return FhirEngineImpl(database).apply { create(TEST_PATIENT) }
+    return FhirEngineImpl(database, fhirDataStore).apply { create(TEST_PATIENT) }
   }
 
   private companion object {

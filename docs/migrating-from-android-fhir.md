@@ -8,7 +8,6 @@ carries over. This page lists what stays the same and what you need to change.
 - **The `FhirEngine` API.** All 14 methods, with the same names and parameters: `create`, `get`,
   `update`, `delete`, `search`, `count`, `syncUpload`, `syncDownload`, `getLastSyncTimeStamp`,
   `clearDatabase`, `getLocalChanges`, `purge` (one and many) and `withTransaction`.
-  `getLastSyncTimeStamp` returns `null` for now, see [Known issues](known-issues.md).
 - **Your data.** The database uses the same file name, and the KMP engine includes android-fhir's
   migrations, so an android-fhir database (schema version 10) is migrated to the KMP engine's
   version 12 and keeps its data. Databases from KMP engine releases 2.0.0-alpha01 to alpha04 are
