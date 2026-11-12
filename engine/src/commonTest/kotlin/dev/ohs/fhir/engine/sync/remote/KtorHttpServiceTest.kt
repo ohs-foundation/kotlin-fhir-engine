@@ -38,6 +38,7 @@ import io.ktor.http.headersOf
 import io.ktor.util.GZipEncoder
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.toByteArray
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -135,6 +136,27 @@ class KtorHttpServiceTest {
     httpService.post("", request, emptyMap())
 
     requestData!!.url.encodedPath.shouldBeEqual("/fhir/")
+  }
+
+  @Ignore(
+    "Ktor's DefaultRequest drops the base URL path when it has no trailing slash, so the request goes to /Patient",
+  )
+  @Test
+  fun should_keep_base_url_path_without_trailing_slash() = runTest {
+    var requestData: HttpRequestData? = null
+    val httpService =
+      KtorHttpService.Builder("https://hapi.fhir.org/baseR4", NetworkConfiguration())
+        .build(
+          engine =
+            MockEngine { request ->
+              requestData = request
+              respondOk(parser.encodeToString(Patient(id = "patient-001")))
+            },
+        )
+
+    httpService.get("Patient/patient-001", emptyMap())
+
+    requestData!!.url.encodedPath.shouldBeEqual("/baseR4/Patient/patient-001")
   }
 
   @Test
