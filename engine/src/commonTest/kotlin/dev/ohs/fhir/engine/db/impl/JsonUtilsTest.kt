@@ -15,9 +15,8 @@
  */
 package dev.ohs.fhir.engine.db.impl
 
-import dev.ohs.fhir.model.r4.CodeableConcept
+import dev.ohs.fhir.model.r4.CarePlan
 import dev.ohs.fhir.model.r4.Enumeration
-import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
 import dev.ohs.fhir.model.r4.String as FhirString
@@ -40,19 +39,30 @@ class JsonUtilsTest {
   }
 
   @Test
-  fun addUpdatedReferenceToResource_updatesMultipleReferenceInObservation() {
-    val observation =
-      Observation(
+  fun addUpdatedReferenceToResource_updatesMultipleReferenceInCarePlan() {
+    val carePlan =
+      CarePlan(
         id = "f001",
-        status = Enumeration(value = Observation.ObservationStatus.Final),
-        code = CodeableConcept(),
+        status = Enumeration(value = CarePlan.RequestStatus.Active),
+        intent = Enumeration(value = CarePlan.CarePlanIntent.Plan),
         subject = Reference(reference = FhirString(value = "Patient/123")),
-        performer = listOf(Reference(reference = FhirString(value = "Patient/123"))),
+        activity =
+          listOf(
+            CarePlan.Activity(
+              detail =
+                CarePlan.Activity.Detail(
+                  status = Enumeration(value = CarePlan.CarePlanActivityStatus.Not_Started),
+                  performer = listOf(Reference(reference = FhirString(value = "Patient/123"))),
+                ),
+            ),
+          ),
       )
-    val updated =
-      addUpdatedReferenceToResource(observation, "Patient/123", "Patient/345") as Observation
-    assertEquals("Patient/345", updated.subject?.reference?.value)
-    assertEquals("Patient/345", updated.performer.first().reference?.value)
+    val updated = addUpdatedReferenceToResource(carePlan, "Patient/123", "Patient/345") as CarePlan
+    assertEquals("Patient/345", updated.subject.reference?.value)
+    assertEquals(
+      "Patient/345",
+      updated.activity.first().detail?.performer?.first()?.reference?.value,
+    )
   }
 
   @Test

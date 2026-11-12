@@ -36,7 +36,7 @@ keeps the original's shape for source compatibility but not every knob is functi
 | `NetworkConfiguration` timeouts                            | ✅      | `writeTimeOut` maps to the socket timeout.                                                                             |
 | `customSearchParameters`                                   | ✅      | See [Custom search parameters](conformance.md#custom-search-parameters).                                               |
 | `storageDirectory`                                         | ✅      | Desktop and web only. See [Platform support](conformance.md#platform-support).                                         |
-| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. Broken labeling on iOS and web. See [Platform support](conformance.md#platform-support). |
+| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. iOS and web send uploads uncompressed and log a warning. See [Platform support](conformance.md#platform-support). |
 | `httpCache`                                                | ⚠️     | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored.                       |
 | `enableEncryptionIfSupported`                              | ⚠️     | Renamed `enableEncryption`. Android and iOS. Where it cannot encrypt it throws at init instead of storing plaintext as android-fhir does. See [Platform support](conformance.md#platform-support). |
 | `databaseErrorStrategy`                                    | ✅      | `RECREATE_AT_OPEN` recreates an encrypted database the current key cannot open, as in android-fhir.                   |

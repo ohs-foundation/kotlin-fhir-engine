@@ -16,3 +16,6 @@
 package dev.ohs.fhir.engine.sync.remote
 
 internal expect fun supportsRequestCompression(): Boolean
+
+/** Gzips [bytes]. Only called where [supportsRequestCompression] is true. */
+internal expect fun gzip(bytes: ByteArray): ByteArray

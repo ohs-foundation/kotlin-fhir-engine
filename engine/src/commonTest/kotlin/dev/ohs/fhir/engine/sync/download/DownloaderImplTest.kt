@@ -33,7 +33,7 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import io.kotest.matchers.collections.shouldContainInOrder
+import io.kotest.matchers.collections.shouldContainExactly
 import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.test.runTest
@@ -161,7 +161,7 @@ class DownloaderImplTest {
       }
     }
 
-    result.map { it.id } shouldContainInOrder listOf("pa-123", "en-123", "ob-123", "con-123")
+    result.map { it.id } shouldContainExactly listOf("pa-123", "en-123", "ob-123", "con-123")
   }
 
   @Test
@@ -194,7 +194,7 @@ class DownloaderImplTest {
                     Bundle.Entry(
                       resource =
                         Encounter(
-                          id = "pa-123",
+                          id = "en-123",
                           status = Enumeration(value = Encounter.EncounterStatus.Planned),
                           `class` =
                             Coding(
@@ -280,7 +280,7 @@ class DownloaderImplTest {
     val result = mutableListOf<DownloadState>()
     downloader.download().collectIndexed { _, value -> result.add(value) }
 
-    result.map { it::class } shouldContainInOrder
+    result.map { it::class } shouldContainExactly
       listOf(
         DownloadState.Started::class,
         DownloadState.Success::class,
@@ -289,7 +289,7 @@ class DownloaderImplTest {
         DownloadState.Success::class,
       )
 
-    result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainInOrder
+    result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainExactly
       listOf(1, 2, 4)
   }
 

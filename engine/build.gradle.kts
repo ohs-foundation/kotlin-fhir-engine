@@ -214,15 +214,11 @@ kotlin {
     val desktopBenchmark by getting {
       dependencies { implementation(libs.kotlinx.benchmark.runtime) }
     }
-    val desktopTest by getting {
-      // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
-      // the codegen consumes at build time, so the test classpath needs access to it.
-      resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
-    }
     getByName("androidDeviceTest") {
       dependencies {
         implementation(libs.androidx.test.core)
         implementation(libs.androidx.test.runner)
+        implementation(libs.androidx.work.testing)
         implementation(libs.kotlin.test.junit)
       }
     }
@@ -379,6 +375,10 @@ tasks
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.JournalModeTest")
       excludeTestsMatching("dev.ohs.fhir.engine.db.impl.DatabaseFileNameTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.FhirDataStoreTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.FhirSynchronizerTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.upload.HttpPostResourceConsolidatorTest")
+      excludeTestsMatching("dev.ohs.fhir.engine.sync.upload.LocalChangeFetcherTest")
     }
   }
 
