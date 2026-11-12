@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
 
-/** The retry policy both encrypting platforms share. */
+/** The retry policy Android uses for its key store. */
 class DatabaseKeyRetryTest {
   @Test
   fun timeout_isRetried_withAGrowingPause() {

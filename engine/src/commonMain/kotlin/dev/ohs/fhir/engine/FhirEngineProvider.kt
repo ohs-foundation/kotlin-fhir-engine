@@ -55,14 +55,16 @@ object FhirEngineProvider {
    * This must be called before [getInstance].
    *
    * @throws UnsupportedOperationException if encryption is requested on a platform that cannot
-   *   encrypt.
+   *   encrypt, or on iOS when the app does not link SQLCipher.
    * @throws IllegalStateException if called again after initialization.
    */
   // Declared so Swift receives these as errors instead of the app aborting.
   @Throws(UnsupportedOperationException::class, IllegalStateException::class)
   fun init(configuration: FhirEngineConfiguration, platformContext: Any = Unit) {
     if (configuration.enableEncryption && !isDatabaseEncryptionSupported) {
-      throw UnsupportedOperationException("Database encryption is not supported on this platform.")
+      throw UnsupportedOperationException(
+        "Database encryption is not available. Desktop and web cannot encrypt, and an iOS app must link SQLCipher.",
+      )
     }
     check(this.configuration == null) { "FhirEngineProvider has already been initialized." }
     this.configuration = configuration
@@ -133,7 +135,8 @@ object FhirEngineProvider {
    * - The persisted `DataStore` is a process-level singleton and keeps its sync watermarks. Use a
    *   new `storageDirectory` to start without them.
    */
-  internal fun resetForTesting() {
+  @FhirEngineTestApi
+  fun resetForTesting() {
     if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
     dataSource?.close()
     fhirEngine = null

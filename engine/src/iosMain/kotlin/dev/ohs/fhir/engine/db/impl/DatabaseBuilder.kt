@@ -17,14 +17,20 @@ package dev.ohs.fhir.engine.db.impl
 
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteDriver
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.SQLiteException
+import androidx.sqlite.driver.NativeSQLiteDriver
+import androidx.sqlite.execSQL
+import dev.ohs.fhir.engine.DatabaseErrorStrategy
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLIsExcludedFromBackupKey
 import platform.Foundation.NSUserDomainMask
 
 internal actual fun getDatabaseBuilder(
@@ -44,9 +50,107 @@ internal actual fun getDatabaseBuilder(
   return builder.setDriver(databaseDriver(config)).setQueryCoroutineContext(Dispatchers.IO)
 }
 
-internal actual val isDatabaseEncryptionSupported: Boolean = false
+// The app links SQLCipher, not the engine, so init checks it on an in-memory database. Opening the
+// file would create it, and an empty encrypted file then stops the app from turning encryption off.
+internal actual val isDatabaseEncryptionSupported: Boolean by lazy {
+  NativeSQLiteDriver().linksSqlCipher()
+}
 
-internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver = BundledSQLiteDriver()
+// An in-memory database never reaches disk, so it is not encrypted.
+internal actual fun databaseDriver(config: DatabaseConfig): SQLiteDriver =
+  if (config.encrypt && !config.inMemory) {
+    EncryptedDatabaseDriver(config.errorStrategy)
+  } else {
+    NativeSQLiteDriver()
+  }
+
+/** Keys every connection with the Keychain key. */
+private class EncryptedDatabaseDriver(private val errorStrategy: DatabaseErrorStrategy) :
+  SQLiteDriver {
+  private val driver = NativeSQLiteDriver()
+
+  // Read on the first open, as on Android, so a Keychain failure is thrown by the first database
+  // call. Lazy reads it once for all of Room's connections. Not retried like Android, because a
+  // Keychain locked before the first unlock stays locked until the user unlocks the device.
+  private val key by lazy { DatabaseEncryptionKeyProvider.getOrCreateKey() }
+
+  override fun open(fileName: String): SQLiteConnection =
+    try {
+      openKeyed(fileName)
+    } catch (exception: SQLiteException) {
+      // Recreate only an unreadable or corrupt file. Other errors, such as a locked database or a
+      // full disk, are thrown so data that is still readable is kept.
+      if (
+        errorStrategy != DatabaseErrorStrategy.RECREATE_AT_OPEN || !exception.isUnreadableDatabase
+      ) {
+        throw exception
+      }
+      deleteDatabaseFiles(fileName)
+      openKeyed(fileName)
+    }
+
+  private fun openKeyed(fileName: String): SQLiteConnection {
+    // Read before the open creates the file, so a Keychain failure leaves no file behind.
+    val keyHex = key.toHexString()
+    val connection = driver.open(fileName)
+    try {
+      connection.execSQL("PRAGMA key = \"x'$keyHex'\"")
+      // Reads the header, which fails when the key does not match the file.
+      connection.prepare("SELECT count(*) FROM sqlite_master").use { it.step() }
+    } catch (exception: Throwable) {
+      connection.close()
+      throw exception
+    }
+    excludeFromBackup(fileName)
+    return connection
+  }
+
+  // A restored copy cannot be read without the key, so the files are kept out of backups. The -wal
+  // and -shm files only exist after the first write, so they are excluded on a later open.
+  @OptIn(ExperimentalForeignApi::class)
+  private fun excludeFromBackup(fileName: String) {
+    for (suffix in DATABASE_FILE_SUFFIXES) {
+      NSURL.fileURLWithPath(fileName + suffix)
+        .setResourceValue(true, forKey = NSURLIsExcludedFromBackupKey, error = null)
+    }
+  }
+}
+
+private val DATABASE_FILE_SUFFIXES = listOf("", "-wal", "-shm", "-journal")
+
+/** Deletes the database file and the files SQLite keeps beside it. */
+@OptIn(ExperimentalForeignApi::class)
+internal fun deleteDatabaseFiles(fileName: String) {
+  for (suffix in DATABASE_FILE_SUFFIXES) {
+    NSFileManager.defaultManager.removeItemAtPath(fileName + suffix, error = null)
+  }
+}
+
+/** Whether the SQLite the app links is SQLCipher. */
+internal fun NativeSQLiteDriver.linksSqlCipher(): Boolean {
+  val connection = open(":memory:")
+  return try {
+    connection.prepare("PRAGMA cipher_version").use { it.step() && it.getText(0).isNotEmpty() }
+  } finally {
+    connection.close()
+  }
+}
+
+/**
+ * Whether SQLite reported the file as not a database (26) or corrupt (11).
+ *
+ * The native [SQLiteException] has no code property. Its message starts with `Error code: N`, so
+ * the code is parsed from there. Extended codes are on, so the primary code is the low byte.
+ */
+internal val SQLiteException.isUnreadableDatabase: Boolean
+  get() {
+    val code = message?.let { ERROR_CODE.find(it) }?.groupValues?.get(1)?.toInt() ?: return false
+    return (code and 0xff) in setOf(SQLITE_CORRUPT, SQLITE_NOTADB)
+  }
+
+private val ERROR_CODE = Regex("""^Error code: (\d+)""")
+private const val SQLITE_CORRUPT = 11
+private const val SQLITE_NOTADB = 26
 
 internal actual fun databaseFileName(
   platformContext: Any,

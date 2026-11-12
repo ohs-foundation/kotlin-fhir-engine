@@ -16,6 +16,7 @@
 package dev.ohs.fhir.engine.db.impl
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import androidx.test.core.app.ApplicationProvider
 import java.io.File
@@ -29,7 +30,10 @@ internal actual val encryptionTestSupport: EncryptionTestSupport? =
 
     override fun deleteDatabaseFiles() {
       for (encrypted in listOf(false, true)) {
-        File(databaseFileName(context, null, DatabaseConfig(encrypt = encrypted))).delete()
+        // Also removes -wal and -shm, which a database opened later at this path would replay.
+        SQLiteDatabase.deleteDatabase(
+          File(databaseFileName(context, null, DatabaseConfig(encrypt = encrypted))),
+        )
       }
     }
 
