@@ -34,8 +34,12 @@ import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.string.shouldContain
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 
 class DownloaderImplTest {
@@ -291,6 +295,28 @@ class DownloaderImplTest {
 
     result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainExactly
       listOf(1, 2, 4)
+  }
+
+  @Ignore(
+    "ResourceSyncException keeps only the exception message, so a failure without one reaches the app as Unknown Exception",
+  )
+  @Test
+  fun downloaderShouldKeepTheCauseOfAFailureWithoutAMessage() = runTest {
+    val testDataSource =
+      object : DataSource {
+        override suspend fun download(downloadRequest: DownloadRequest): Resource =
+          throw IllegalStateException()
+
+        override suspend fun upload(request: UploadRequest): Resource {
+          throw UnsupportedOperationException()
+        }
+      }
+    val downloader =
+      DownloaderImpl(testDataSource, TestDownloadWorkManager(listOf(DownloadRequest.of("Patient"))))
+
+    val failure = downloader.download().toList().filterIsInstance<DownloadState.Failure>().single()
+
+    failure.syncError.exceptionStacktrace.shouldNotBeNull() shouldContain "IllegalStateException"
   }
 
   companion object {
