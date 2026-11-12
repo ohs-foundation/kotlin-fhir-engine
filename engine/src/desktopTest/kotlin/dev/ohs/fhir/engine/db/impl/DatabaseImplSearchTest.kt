@@ -425,6 +425,46 @@ class DatabaseImplSearchTest {
     )
   }
 
+  @Ignore(
+    "The indexer throws ArithmeticException on a dateTime with fractional seconds, so the insert fails",
+  )
+  @Test
+  fun search_date_equals_fractionalSeconds() = runTest {
+    database.insert(deceasedPatient("2013-03-14T10:00:00.123-05:30"))
+
+    assertEquals(listOf("1"), searchDeathDate(SearchComparator.Eq, "2013-03-14"))
+  }
+
+  @Ignore(
+    "A dateTime is indexed as a one second range but eq searches a single instant, so nothing matches",
+  )
+  @Test
+  fun search_dateTime_equals_sameSecond() = runTest {
+    database.insert(deceasedPatient("2013-03-14T10:00:00-05:30"))
+
+    assertEquals(
+      listOf("1"),
+      searchDeathDate(SearchComparator.Eq, "2013-03-14T10:00:00-05:30"),
+    )
+  }
+
+  @Ignore(
+    "An empty system drops the system clause but still binds its argument, so SQLite throws column index out of range",
+  )
+  @Test
+  fun search_token_emptySystem_matchesCodeOnly() = runTest {
+    database.insert(immunization("1", coding("http://hl7.org/fhir/sid/cvx", "140", "Influenza")))
+
+    val ids =
+      searchIds(
+        Search(ResourceType.Immunization).apply {
+          filter(TokenClientParam("vaccine-code"), { value = of(coding("", "140", "Influenza")) })
+        },
+      )
+
+    assertEquals(listOf("1"), ids)
+  }
+
   @Ignore(QUANTITY_NOT_INDEXED)
   @Test
   fun search_quantity_equal() = runTest {
