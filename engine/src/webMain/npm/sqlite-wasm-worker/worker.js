@@ -111,7 +111,6 @@ const commandMap = {
 
 function handleMessage(e) {
     const requestMsg = e.data;
-    console.log("handleMessage: " + JSON.stringify(requestMsg));
     if (!Object.hasOwn(requestMsg, 'data') && requestMsg.data == null) {
         postMessage(
             {'id': requestMsg.id, 'error': "Invalid request, missing 'data'."}
