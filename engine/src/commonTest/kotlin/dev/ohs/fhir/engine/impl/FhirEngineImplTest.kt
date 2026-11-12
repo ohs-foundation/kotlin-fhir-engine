@@ -34,6 +34,7 @@ import dev.ohs.fhir.engine.search.filter.TokenParamFilterCriterion
 import dev.ohs.fhir.engine.search.include
 import dev.ohs.fhir.engine.search.search
 import dev.ohs.fhir.engine.sync.AcceptLocalConflictResolver
+import dev.ohs.fhir.engine.sync.AcceptRemoteConflictResolver
 import dev.ohs.fhir.engine.sync.ResourceSyncException
 import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
 import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
@@ -665,6 +666,37 @@ class FhirEngineImplTest {
     fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(TEST_PATIENT_2)) }
 
     assertResourceEquals(TEST_PATIENT_2, fhirEngine.get<Patient>(TEST_PATIENT_2_ID))
+  }
+
+  @Test
+  fun syncDownload_acceptRemoteConflict_removesLocalChange() = runTest {
+    val (fhirEngine, database) = setUpEngineWithDatabase()
+    val originalPatient =
+      Patient(
+        id = "original-001",
+        meta = Meta(versionId = Id(value = "1"), lastUpdated = fhirInstant("2022-12-02T10:15:30Z")),
+        name =
+          listOf(
+            HumanName(
+              family = FhirString(value = "Stark"),
+              given = listOf(FhirString(value = "Tony")),
+            ),
+          ),
+      )
+    fhirEngine.syncDownload(AcceptRemoteConflictResolver) { flowOf(listOf(originalPatient)) }
+    fhirEngine.update(
+      originalPatient.copy(address = listOf(Address(city = FhirString(value = "Malibu")))),
+    )
+    val remoteChange =
+      originalPatient.copy(
+        meta = Meta(versionId = Id(value = "2"), lastUpdated = fhirInstant("2022-12-03T10:15:30Z")),
+        address = listOf(Address(country = FhirString(value = "USA"))),
+      )
+
+    fhirEngine.syncDownload(AcceptRemoteConflictResolver) { flowOf(listOf(remoteChange)) }
+
+    assertTrue(database.getAllLocalChanges().none { it.resourceId == "original-001" })
+    assertResourceEquals(remoteChange, fhirEngine.get<Patient>("original-001"))
   }
 
   @Test
