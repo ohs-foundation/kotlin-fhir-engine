@@ -15,17 +15,32 @@
  */
 package dev.ohs.fhir.codelab
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import dev.ohs.fhir.engine.FhirEngineProvider
 
 @Composable
 fun App(platformContext: Any, syncLauncher: SyncLauncher) {
-  val scope = rememberCoroutineScope()
-  val viewModel = remember {
-    PatientListViewModel(FhirEngineProvider.getInstance(platformContext), syncLauncher, scope)
+  MaterialTheme {
+    // Shown until initFhirEngine initializes the engine.
+    if (FhirEngineProvider.isNotInitialized()) {
+      Surface(Modifier.fillMaxSize()) {
+        Box(contentAlignment = Alignment.Center) { Text("Hello World!") }
+      }
+      return@MaterialTheme
+    }
+    val scope = rememberCoroutineScope()
+    val viewModel = remember {
+      PatientListViewModel(FhirEngineProvider.getInstance(platformContext), syncLauncher, scope)
+    }
+    PatientListScreen(viewModel)
   }
-  MaterialTheme { PatientListScreen(viewModel) }
 }
