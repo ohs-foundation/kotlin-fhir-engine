@@ -23,7 +23,7 @@ import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 
 /** Defines how the app syncs with the FHIR server, on every platform. */
 class AppFhirSyncTask(private val platformContext: Any) : FhirSyncTask {
-  // Add code to define the download manager, conflict resolver, FHIR Engine and upload strategy
+  // 5.2 Replace the functions below with code from the codelab to define how the app syncs.
 
   override fun getDownloadWorkManager(): DownloadWorkManager = TODO()
 

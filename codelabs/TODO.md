@@ -13,6 +13,8 @@
 
 ## Pending
 - [ ] Keep the README code in step with the starter. The solution exists only in the README.
-- [ ] New screenshots of the app, the project in Android Studio, and the Sync button.
+- [x] Screenshots of the app on the Android emulator (`images/image6.png` to `image9.png`).
+- [ ] Screenshot of the project open in Android Studio.
+- [ ] iOS: confirm the steps in `iosApp/README.md` on a real device.
 - [ ] Bump the engine version in `shared/build.gradle.kts` and the README with each release.
 - [ ] Web: document how to turn on CORS for `http://localhost:8081` in HAPI, if it is off by default.

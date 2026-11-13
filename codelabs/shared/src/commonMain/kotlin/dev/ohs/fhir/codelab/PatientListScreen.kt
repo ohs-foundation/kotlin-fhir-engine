@@ -92,7 +92,7 @@ private suspend fun handleSyncJobStatus(
   viewModel: PatientListViewModel,
   snackbarHostState: SnackbarHostState,
 ) {
-  // Add code to show a message when the sync job is complete
+  // 5.4 Replace with code from the codelab to show a message when the sync completes.
 }
 
 @Composable

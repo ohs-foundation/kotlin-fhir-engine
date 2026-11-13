@@ -24,14 +24,14 @@ class DownloadWorkManagerImpl : DownloadWorkManager {
   private val urls = ArrayDeque(listOf("Patient"))
 
   override suspend fun getNextRequest(): DownloadRequest? {
-    // Add code to return the next download request
+    // 5.1 Replace with code from the codelab to return the next download request.
     return null
   }
 
   override suspend fun getSummaryRequestUrls() = mapOf<ResourceType, String>()
 
   override suspend fun processResponse(response: Resource): Collection<Resource> {
-    // Add code to extract the resources from the response
+    // 5.1 Replace with code from the codelab to extract the resources from the response.
     return emptyList()
   }
 }

@@ -25,5 +25,5 @@ fun initFhirEngine(
   debug: Boolean,
   storageDirectory: String? = null,
 ) {
-  // Add code to initialize the FHIR Engine
+  // 4 Replace with code from the codelab to initialize the FHIR Engine.
 }

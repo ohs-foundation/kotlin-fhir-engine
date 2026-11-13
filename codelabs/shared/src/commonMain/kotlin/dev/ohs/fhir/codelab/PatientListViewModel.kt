@@ -22,6 +22,7 @@ import dev.ohs.fhir.engine.search.search
 import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.model.r4.Patient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -39,25 +40,42 @@ class PatientListViewModel(
   private val _patients = MutableStateFlow<List<Patient>>(emptyList())
   val patients: StateFlow<List<Patient>> = _patients
 
+  private var loadJob: Job? = null
+
   init {
-    scope.launch {
-      _patients.value =
-        fhirEngine
-          .search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }
-          .map { it.resource }
-    }
+    refreshPatients()
+  }
+
+  /** Loads all patients from the local database, sorted by given name. */
+  fun refreshPatients() = showPatients {
+    fhirEngine
+      .search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }
+      .map { it.resource }
+  }
+
+  /**
+   * Shows the patients that [load] returns. Cancels the previous load, so an older search can't
+   * replace the result of a newer one.
+   */
+  private fun showPatients(load: suspend () -> List<Patient>) {
+    loadJob?.cancel()
+    loadJob = scope.launch { _patients.value = load() }
   }
 
   fun triggerOneTimeSync() {
-    // Add code to start sync
+    // 5.3 Replace with code from the codelab to start the sync.
   }
+
+  // 6.1 Replace with code from the codelab to search for patients by city.
+
+  // 6.2 Replace with code from the codelab to change the city of a patient.
 
   /** Swaps the city of patients in Wakefield and Taunton, then syncs the changes. */
   fun triggerUpdate() {
-    // Add code to trigger update
+    // 6.3 Replace with code from the codelab to update the patients and sync.
   }
 
   fun searchPatientsByName(nameQuery: String) {
-    // Add code to use fhirEngine to search for patients
+    // 7 Replace with code from the codelab to search for patients by name.
   }
 }
