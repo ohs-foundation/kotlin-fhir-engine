@@ -1,0 +1,22 @@
+# Local FHIR server for the codelab. Run `docker compose up -d` in this folder.
+services:
+  hapi:
+    image: hapiproject/hapi:v8.12.0-2
+    ports:
+      - "8080:8080"
+
+  # Loads the test patients once the server is up. Re-running it updates the same patients.
+  seed:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      - hapi
+    volumes:
+      - ./data:/data:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        until curl -sf -o /dev/null http://hapi:8080/fhir/metadata; do sleep 2; done
+        curl -sf -o /dev/null -X POST -H "Content-Type: application/fhir+json" \
+          --data-binary @/data/patients.json http://hapi:8080/fhir/ \
+          && echo "Loaded the test patients"
