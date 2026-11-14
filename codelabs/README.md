@@ -123,7 +123,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api("dev.ohs.fhir:fhir-engine:2.0.0-alpha05")
-      api(libs.fhir.model.r4)
+      api("dev.ohs.fhir:fhir-model-r4:1.0.0-rc03")
       // ...
     }
   }
@@ -131,8 +131,7 @@ kotlin {
 ```
 
 Because the dependencies are in `commonMain`, Gradle picks the right artifact for each target
-platform. `libs.fhir.model.r4` comes from the repository's version catalog and resolves to
-`dev.ohs.fhir:fhir-model-r4:1.0.0-rc03`.
+platform.
 
 The FHIR model is [Kotlin FHIR](https://github.com/ohs-foundation/kotlin-fhir), not HAPI. Kotlin
 FHIR resources are immutable. To change a resource, make a copy with `copy(...)`.
@@ -168,11 +167,11 @@ see there isn't much here yet, so let's get right into creating the FHIR Engine!
 Because the app is built with Kotlin Multiplatform, you can run it on other platforms too, at any
 step of the codelab. Run the Gradle commands in the `codelabs` folder:
 
-| Platform      | Command or action                                                                |
-|:--------------|:---------------------------------------------------------------------------------|
-| Desktop (JVM) | `./gradlew :shared:run`                                                          |
+| Platform      | Command or action                                                                  |
+|:--------------|:-----------------------------------------------------------------------------------|
+| Desktop (JVM) | `./gradlew :shared:run`                                                            |
 | Web (Wasm)    | `./gradlew :shared:wasmJsBrowserDevelopmentRun`, then open `http://localhost:8081` |
-| iOS           | Open `iosApp/iosApp.xcodeproj` in Xcode, select a simulator, and click **Run**.  |
+| iOS           | Open `iosApp/iosApp.xcodeproj` in Xcode, select a simulator, and click **Run**.    |
 
 On iOS, Xcode builds the `shared` framework with Gradle. To run on a real device, see
 [`iosApp/README.md`](iosApp/README.md).

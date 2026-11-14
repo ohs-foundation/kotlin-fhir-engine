@@ -34,7 +34,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api("dev.ohs.fhir:fhir-engine:2.0.0-alpha05")
-      api(libs.fhir.model.r4)
+      api("dev.ohs.fhir:fhir-model-r4:1.0.0-rc03")
+
       implementation(libs.kotlinx.coroutines.core)
       implementation(compose.runtime)
       implementation(compose.foundation)
