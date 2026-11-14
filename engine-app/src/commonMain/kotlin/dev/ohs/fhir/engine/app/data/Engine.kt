@@ -20,8 +20,6 @@ import dev.ohs.fhir.engine.FhirEngineConfiguration
 import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhir.engine.NetworkConfiguration
 import dev.ohs.fhir.engine.ServerConfiguration
-import dev.ohs.fhir.engine.index.SearchParamDefinition
-import dev.ohs.fhir.engine.index.SearchParamType
 import dev.ohs.fhir.engine.sync.remote.HttpLogger
 
 const val SERVER_BASE_URL = "https://hapi.fhir.org/baseR4/"
@@ -44,12 +42,6 @@ internal fun initFhirEngine(platformContext: Any, storageDirectory: String? = nu
             baseUrl = SERVER_BASE_URL,
             networkConfiguration = NetworkConfiguration(uploadWithGzip = false),
             httpLogger = HttpLogger(level = HttpLogger.Level.BODY),
-          ),
-        customSearchParameters =
-          listOf(
-            SearchParamDefinition("name", SearchParamType.STRING, "Patient.name"),
-            SearchParamDefinition("family", SearchParamType.STRING, "Patient.name.family"),
-            SearchParamDefinition("given", SearchParamType.STRING, "Patient.name.given"),
           ),
       ),
       platformContext,

@@ -15,9 +15,9 @@
  */
 package dev.ohs.fhir.engine
 
-import dev.ohs.fhir.engine.index.SearchParamDefinition
 import dev.ohs.fhir.engine.sync.HttpAuthenticator
 import dev.ohs.fhir.engine.sync.remote.HttpLogger
+import dev.ohs.fhir.model.r4.SearchParameter
 
 /**
  * Configuration for the FHIR Engine, including database setup, error recovery, server connection,
@@ -35,7 +35,8 @@ import dev.ohs.fhir.engine.sync.remote.HttpLogger
  * @property customSearchParameters Additional search parameters to be used for querying the FHIR
  *   engine with the Search API. These are in addition to the default search parameters defined in
  *   the FHIR specification. Custom search parameters must be unique and not change existing or
- *   default search parameters.
+ *   default search parameters. Each needs a `name`, `type` and `expression`, and applies to the
+ *   resource types in its `base`.
  * @property storageDirectory Directory used to store the database and preferences files. Only
  *   honored on Desktop: Android and iOS already have an OS-provided, app-scoped storage location
  *   (the application's `filesDir` / Application Support directory) and ignore this property.
@@ -49,7 +50,7 @@ constructor(
   val databaseErrorStrategy: DatabaseErrorStrategy = DatabaseErrorStrategy.UNSPECIFIED,
   val serverConfiguration: ServerConfiguration? = null,
   val testMode: Boolean = false,
-  val customSearchParameters: List<SearchParamDefinition>? = null,
+  val customSearchParameters: List<SearchParameter>? = null,
   val storageDirectory: String? = null,
 )
 

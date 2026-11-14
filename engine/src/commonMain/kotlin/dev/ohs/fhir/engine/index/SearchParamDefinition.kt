@@ -16,10 +16,14 @@
 package dev.ohs.fhir.engine.index
 
 /** Definition of a search parameter for indexing and querying FHIR resources. */
-data class SearchParamDefinition(val name: String, val type: SearchParamType, val path: String)
+internal data class SearchParamDefinition(
+  val name: String,
+  val type: SearchParamType,
+  val path: String,
+)
 
 /** The type of a search parameter. */
-enum class SearchParamType {
+internal enum class SearchParamType {
   NUMBER,
   DATE,
   STRING,

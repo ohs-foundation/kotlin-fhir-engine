@@ -22,6 +22,7 @@ import dev.ohs.fhir.engine.impl.FhirEngineImpl
 import dev.ohs.fhir.engine.index.ResourceIndexer
 import dev.ohs.fhir.engine.index.SearchParamDefinition
 import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
+import dev.ohs.fhir.engine.index.asMapOfResourceTypeToSearchParamDefinitions
 import dev.ohs.fhir.engine.sync.DataSource
 import dev.ohs.fhir.engine.sync.FhirDataStore
 import dev.ohs.fhir.engine.sync.getDataStore
@@ -184,6 +185,6 @@ object FhirEngineProvider {
     config: FhirEngineConfiguration,
   ): Map<String, List<SearchParamDefinition>> {
     val params = config.customSearchParameters ?: return emptyMap()
-    return params.groupBy { it.path.substringBefore(".") }
+    return params.asMapOfResourceTypeToSearchParamDefinitions()
   }
 }

@@ -21,6 +21,8 @@ carries over. This page lists what stays the same and what you need to change.
 - **The search DSL.** `filter`, `sort`, `count`, `from`, `has`, `include` and `revInclude` work
   the same way. There's no `search(resourceType) { }` overload, and filter values use the types in
   the table below.
+- **Custom search parameters.** `customSearchParameters` takes FHIR `SearchParameter` resources
+  (`dev.ohs.fhir.model.r4.SearchParameter`), mapped to resource types as in android-fhir.
 
 ## What changes
 
@@ -31,7 +33,6 @@ carries over. This page lists what stays the same and what you need to change.
 | Search parameters | HAPI constants, such as `Patient.GIVEN` | By name, such as `StringClientParam("given")` |
 | Search prefixes | `ParamPrefixEnum.GREATERTHAN` | `SearchComparator.Gt`, from `dev.ohs.fhir.model.r4.SearchParameter` |
 | Search values | `java.math.BigDecimal`, `DateType`, `DateTimeType` | `com.ionspin.kotlin.bignum.decimal.BigDecimal`, `FhirDate`, `FhirDateTime` |
-| Custom search parameters | FHIR `SearchParameter` resources | `SearchParamDefinition(name, type, path)`, with the KMP engine's own `SearchParamType`. The path must start with the resource type. |
 | Time types | `java.time.OffsetDateTime` from `getLastSyncTimeStamp`, `java.time.Instant` in `LocalChange.timestamp` | The KMP engine's own `OffsetDateTime`, and `kotlin.time.Instant` |
 | `Sync.getLastSyncTimestamp(context)` on Android | Returns `OffsetDateTime?` | A `suspend` function that returns `kotlin.time.Instant?` |
 | HTTP | Retrofit and OkHttp | Ktor, on OkHttp on Android, Java on desktop, Darwin on iOS, and the browser on web |
