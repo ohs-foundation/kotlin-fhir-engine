@@ -71,6 +71,7 @@ import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.Currencies
 import dev.ohs.fhir.model.r4.terminologies.PublicationStatus
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -394,11 +395,11 @@ class ResourceIndexerTest {
           ),
       )
     val resourceIndices = resourceIndexer.index(observation)
-    assertTrue(resourceIndices.dateTimeIndices.none { it.name == "date" })
+    assertTrue(resourceIndices.dateTimeIndices.isEmpty())
   }
 
-  // fhir-path returns no value for CarePlan.activity.detail.scheduled (scheduled[x] choice type not
-  // surfaced). Enable once fhir-path supports it.
+  // fhir-path returns scheduledString as a plain kotlin String, which the dateTime indexer does not
+  // handle. Enable once the indexer parses plain String date-times.
   @Ignore
   @Test
   fun index_dateTime_string() {
@@ -460,7 +461,11 @@ class ResourceIndexerTest {
 
   @Test
   fun index_string_null() {
-    val patient = Patient(id = "non-null-ID", name = listOf(HumanName(given = listOf())))
+    val patient =
+      Patient(
+        id = "non-null-ID",
+        name = listOf(HumanName(given = listOf(FhirString(value = null)))),
+      )
     val resourceIndices = resourceIndexer.index(patient)
     assertFalse(resourceIndices.stringIndices.any { it.path == "Patient.name.given" })
     assertFalse(resourceIndices.stringIndices.any { it.name == "given" })
@@ -792,8 +797,8 @@ class ResourceIndexerTest {
     assertFalse(resourceIndices.tokenIndices.any { it.name == "gender" })
   }
 
-  // fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex
-  // can't be reconstructed. Enable once fhir-path preserves Quantity system/code.
+  // Money currency is indexed as the enum name "Eur" instead of its code "EUR". Enable once the
+  // indexer uses the currency code.
   @Ignore
   @Test
   fun index_quantity_money() {
@@ -820,9 +825,6 @@ class ResourceIndexerTest {
     )
   }
 
-  // fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex
-  // can't be reconstructed. Enable once fhir-path preserves Quantity system/code.
-  @Ignore
   @Test
   fun index_quantity_quantity_noUnitOrCode() {
     val substance =
@@ -1308,8 +1310,9 @@ class ResourceIndexerTest {
     assertEquals(1, matching.size)
   }
 
-  // fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex
-  // can't be reconstructed. Enable once fhir-path preserves Quantity system/code.
+  // The search param paths use `Observation.component.value as Quantity`, and fhir-path's `as`
+  // throws on a collection with more than one item, so the whole param is skipped. Enable once
+  // `as` works on repeating elements.
   @Ignore
   @Test
   fun index_quantity_observation_valueQuantity() {
@@ -1393,9 +1396,6 @@ class ResourceIndexerTest {
     )
   }
 
-  // custom search-param / extension-path indexing not yet supported by fhir-path here. Enable once
-  // extension-value paths resolve.
-  @Ignore
   @Test
   fun index_custom_search_param() {
     val patient =
@@ -1473,30 +1473,43 @@ class ResourceIndexerTest {
     val invoice = fhirJsonParser.decodeFromString<Invoice>(INVOICE_JSON)
     val resourceIndices = resourceIndexer.index(invoice)
 
-    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Invoice.id", null, "example"))
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex("identifier", "Invoice.identifier", "http://myHospital.org/Invoices", "654321"),
+    assertEquals("example", resourceIndices.resourceId)
+    assertEquals(ResourceType.Invoice, resourceIndices.resourceType)
+    assertTrue(resourceIndices.numberIndices.isEmpty())
+    // quantityIndices are not asserted because Money currency is indexed as "Eur" instead of "EUR".
+    // status is left out because the KMP engine indexes it without the code system android-fhir
+    // sets.
+    assertEquals(
+      setOf(
+        TokenIndex("identifier", "Invoice.identifier", "http://myHospital.org/Invoices", "654321"),
+        TokenIndex(
+          "participant-role",
+          "Invoice.participant.role",
+          "http://snomed.info/sct",
+          "17561000",
+        ),
+        TokenIndex("_id", "Invoice.id", null, "example"),
+      ),
+      resourceIndices.tokenIndices.filterNot { it.name == "status" }.toSet(),
     )
-    assertTrue(
-      resourceIndices.tokenIndices.any {
-        it.name == "participant-role" &&
-          it.system == "http://snomed.info/sct" &&
-          it.value == "17561000"
-      },
+    assertTrue(resourceIndices.uriIndices.isEmpty())
+    val date = epochMillis("2017-01-25T08:00:00+01:00")
+    assertEquals(
+      setOf(DateTimeIndex("date", "Invoice.date", date, date + 999)),
+      resourceIndices.dateTimeIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.referenceIndices,
-      ReferenceIndex("subject", "Invoice.subject", "Patient/example"),
+    assertEquals(
+      setOf(
+        ReferenceIndex("subject", "Invoice.subject", "Patient/example"),
+        // Not in android-fhir, whose resolve() returns nothing without a resolver.
+        ReferenceIndex("patient", "Invoice.subject.where(resolve() is Patient)", "Patient/example"),
+        ReferenceIndex("participant", "Invoice.participant.actor", "Practitioner/example"),
+        ReferenceIndex("account", "Invoice.account", "Account/example"),
+      ),
+      resourceIndices.referenceIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.referenceIndices,
-      ReferenceIndex("account", "Invoice.account", "Account/example"),
-    )
-    assertContains(
-      resourceIndices.referenceIndices,
-      ReferenceIndex("participant", "Invoice.participant.actor", "Practitioner/example"),
-    )
+    assertTrue(resourceIndices.stringIndices.isEmpty())
+    assertTrue(resourceIndices.positionIndices.isEmpty())
   }
 
   @Test
@@ -1504,25 +1517,45 @@ class ResourceIndexerTest {
     val q = fhirJsonParser.decodeFromString<Questionnaire>(QUESTIONNAIRE_JSON)
     val resourceIndices = resourceIndexer.index(q)
 
-    assertContains(
-      resourceIndices.uriIndices,
-      UriIndex("url", "Questionnaire.url", "http://hl7.org/fhir/Questionnaire/3141"),
+    assertEquals("3141", resourceIndices.resourceId)
+    assertEquals(ResourceType.Questionnaire, resourceIndices.resourceType)
+    assertEquals(
+      setOf(UriIndex("url", "Questionnaire.url", "http://hl7.org/fhir/Questionnaire/3141")),
+      resourceIndices.uriIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex("_id", "Questionnaire.id", null, "3141"),
+    assertTrue(resourceIndices.numberIndices.isEmpty())
+    // subject-type and status are left out because the KMP engine indexes them with a null system,
+    // where android-fhir sets "" for subject-type and the code system for status.
+    assertEquals(
+      setOf(
+        TokenIndex("_id", "Questionnaire.id", null, "3141"),
+        TokenIndex(
+          "code",
+          "Questionnaire.item.code",
+          "http://example.org/system/code/sections",
+          "HISTOPATHOLOGY",
+        ),
+      ),
+      resourceIndices.tokenIndices.filterNot { it.name in setOf("subject-type", "status") }.toSet(),
     )
-    assertTrue(
-      resourceIndices.tokenIndices.any {
-        it.name == "code" &&
-          it.system == "http://example.org/system/code/sections" &&
-          it.value == "HISTOPATHOLOGY"
-      },
+    assertEquals(
+      setOf(
+        DateTimeIndex(
+          "date",
+          "Questionnaire.date",
+          epochMillis("2012-01-01T00:00:00Z"),
+          epochMillis("2012-02-01T00:00:00Z") - 1,
+        ),
+      ),
+      resourceIndices.dateTimeIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.stringIndices,
-      StringIndex("title", "Questionnaire.title", "Cancer Quality Forum Questionnaire 2012"),
+    assertTrue(resourceIndices.referenceIndices.isEmpty())
+    assertEquals(
+      setOf(StringIndex("title", "Questionnaire.title", "Cancer Quality Forum Questionnaire 2012")),
+      resourceIndices.stringIndices.toSet(),
     )
+    assertTrue(resourceIndices.positionIndices.isEmpty())
+    assertTrue(resourceIndices.quantityIndices.isEmpty())
   }
 
   @Test
@@ -1530,45 +1563,58 @@ class ResourceIndexerTest {
     val patient = fhirJsonParser.decodeFromString<Patient>(PATIENT_JSON)
     val resourceIndices = resourceIndexer.index(patient)
 
-    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Patient.id", null, "f001"))
-    assertContains(
-      resourceIndices.tokenIndices,
-      TokenIndex(
-        "identifier",
-        "Patient.identifier",
-        "urn:oid:2.16.840.1.113883.2.4.6.3",
-        "738472983",
+    assertEquals("f001", resourceIndices.resourceId)
+    assertEquals(ResourceType.Patient, resourceIndices.resourceType)
+    val birthDate = kotlinx.datetime.LocalDate(1944, 11, 17).toEpochDays()
+    assertEquals(
+      setOf(DateIndex("birthdate", "Patient.birthDate", birthDate, birthDate)),
+      resourceIndices.dateIndices.toSet(),
+    )
+    assertTrue(resourceIndices.numberIndices.isEmpty())
+    // gender and address-use are left out because the KMP engine indexes them without the code
+    // system android-fhir sets.
+    assertEquals(
+      setOf(
+        TokenIndex(
+          "identifier",
+          "Patient.identifier",
+          "urn:oid:2.16.840.1.113883.2.4.6.3",
+          "738472983",
+        ),
+        TokenIndex(
+          "deceased",
+          "Patient.deceased.exists() and Patient.deceased != false",
+          null,
+          "false",
+        ),
+        TokenIndex("active", "Patient.active", null, "true"),
+        TokenIndex("language", "Patient.communication.language", "urn:ietf:bcp:47", "nl"),
+        TokenIndex("_id", "Patient.id", null, "f001"),
       ),
+      resourceIndices.tokenIndices.filterNot { it.name in setOf("gender", "address-use") }.toSet(),
     )
-    assertTrue(resourceIndices.tokenIndices.any { it.name == "active" && it.value == "true" })
-    assertTrue(
-      resourceIndices.tokenIndices.any {
-        it.name == "language" && it.system == "urn:ietf:bcp:47" && it.value == "nl"
-      },
+    assertTrue(resourceIndices.uriIndices.isEmpty())
+    assertTrue(resourceIndices.quantityIndices.isEmpty())
+    assertEquals(
+      setOf(
+        ReferenceIndex("organization", "Patient.managingOrganization", "Organization/f001"),
+      ),
+      resourceIndices.referenceIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.referenceIndices,
-      ReferenceIndex("organization", "Patient.managingOrganization", "Organization/f001"),
+    assertEquals(
+      setOf(
+        StringIndex("given", "Patient.name.given", "Pieter"),
+        StringIndex("address", "Patient.address", "Van Egmondkade 23, Amsterdam, NLD, 1024 RJ"),
+        StringIndex("address-postalcode", "Patient.address.postalCode", "1024 RJ"),
+        StringIndex("address-country", "Patient.address.country", "NLD"),
+        StringIndex("phonetic", "Patient.name", "Pieter van de Heuvel MSc"),
+        StringIndex("name", "Patient.name", "Pieter van de Heuvel MSc"),
+        StringIndex("family", "Patient.name.family", "van de Heuvel"),
+        StringIndex("address-city", "Patient.address.city", "Amsterdam"),
+      ),
+      resourceIndices.stringIndices.toSet(),
     )
-    assertContains(
-      resourceIndices.stringIndices,
-      StringIndex("given", "Patient.name.given", "Pieter"),
-    )
-    assertContains(
-      resourceIndices.stringIndices,
-      StringIndex("family", "Patient.name.family", "van de Heuvel"),
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Amsterdam" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "NLD" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any {
-        it.name == "address-postalcode" && it.value == "1024 RJ"
-      },
-    )
+    assertTrue(resourceIndices.positionIndices.isEmpty())
   }
 
   @Test
@@ -1576,29 +1622,42 @@ class ResourceIndexerTest {
     val location = fhirJsonParser.decodeFromString<Location>(LOCATION_JSON)
     val resourceIndices = resourceIndexer.index(location)
 
-    assertContains(resourceIndices.positionIndices, PositionIndex(-83.69471, 42.2565))
-    assertContains(resourceIndices.tokenIndices, TokenIndex("_id", "Location.id", null, "hl7"))
-    assertTrue(
-      resourceIndices.tokenIndices.any {
-        it.name == "type" &&
-          it.system == "http://terminology.hl7.org/CodeSystem/v3-RoleCode" &&
-          it.value == "SLEEP"
-      },
+    assertEquals("hl7", resourceIndices.resourceId)
+    assertEquals(ResourceType.Location, resourceIndices.resourceType)
+    assertEquals(listOf(PositionIndex(-83.69471, 42.2565)), resourceIndices.positionIndices)
+    assertTrue(resourceIndices.numberIndices.isEmpty())
+    // status is left out because the KMP engine indexes it without the code system android-fhir
+    // sets.
+    assertEquals(
+      setOf(
+        TokenIndex(
+          "type",
+          "Location.type",
+          "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+          "SLEEP",
+        ),
+        TokenIndex("_id", "Location.id", null, "hl7"),
+      ),
+      resourceIndices.tokenIndices.filterNot { it.name == "status" }.toSet(),
     )
-    assertTrue(
-      resourceIndices.stringIndices.any {
-        it.name == "name" && it.value == "Health Level Seven International"
-      },
-    )
-    assertTrue(resourceIndices.stringIndices.any { it.name == "address-state" && it.value == "MI" })
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-city" && it.value == "Ann Arbor" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-postalcode" && it.value == "48104" },
-    )
-    assertTrue(
-      resourceIndices.stringIndices.any { it.name == "address-country" && it.value == "USA" },
+    assertTrue(resourceIndices.uriIndices.isEmpty())
+    assertTrue(resourceIndices.dateTimeIndices.isEmpty())
+    assertTrue(resourceIndices.referenceIndices.isEmpty())
+    assertTrue(resourceIndices.quantityIndices.isEmpty())
+    assertEquals(
+      setOf(
+        StringIndex(
+          "address",
+          "Location.address",
+          "3300 Washtenaw Avenue, Suite 227, Ann Arbor, MI, USA, 48104",
+        ),
+        StringIndex("address-state", "Location.address.state", "MI"),
+        StringIndex("address-postalcode", "Location.address.postalCode", "48104"),
+        StringIndex("name", "Location.name | Location.alias", "Health Level Seven International"),
+        StringIndex("address-country", "Location.address.country", "USA"),
+        StringIndex("address-city", "Location.address.city", "Ann Arbor"),
+      ),
+      resourceIndices.stringIndices.toSet(),
     )
   }
 

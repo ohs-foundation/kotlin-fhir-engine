@@ -28,6 +28,7 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respondOk
 import io.ktor.client.request.HttpRequestData
@@ -145,6 +146,8 @@ internal class FhirHttpDataSourceTest {
       .body
       .readBytearrayContentAsString()
       .shouldBe("[{\"op\":\"replace\",\"path\":\"/name/0/given/0\",\"value\":\"Janet\"}]")
+    // Ktor carries Content-Type on the body, not in the request headers
+    requestData!!.body.contentType.toString().shouldContain(ContentTypes.APPLICATION_JSON_PATCH)
   }
 
   private fun OutgoingContent.readBytearrayContentAsString(): String? {

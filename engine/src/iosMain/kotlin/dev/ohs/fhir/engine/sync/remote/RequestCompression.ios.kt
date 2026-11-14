@@ -16,3 +16,6 @@
 package dev.ohs.fhir.engine.sync.remote
 
 internal actual fun supportsRequestCompression(): Boolean = false
+
+internal actual fun gzip(bytes: ByteArray): ByteArray =
+  throw UnsupportedOperationException("Request compression is not supported on this platform.")

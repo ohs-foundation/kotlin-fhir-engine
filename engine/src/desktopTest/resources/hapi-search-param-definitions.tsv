@@ -1,0 +1,1699 @@
+# @SearchParamDefinition annotations of the HAPI org.hl7.fhir.r4 6.0.22 model classes, as android-fhir reads them.
+# ListResource is listed as List. Columns: resource type, name, type, path.
+Account	identifier	TOKEN	Account.identifier
+Account	name	STRING	Account.name
+Account	owner	REFERENCE	Account.owner
+Account	patient	REFERENCE	Account.subject.where(resolve() is Patient)
+Account	period	DATE	Account.servicePeriod
+Account	status	TOKEN	Account.status
+Account	subject	REFERENCE	Account.subject
+Account	type	TOKEN	Account.type
+ActivityDefinition	composed-of	REFERENCE	ActivityDefinition.relatedArtifact.where(type='composed-of').resource
+ActivityDefinition	context	TOKEN	(ActivityDefinition.useContext.value as CodeableConcept)
+ActivityDefinition	context-quantity	QUANTITY	(ActivityDefinition.useContext.value as Quantity) | (ActivityDefinition.useContext.value as Range)
+ActivityDefinition	context-type	TOKEN	ActivityDefinition.useContext.code
+ActivityDefinition	context-type-quantity	COMPOSITE	ActivityDefinition.useContext
+ActivityDefinition	context-type-value	COMPOSITE	ActivityDefinition.useContext
+ActivityDefinition	date	DATE	ActivityDefinition.date
+ActivityDefinition	depends-on	REFERENCE	ActivityDefinition.relatedArtifact.where(type='depends-on').resource | ActivityDefinition.library
+ActivityDefinition	derived-from	REFERENCE	ActivityDefinition.relatedArtifact.where(type='derived-from').resource
+ActivityDefinition	description	STRING	ActivityDefinition.description
+ActivityDefinition	effective	DATE	ActivityDefinition.effectivePeriod
+ActivityDefinition	identifier	TOKEN	ActivityDefinition.identifier
+ActivityDefinition	jurisdiction	TOKEN	ActivityDefinition.jurisdiction
+ActivityDefinition	name	STRING	ActivityDefinition.name
+ActivityDefinition	predecessor	REFERENCE	ActivityDefinition.relatedArtifact.where(type='predecessor').resource
+ActivityDefinition	publisher	STRING	ActivityDefinition.publisher
+ActivityDefinition	status	TOKEN	ActivityDefinition.status
+ActivityDefinition	successor	REFERENCE	ActivityDefinition.relatedArtifact.where(type='successor').resource
+ActivityDefinition	title	STRING	ActivityDefinition.title
+ActivityDefinition	topic	TOKEN	ActivityDefinition.topic
+ActivityDefinition	url	URI	ActivityDefinition.url
+ActivityDefinition	version	TOKEN	ActivityDefinition.version
+AdverseEvent	actuality	TOKEN	AdverseEvent.actuality
+AdverseEvent	category	TOKEN	AdverseEvent.category
+AdverseEvent	date	DATE	AdverseEvent.date
+AdverseEvent	event	TOKEN	AdverseEvent.event
+AdverseEvent	location	REFERENCE	AdverseEvent.location
+AdverseEvent	recorder	REFERENCE	AdverseEvent.recorder
+AdverseEvent	resultingcondition	REFERENCE	AdverseEvent.resultingCondition
+AdverseEvent	seriousness	TOKEN	AdverseEvent.seriousness
+AdverseEvent	severity	TOKEN	AdverseEvent.severity
+AdverseEvent	study	REFERENCE	AdverseEvent.study
+AdverseEvent	subject	REFERENCE	AdverseEvent.subject
+AdverseEvent	substance	REFERENCE	AdverseEvent.suspectEntity.instance
+AllergyIntolerance	asserter	REFERENCE	AllergyIntolerance.asserter
+AllergyIntolerance	category	TOKEN	AllergyIntolerance.category
+AllergyIntolerance	clinical-status	TOKEN	AllergyIntolerance.clinicalStatus
+AllergyIntolerance	code	TOKEN	AllergyIntolerance.code | AllergyIntolerance.reaction.substance
+AllergyIntolerance	criticality	TOKEN	AllergyIntolerance.criticality
+AllergyIntolerance	date	DATE	AllergyIntolerance.recordedDate
+AllergyIntolerance	identifier	TOKEN	AllergyIntolerance.identifier
+AllergyIntolerance	last-date	DATE	AllergyIntolerance.lastOccurrence
+AllergyIntolerance	manifestation	TOKEN	AllergyIntolerance.reaction.manifestation
+AllergyIntolerance	onset	DATE	AllergyIntolerance.reaction.onset
+AllergyIntolerance	patient	REFERENCE	AllergyIntolerance.patient
+AllergyIntolerance	recorder	REFERENCE	AllergyIntolerance.recorder
+AllergyIntolerance	route	TOKEN	AllergyIntolerance.reaction.exposureRoute
+AllergyIntolerance	severity	TOKEN	AllergyIntolerance.reaction.severity
+AllergyIntolerance	type	TOKEN	AllergyIntolerance.type
+AllergyIntolerance	verification-status	TOKEN	AllergyIntolerance.verificationStatus
+Appointment	actor	REFERENCE	Appointment.participant.actor
+Appointment	appointment-type	TOKEN	Appointment.appointmentType
+Appointment	based-on	REFERENCE	Appointment.basedOn
+Appointment	date	DATE	Appointment.start
+Appointment	identifier	TOKEN	Appointment.identifier
+Appointment	location	REFERENCE	Appointment.participant.actor.where(resolve() is Location)
+Appointment	part-status	TOKEN	Appointment.participant.status
+Appointment	patient	REFERENCE	Appointment.participant.actor.where(resolve() is Patient)
+Appointment	practitioner	REFERENCE	Appointment.participant.actor.where(resolve() is Practitioner)
+Appointment	reason-code	TOKEN	Appointment.reasonCode
+Appointment	reason-reference	REFERENCE	Appointment.reasonReference
+Appointment	service-category	TOKEN	Appointment.serviceCategory
+Appointment	service-type	TOKEN	Appointment.serviceType
+Appointment	slot	REFERENCE	Appointment.slot
+Appointment	specialty	TOKEN	Appointment.specialty
+Appointment	status	TOKEN	Appointment.status
+Appointment	supporting-info	REFERENCE	Appointment.supportingInformation
+AppointmentResponse	actor	REFERENCE	AppointmentResponse.actor
+AppointmentResponse	appointment	REFERENCE	AppointmentResponse.appointment
+AppointmentResponse	identifier	TOKEN	AppointmentResponse.identifier
+AppointmentResponse	location	REFERENCE	AppointmentResponse.actor.where(resolve() is Location)
+AppointmentResponse	part-status	TOKEN	AppointmentResponse.participantStatus
+AppointmentResponse	patient	REFERENCE	AppointmentResponse.actor.where(resolve() is Patient)
+AppointmentResponse	practitioner	REFERENCE	AppointmentResponse.actor.where(resolve() is Practitioner)
+AuditEvent	action	TOKEN	AuditEvent.action
+AuditEvent	address	STRING	AuditEvent.agent.network.address
+AuditEvent	agent	REFERENCE	AuditEvent.agent.who
+AuditEvent	agent-name	STRING	AuditEvent.agent.name
+AuditEvent	agent-role	TOKEN	AuditEvent.agent.role
+AuditEvent	altid	TOKEN	AuditEvent.agent.altId
+AuditEvent	date	DATE	AuditEvent.recorded
+AuditEvent	entity	REFERENCE	AuditEvent.entity.what
+AuditEvent	entity-name	STRING	AuditEvent.entity.name
+AuditEvent	entity-role	TOKEN	AuditEvent.entity.role
+AuditEvent	entity-type	TOKEN	AuditEvent.entity.type
+AuditEvent	outcome	TOKEN	AuditEvent.outcome
+AuditEvent	patient	REFERENCE	AuditEvent.agent.who.where(resolve() is Patient) | AuditEvent.entity.what.where(resolve() is Patient)
+AuditEvent	policy	URI	AuditEvent.agent.policy
+AuditEvent	site	TOKEN	AuditEvent.source.site
+AuditEvent	source	REFERENCE	AuditEvent.source.observer
+AuditEvent	subtype	TOKEN	AuditEvent.subtype
+AuditEvent	type	TOKEN	AuditEvent.type
+Basic	author	REFERENCE	Basic.author
+Basic	code	TOKEN	Basic.code
+Basic	created	DATE	Basic.created
+Basic	identifier	TOKEN	Basic.identifier
+Basic	patient	REFERENCE	Basic.subject.where(resolve() is Patient)
+Basic	subject	REFERENCE	Basic.subject
+BodyStructure	identifier	TOKEN	BodyStructure.identifier
+BodyStructure	location	TOKEN	BodyStructure.location
+BodyStructure	morphology	TOKEN	BodyStructure.morphology
+BodyStructure	patient	REFERENCE	BodyStructure.patient
+Bundle	composition	REFERENCE	Bundle.entry[0].resource
+Bundle	identifier	TOKEN	Bundle.identifier
+Bundle	message	REFERENCE	Bundle.entry[0].resource
+Bundle	timestamp	DATE	Bundle.timestamp
+Bundle	type	TOKEN	Bundle.type
+CapabilityStatement	context	TOKEN	(CapabilityStatement.useContext.value as CodeableConcept)
+CapabilityStatement	context-quantity	QUANTITY	(CapabilityStatement.useContext.value as Quantity) | (CapabilityStatement.useContext.value as Range)
+CapabilityStatement	context-type	TOKEN	CapabilityStatement.useContext.code
+CapabilityStatement	context-type-quantity	COMPOSITE	CapabilityStatement.useContext
+CapabilityStatement	context-type-value	COMPOSITE	CapabilityStatement.useContext
+CapabilityStatement	date	DATE	CapabilityStatement.date
+CapabilityStatement	description	STRING	CapabilityStatement.description
+CapabilityStatement	fhirversion	TOKEN	CapabilityStatement.version
+CapabilityStatement	format	TOKEN	CapabilityStatement.format
+CapabilityStatement	guide	REFERENCE	CapabilityStatement.implementationGuide
+CapabilityStatement	jurisdiction	TOKEN	CapabilityStatement.jurisdiction
+CapabilityStatement	mode	TOKEN	CapabilityStatement.rest.mode
+CapabilityStatement	name	STRING	CapabilityStatement.name
+CapabilityStatement	publisher	STRING	CapabilityStatement.publisher
+CapabilityStatement	resource	TOKEN	CapabilityStatement.rest.resource.type
+CapabilityStatement	resource-profile	REFERENCE	CapabilityStatement.rest.resource.profile
+CapabilityStatement	security-service	TOKEN	CapabilityStatement.rest.security.service
+CapabilityStatement	software	STRING	CapabilityStatement.software.name
+CapabilityStatement	status	TOKEN	CapabilityStatement.status
+CapabilityStatement	supported-profile	REFERENCE	CapabilityStatement.rest.resource.supportedProfile
+CapabilityStatement	title	STRING	CapabilityStatement.title
+CapabilityStatement	url	URI	CapabilityStatement.url
+CapabilityStatement	version	TOKEN	CapabilityStatement.version
+CarePlan	activity-code	TOKEN	CarePlan.activity.detail.code
+CarePlan	activity-date	DATE	CarePlan.activity.detail.scheduled
+CarePlan	activity-reference	REFERENCE	CarePlan.activity.reference
+CarePlan	based-on	REFERENCE	CarePlan.basedOn
+CarePlan	care-team	REFERENCE	CarePlan.careTeam
+CarePlan	category	TOKEN	CarePlan.category
+CarePlan	condition	REFERENCE	CarePlan.addresses
+CarePlan	date	DATE	CarePlan.period
+CarePlan	encounter	REFERENCE	CarePlan.encounter
+CarePlan	goal	REFERENCE	CarePlan.goal
+CarePlan	identifier	TOKEN	CarePlan.identifier
+CarePlan	instantiates-canonical	REFERENCE	CarePlan.instantiatesCanonical
+CarePlan	instantiates-uri	URI	CarePlan.instantiatesUri
+CarePlan	intent	TOKEN	CarePlan.intent
+CarePlan	part-of	REFERENCE	CarePlan.partOf
+CarePlan	patient	REFERENCE	CarePlan.subject.where(resolve() is Patient)
+CarePlan	performer	REFERENCE	CarePlan.activity.detail.performer
+CarePlan	replaces	REFERENCE	CarePlan.replaces
+CarePlan	status	TOKEN	CarePlan.status
+CarePlan	subject	REFERENCE	CarePlan.subject
+CareTeam	category	TOKEN	CareTeam.category
+CareTeam	date	DATE	CareTeam.period
+CareTeam	encounter	REFERENCE	CareTeam.encounter
+CareTeam	identifier	TOKEN	CareTeam.identifier
+CareTeam	participant	REFERENCE	CareTeam.participant.member
+CareTeam	patient	REFERENCE	CareTeam.subject.where(resolve() is Patient)
+CareTeam	status	TOKEN	CareTeam.status
+CareTeam	subject	REFERENCE	CareTeam.subject
+ChargeItem	account	REFERENCE	ChargeItem.account
+ChargeItem	code	TOKEN	ChargeItem.code
+ChargeItem	context	REFERENCE	ChargeItem.context
+ChargeItem	entered-date	DATE	ChargeItem.enteredDate
+ChargeItem	enterer	REFERENCE	ChargeItem.enterer
+ChargeItem	factor-override	NUMBER	ChargeItem.factorOverride
+ChargeItem	identifier	TOKEN	ChargeItem.identifier
+ChargeItem	occurrence	DATE	ChargeItem.occurrence
+ChargeItem	patient	REFERENCE	ChargeItem.subject.where(resolve() is Patient)
+ChargeItem	performer-actor	REFERENCE	ChargeItem.performer.actor
+ChargeItem	performer-function	TOKEN	ChargeItem.performer.function
+ChargeItem	performing-organization	REFERENCE	ChargeItem.performingOrganization
+ChargeItem	price-override	QUANTITY	ChargeItem.priceOverride
+ChargeItem	quantity	QUANTITY	ChargeItem.quantity
+ChargeItem	requesting-organization	REFERENCE	ChargeItem.requestingOrganization
+ChargeItem	service	REFERENCE	ChargeItem.service
+ChargeItem	subject	REFERENCE	ChargeItem.subject
+ChargeItemDefinition	context	TOKEN	(ChargeItemDefinition.useContext.value as CodeableConcept)
+ChargeItemDefinition	context-quantity	QUANTITY	(ChargeItemDefinition.useContext.value as Quantity) | (ChargeItemDefinition.useContext.value as Range)
+ChargeItemDefinition	context-type	TOKEN	ChargeItemDefinition.useContext.code
+ChargeItemDefinition	context-type-quantity	COMPOSITE	ChargeItemDefinition.useContext
+ChargeItemDefinition	context-type-value	COMPOSITE	ChargeItemDefinition.useContext
+ChargeItemDefinition	date	DATE	ChargeItemDefinition.date
+ChargeItemDefinition	description	STRING	ChargeItemDefinition.description
+ChargeItemDefinition	effective	DATE	ChargeItemDefinition.effectivePeriod
+ChargeItemDefinition	identifier	TOKEN	ChargeItemDefinition.identifier
+ChargeItemDefinition	jurisdiction	TOKEN	ChargeItemDefinition.jurisdiction
+ChargeItemDefinition	publisher	STRING	ChargeItemDefinition.publisher
+ChargeItemDefinition	status	TOKEN	ChargeItemDefinition.status
+ChargeItemDefinition	title	STRING	ChargeItemDefinition.title
+ChargeItemDefinition	url	URI	ChargeItemDefinition.url
+ChargeItemDefinition	version	TOKEN	ChargeItemDefinition.version
+Claim	care-team	REFERENCE	Claim.careTeam.provider
+Claim	created	DATE	Claim.created
+Claim	detail-udi	REFERENCE	Claim.item.detail.udi
+Claim	encounter	REFERENCE	Claim.item.encounter
+Claim	enterer	REFERENCE	Claim.enterer
+Claim	facility	REFERENCE	Claim.facility
+Claim	identifier	TOKEN	Claim.identifier
+Claim	insurer	REFERENCE	Claim.insurer
+Claim	item-udi	REFERENCE	Claim.item.udi
+Claim	patient	REFERENCE	Claim.patient
+Claim	payee	REFERENCE	Claim.payee.party
+Claim	priority	TOKEN	Claim.priority
+Claim	procedure-udi	REFERENCE	Claim.procedure.udi
+Claim	provider	REFERENCE	Claim.provider
+Claim	status	TOKEN	Claim.status
+Claim	subdetail-udi	REFERENCE	Claim.item.detail.subDetail.udi
+Claim	use	TOKEN	Claim.use
+ClaimResponse	created	DATE	ClaimResponse.created
+ClaimResponse	disposition	STRING	ClaimResponse.disposition
+ClaimResponse	identifier	TOKEN	ClaimResponse.identifier
+ClaimResponse	insurer	REFERENCE	ClaimResponse.insurer
+ClaimResponse	outcome	TOKEN	ClaimResponse.outcome
+ClaimResponse	patient	REFERENCE	ClaimResponse.patient
+ClaimResponse	payment-date	DATE	ClaimResponse.payment.date
+ClaimResponse	request	REFERENCE	ClaimResponse.request
+ClaimResponse	requestor	REFERENCE	ClaimResponse.requestor
+ClaimResponse	status	TOKEN	ClaimResponse.status
+ClaimResponse	use	TOKEN	ClaimResponse.use
+ClinicalImpression	assessor	REFERENCE	ClinicalImpression.assessor
+ClinicalImpression	date	DATE	ClinicalImpression.date
+ClinicalImpression	encounter	REFERENCE	ClinicalImpression.encounter
+ClinicalImpression	finding-code	TOKEN	ClinicalImpression.finding.itemCodeableConcept
+ClinicalImpression	finding-ref	REFERENCE	ClinicalImpression.finding.itemReference
+ClinicalImpression	identifier	TOKEN	ClinicalImpression.identifier
+ClinicalImpression	investigation	REFERENCE	ClinicalImpression.investigation.item
+ClinicalImpression	patient	REFERENCE	ClinicalImpression.subject.where(resolve() is Patient)
+ClinicalImpression	previous	REFERENCE	ClinicalImpression.previous
+ClinicalImpression	problem	REFERENCE	ClinicalImpression.problem
+ClinicalImpression	status	TOKEN	ClinicalImpression.status
+ClinicalImpression	subject	REFERENCE	ClinicalImpression.subject
+ClinicalImpression	supporting-info	REFERENCE	ClinicalImpression.supportingInfo
+CodeSystem	code	TOKEN	CodeSystem.concept.code
+CodeSystem	content-mode	TOKEN	CodeSystem.content
+CodeSystem	context	TOKEN	(CodeSystem.useContext.value as CodeableConcept)
+CodeSystem	context-quantity	QUANTITY	(CodeSystem.useContext.value as Quantity) | (CodeSystem.useContext.value as Range)
+CodeSystem	context-type	TOKEN	CodeSystem.useContext.code
+CodeSystem	context-type-quantity	COMPOSITE	CodeSystem.useContext
+CodeSystem	context-type-value	COMPOSITE	CodeSystem.useContext
+CodeSystem	date	DATE	CodeSystem.date
+CodeSystem	description	STRING	CodeSystem.description
+CodeSystem	identifier	TOKEN	CodeSystem.identifier
+CodeSystem	jurisdiction	TOKEN	CodeSystem.jurisdiction
+CodeSystem	language	TOKEN	CodeSystem.concept.designation.language
+CodeSystem	name	STRING	CodeSystem.name
+CodeSystem	publisher	STRING	CodeSystem.publisher
+CodeSystem	status	TOKEN	CodeSystem.status
+CodeSystem	supplements	REFERENCE	CodeSystem.supplements
+CodeSystem	system	URI	CodeSystem.url
+CodeSystem	title	STRING	CodeSystem.title
+CodeSystem	url	URI	CodeSystem.url
+CodeSystem	version	TOKEN	CodeSystem.version
+Communication	based-on	REFERENCE	Communication.basedOn
+Communication	category	TOKEN	Communication.category
+Communication	encounter	REFERENCE	Communication.encounter
+Communication	identifier	TOKEN	Communication.identifier
+Communication	instantiates-canonical	REFERENCE	Communication.instantiatesCanonical
+Communication	instantiates-uri	URI	Communication.instantiatesUri
+Communication	medium	TOKEN	Communication.medium
+Communication	part-of	REFERENCE	Communication.partOf
+Communication	patient	REFERENCE	Communication.subject.where(resolve() is Patient)
+Communication	received	DATE	Communication.received
+Communication	recipient	REFERENCE	Communication.recipient
+Communication	sender	REFERENCE	Communication.sender
+Communication	sent	DATE	Communication.sent
+Communication	status	TOKEN	Communication.status
+Communication	subject	REFERENCE	Communication.subject
+CommunicationRequest	authored	DATE	CommunicationRequest.authoredOn
+CommunicationRequest	based-on	REFERENCE	CommunicationRequest.basedOn
+CommunicationRequest	category	TOKEN	CommunicationRequest.category
+CommunicationRequest	encounter	REFERENCE	CommunicationRequest.encounter
+CommunicationRequest	group-identifier	TOKEN	CommunicationRequest.groupIdentifier
+CommunicationRequest	identifier	TOKEN	CommunicationRequest.identifier
+CommunicationRequest	medium	TOKEN	CommunicationRequest.medium
+CommunicationRequest	occurrence	DATE	(CommunicationRequest.occurrence as dateTime)
+CommunicationRequest	patient	REFERENCE	CommunicationRequest.subject.where(resolve() is Patient)
+CommunicationRequest	priority	TOKEN	CommunicationRequest.priority
+CommunicationRequest	recipient	REFERENCE	CommunicationRequest.recipient
+CommunicationRequest	replaces	REFERENCE	CommunicationRequest.replaces
+CommunicationRequest	requester	REFERENCE	CommunicationRequest.requester
+CommunicationRequest	sender	REFERENCE	CommunicationRequest.sender
+CommunicationRequest	status	TOKEN	CommunicationRequest.status
+CommunicationRequest	subject	REFERENCE	CommunicationRequest.subject
+CompartmentDefinition	code	TOKEN	CompartmentDefinition.code
+CompartmentDefinition	context	TOKEN	(CompartmentDefinition.useContext.value as CodeableConcept)
+CompartmentDefinition	context-quantity	QUANTITY	(CompartmentDefinition.useContext.value as Quantity) | (CompartmentDefinition.useContext.value as Range)
+CompartmentDefinition	context-type	TOKEN	CompartmentDefinition.useContext.code
+CompartmentDefinition	context-type-quantity	COMPOSITE	CompartmentDefinition.useContext
+CompartmentDefinition	context-type-value	COMPOSITE	CompartmentDefinition.useContext
+CompartmentDefinition	date	DATE	CompartmentDefinition.date
+CompartmentDefinition	description	STRING	CompartmentDefinition.description
+CompartmentDefinition	name	STRING	CompartmentDefinition.name
+CompartmentDefinition	publisher	STRING	CompartmentDefinition.publisher
+CompartmentDefinition	resource	TOKEN	CompartmentDefinition.resource.code
+CompartmentDefinition	status	TOKEN	CompartmentDefinition.status
+CompartmentDefinition	url	URI	CompartmentDefinition.url
+CompartmentDefinition	version	TOKEN	CompartmentDefinition.version
+Composition	attester	REFERENCE	Composition.attester.party
+Composition	author	REFERENCE	Composition.author
+Composition	category	TOKEN	Composition.category
+Composition	confidentiality	TOKEN	Composition.confidentiality
+Composition	context	TOKEN	Composition.event.code
+Composition	date	DATE	Composition.date
+Composition	encounter	REFERENCE	Composition.encounter
+Composition	entry	REFERENCE	Composition.section.entry
+Composition	identifier	TOKEN	Composition.identifier
+Composition	patient	REFERENCE	Composition.subject.where(resolve() is Patient)
+Composition	period	DATE	Composition.event.period
+Composition	related-id	TOKEN	(Composition.relatesTo.target as Identifier)
+Composition	related-ref	REFERENCE	(Composition.relatesTo.target as Reference)
+Composition	section	TOKEN	Composition.section.code
+Composition	status	TOKEN	Composition.status
+Composition	subject	REFERENCE	Composition.subject
+Composition	title	STRING	Composition.title
+Composition	type	TOKEN	Composition.type
+ConceptMap	context	TOKEN	(ConceptMap.useContext.value as CodeableConcept)
+ConceptMap	context-quantity	QUANTITY	(ConceptMap.useContext.value as Quantity) | (ConceptMap.useContext.value as Range)
+ConceptMap	context-type	TOKEN	ConceptMap.useContext.code
+ConceptMap	context-type-quantity	COMPOSITE	ConceptMap.useContext
+ConceptMap	context-type-value	COMPOSITE	ConceptMap.useContext
+ConceptMap	date	DATE	ConceptMap.date
+ConceptMap	dependson	URI	ConceptMap.group.element.target.dependsOn.property
+ConceptMap	description	STRING	ConceptMap.description
+ConceptMap	identifier	TOKEN	ConceptMap.identifier
+ConceptMap	jurisdiction	TOKEN	ConceptMap.jurisdiction
+ConceptMap	name	STRING	ConceptMap.name
+ConceptMap	other	REFERENCE	ConceptMap.group.unmapped.url
+ConceptMap	product	URI	ConceptMap.group.element.target.product.property
+ConceptMap	publisher	STRING	ConceptMap.publisher
+ConceptMap	source	REFERENCE	(ConceptMap.source as canonical)
+ConceptMap	source-code	TOKEN	ConceptMap.group.element.code
+ConceptMap	source-system	URI	ConceptMap.group.source
+ConceptMap	source-uri	REFERENCE	(ConceptMap.source as uri)
+ConceptMap	status	TOKEN	ConceptMap.status
+ConceptMap	target	REFERENCE	(ConceptMap.target as canonical)
+ConceptMap	target-code	TOKEN	ConceptMap.group.element.target.code
+ConceptMap	target-system	URI	ConceptMap.group.target
+ConceptMap	target-uri	REFERENCE	(ConceptMap.target as uri)
+ConceptMap	title	STRING	ConceptMap.title
+ConceptMap	url	URI	ConceptMap.url
+ConceptMap	version	TOKEN	ConceptMap.version
+Condition	abatement-age	QUANTITY	Condition.abatement.as(Age) | Condition.abatement.as(Range)
+Condition	abatement-date	DATE	Condition.abatement.as(dateTime) | Condition.abatement.as(Period)
+Condition	abatement-string	STRING	Condition.abatement.as(string)
+Condition	asserter	REFERENCE	Condition.asserter
+Condition	body-site	TOKEN	Condition.bodySite
+Condition	category	TOKEN	Condition.category
+Condition	clinical-status	TOKEN	Condition.clinicalStatus
+Condition	code	TOKEN	Condition.code
+Condition	encounter	REFERENCE	Condition.encounter
+Condition	evidence	TOKEN	Condition.evidence.code
+Condition	evidence-detail	REFERENCE	Condition.evidence.detail
+Condition	identifier	TOKEN	Condition.identifier
+Condition	onset-age	QUANTITY	Condition.onset.as(Age) | Condition.onset.as(Range)
+Condition	onset-date	DATE	Condition.onset.as(dateTime) | Condition.onset.as(Period)
+Condition	onset-info	STRING	Condition.onset.as(string)
+Condition	patient	REFERENCE	Condition.subject.where(resolve() is Patient)
+Condition	recorded-date	DATE	Condition.recordedDate
+Condition	severity	TOKEN	Condition.severity
+Condition	stage	TOKEN	Condition.stage.summary
+Condition	subject	REFERENCE	Condition.subject
+Condition	verification-status	TOKEN	Condition.verificationStatus
+Consent	action	TOKEN	Consent.provision.action
+Consent	actor	REFERENCE	Consent.provision.actor.reference
+Consent	category	TOKEN	Consent.category
+Consent	consentor	REFERENCE	Consent.performer
+Consent	data	REFERENCE	Consent.provision.data.reference
+Consent	date	DATE	Consent.dateTime
+Consent	identifier	TOKEN	Consent.identifier
+Consent	organization	REFERENCE	Consent.organization
+Consent	patient	REFERENCE	Consent.patient
+Consent	period	DATE	Consent.provision.period
+Consent	purpose	TOKEN	Consent.provision.purpose
+Consent	scope	TOKEN	Consent.scope
+Consent	security-label	TOKEN	Consent.provision.securityLabel
+Consent	source-reference	REFERENCE	Consent.source
+Consent	status	TOKEN	Consent.status
+Contract	authority	REFERENCE	Contract.authority
+Contract	domain	REFERENCE	Contract.domain
+Contract	identifier	TOKEN	Contract.identifier
+Contract	instantiates	URI	Contract.instantiatesUri
+Contract	issued	DATE	Contract.issued
+Contract	patient	REFERENCE	Contract.subject.where(resolve() is Patient)
+Contract	signer	REFERENCE	Contract.signer.party
+Contract	status	TOKEN	Contract.status
+Contract	subject	REFERENCE	Contract.subject
+Contract	url	URI	Contract.url
+Coverage	beneficiary	REFERENCE	Coverage.beneficiary
+Coverage	class-type	TOKEN	Coverage.class.type
+Coverage	class-value	STRING	Coverage.class.value
+Coverage	dependent	STRING	Coverage.dependent
+Coverage	identifier	TOKEN	Coverage.identifier
+Coverage	patient	REFERENCE	Coverage.beneficiary
+Coverage	payor	REFERENCE	Coverage.payor
+Coverage	policy-holder	REFERENCE	Coverage.policyHolder
+Coverage	status	TOKEN	Coverage.status
+Coverage	subscriber	REFERENCE	Coverage.subscriber
+Coverage	type	TOKEN	Coverage.type
+CoverageEligibilityRequest	created	DATE	CoverageEligibilityRequest.created
+CoverageEligibilityRequest	enterer	REFERENCE	CoverageEligibilityRequest.enterer
+CoverageEligibilityRequest	facility	REFERENCE	CoverageEligibilityRequest.facility
+CoverageEligibilityRequest	identifier	TOKEN	CoverageEligibilityRequest.identifier
+CoverageEligibilityRequest	patient	REFERENCE	CoverageEligibilityRequest.patient
+CoverageEligibilityRequest	provider	REFERENCE	CoverageEligibilityRequest.provider
+CoverageEligibilityRequest	status	TOKEN	CoverageEligibilityRequest.status
+CoverageEligibilityResponse	created	DATE	CoverageEligibilityResponse.created
+CoverageEligibilityResponse	disposition	STRING	CoverageEligibilityResponse.disposition
+CoverageEligibilityResponse	identifier	TOKEN	CoverageEligibilityResponse.identifier
+CoverageEligibilityResponse	insurer	REFERENCE	CoverageEligibilityResponse.insurer
+CoverageEligibilityResponse	outcome	TOKEN	CoverageEligibilityResponse.outcome
+CoverageEligibilityResponse	patient	REFERENCE	CoverageEligibilityResponse.patient
+CoverageEligibilityResponse	request	REFERENCE	CoverageEligibilityResponse.request
+CoverageEligibilityResponse	requestor	REFERENCE	CoverageEligibilityResponse.requestor
+CoverageEligibilityResponse	status	TOKEN	CoverageEligibilityResponse.status
+DetectedIssue	author	REFERENCE	DetectedIssue.author
+DetectedIssue	code	TOKEN	DetectedIssue.code
+DetectedIssue	identified	DATE	DetectedIssue.identified
+DetectedIssue	identifier	TOKEN	DetectedIssue.identifier
+DetectedIssue	implicated	REFERENCE	DetectedIssue.implicated
+DetectedIssue	patient	REFERENCE	DetectedIssue.patient
+Device	device-name	STRING	Device.deviceName.name | Device.type.coding.display | Device.type.text
+Device	identifier	TOKEN	Device.identifier
+Device	location	REFERENCE	Device.location
+Device	manufacturer	STRING	Device.manufacturer
+Device	model	STRING	Device.modelNumber
+Device	organization	REFERENCE	Device.owner
+Device	patient	REFERENCE	Device.patient
+Device	status	TOKEN	Device.status
+Device	type	TOKEN	Device.type
+Device	udi-carrier	STRING	Device.udiCarrier.carrierHRF
+Device	udi-di	STRING	Device.udiCarrier.deviceIdentifier
+Device	url	URI	Device.url
+DeviceDefinition	identifier	TOKEN	DeviceDefinition.identifier
+DeviceDefinition	parent	REFERENCE	DeviceDefinition.parentDevice
+DeviceDefinition	type	TOKEN	DeviceDefinition.type
+DeviceMetric	category	TOKEN	DeviceMetric.category
+DeviceMetric	identifier	TOKEN	DeviceMetric.identifier
+DeviceMetric	parent	REFERENCE	DeviceMetric.parent
+DeviceMetric	source	REFERENCE	DeviceMetric.source
+DeviceMetric	type	TOKEN	DeviceMetric.type
+DeviceRequest	authored-on	DATE	DeviceRequest.authoredOn
+DeviceRequest	based-on	REFERENCE	DeviceRequest.basedOn
+DeviceRequest	code	TOKEN	(DeviceRequest.code as CodeableConcept)
+DeviceRequest	device	REFERENCE	(DeviceRequest.code as Reference)
+DeviceRequest	encounter	REFERENCE	DeviceRequest.encounter
+DeviceRequest	event-date	DATE	(DeviceRequest.occurrence as dateTime) | (DeviceRequest.occurrence as Period)
+DeviceRequest	group-identifier	TOKEN	DeviceRequest.groupIdentifier
+DeviceRequest	identifier	TOKEN	DeviceRequest.identifier
+DeviceRequest	instantiates-canonical	REFERENCE	DeviceRequest.instantiatesCanonical
+DeviceRequest	instantiates-uri	URI	DeviceRequest.instantiatesUri
+DeviceRequest	insurance	REFERENCE	DeviceRequest.insurance
+DeviceRequest	intent	TOKEN	DeviceRequest.intent
+DeviceRequest	patient	REFERENCE	DeviceRequest.subject.where(resolve() is Patient)
+DeviceRequest	performer	REFERENCE	DeviceRequest.performer
+DeviceRequest	prior-request	REFERENCE	DeviceRequest.priorRequest
+DeviceRequest	requester	REFERENCE	DeviceRequest.requester
+DeviceRequest	status	TOKEN	DeviceRequest.status
+DeviceRequest	subject	REFERENCE	DeviceRequest.subject
+DeviceUseStatement	device	REFERENCE	DeviceUseStatement.device
+DeviceUseStatement	identifier	TOKEN	DeviceUseStatement.identifier
+DeviceUseStatement	patient	REFERENCE	DeviceUseStatement.subject
+DeviceUseStatement	subject	REFERENCE	DeviceUseStatement.subject
+DiagnosticReport	based-on	REFERENCE	DiagnosticReport.basedOn
+DiagnosticReport	category	TOKEN	DiagnosticReport.category
+DiagnosticReport	code	TOKEN	DiagnosticReport.code
+DiagnosticReport	conclusion	TOKEN	DiagnosticReport.conclusionCode
+DiagnosticReport	date	DATE	DiagnosticReport.effective
+DiagnosticReport	encounter	REFERENCE	DiagnosticReport.encounter
+DiagnosticReport	identifier	TOKEN	DiagnosticReport.identifier
+DiagnosticReport	issued	DATE	DiagnosticReport.issued
+DiagnosticReport	media	REFERENCE	DiagnosticReport.media.link
+DiagnosticReport	patient	REFERENCE	DiagnosticReport.subject.where(resolve() is Patient)
+DiagnosticReport	performer	REFERENCE	DiagnosticReport.performer
+DiagnosticReport	result	REFERENCE	DiagnosticReport.result
+DiagnosticReport	results-interpreter	REFERENCE	DiagnosticReport.resultsInterpreter
+DiagnosticReport	specimen	REFERENCE	DiagnosticReport.specimen
+DiagnosticReport	status	TOKEN	DiagnosticReport.status
+DiagnosticReport	subject	REFERENCE	DiagnosticReport.subject
+DocumentManifest	author	REFERENCE	DocumentManifest.author
+DocumentManifest	created	DATE	DocumentManifest.created
+DocumentManifest	description	STRING	DocumentManifest.description
+DocumentManifest	identifier	TOKEN	DocumentManifest.masterIdentifier | DocumentManifest.identifier
+DocumentManifest	item	REFERENCE	DocumentManifest.content
+DocumentManifest	patient	REFERENCE	DocumentManifest.subject.where(resolve() is Patient)
+DocumentManifest	recipient	REFERENCE	DocumentManifest.recipient
+DocumentManifest	related-id	TOKEN	DocumentManifest.related.identifier
+DocumentManifest	related-ref	REFERENCE	DocumentManifest.related.ref
+DocumentManifest	source	URI	DocumentManifest.source
+DocumentManifest	status	TOKEN	DocumentManifest.status
+DocumentManifest	subject	REFERENCE	DocumentManifest.subject
+DocumentManifest	type	TOKEN	DocumentManifest.type
+DocumentReference	authenticator	REFERENCE	DocumentReference.authenticator
+DocumentReference	author	REFERENCE	DocumentReference.author
+DocumentReference	category	TOKEN	DocumentReference.category
+DocumentReference	contenttype	TOKEN	DocumentReference.content.attachment.contentType
+DocumentReference	custodian	REFERENCE	DocumentReference.custodian
+DocumentReference	date	DATE	DocumentReference.date
+DocumentReference	description	STRING	DocumentReference.description
+DocumentReference	encounter	REFERENCE	DocumentReference.context.encounter
+DocumentReference	event	TOKEN	DocumentReference.context.event
+DocumentReference	facility	TOKEN	DocumentReference.context.facilityType
+DocumentReference	format	TOKEN	DocumentReference.content.format
+DocumentReference	identifier	TOKEN	DocumentReference.masterIdentifier | DocumentReference.identifier
+DocumentReference	language	TOKEN	DocumentReference.content.attachment.language
+DocumentReference	location	URI	DocumentReference.content.attachment.url
+DocumentReference	patient	REFERENCE	DocumentReference.subject.where(resolve() is Patient)
+DocumentReference	period	DATE	DocumentReference.context.period
+DocumentReference	related	REFERENCE	DocumentReference.context.related
+DocumentReference	relatesto	REFERENCE	DocumentReference.relatesTo.target
+DocumentReference	relation	TOKEN	DocumentReference.relatesTo.code
+DocumentReference	relationship	COMPOSITE	DocumentReference.relatesTo
+DocumentReference	security-label	TOKEN	DocumentReference.securityLabel
+DocumentReference	setting	TOKEN	DocumentReference.context.practiceSetting
+DocumentReference	status	TOKEN	DocumentReference.status
+DocumentReference	subject	REFERENCE	DocumentReference.subject
+DocumentReference	type	TOKEN	DocumentReference.type
+EffectEvidenceSynthesis	context	TOKEN	(EffectEvidenceSynthesis.useContext.value as CodeableConcept)
+EffectEvidenceSynthesis	context-quantity	QUANTITY	(EffectEvidenceSynthesis.useContext.value as Quantity) | (EffectEvidenceSynthesis.useContext.value as Range)
+EffectEvidenceSynthesis	context-type	TOKEN	EffectEvidenceSynthesis.useContext.code
+EffectEvidenceSynthesis	context-type-quantity	COMPOSITE	EffectEvidenceSynthesis.useContext
+EffectEvidenceSynthesis	context-type-value	COMPOSITE	EffectEvidenceSynthesis.useContext
+EffectEvidenceSynthesis	date	DATE	EffectEvidenceSynthesis.date
+EffectEvidenceSynthesis	description	STRING	EffectEvidenceSynthesis.description
+EffectEvidenceSynthesis	effective	DATE	EffectEvidenceSynthesis.effectivePeriod
+EffectEvidenceSynthesis	identifier	TOKEN	EffectEvidenceSynthesis.identifier
+EffectEvidenceSynthesis	jurisdiction	TOKEN	EffectEvidenceSynthesis.jurisdiction
+EffectEvidenceSynthesis	name	STRING	EffectEvidenceSynthesis.name
+EffectEvidenceSynthesis	publisher	STRING	EffectEvidenceSynthesis.publisher
+EffectEvidenceSynthesis	status	TOKEN	EffectEvidenceSynthesis.status
+EffectEvidenceSynthesis	title	STRING	EffectEvidenceSynthesis.title
+EffectEvidenceSynthesis	url	URI	EffectEvidenceSynthesis.url
+EffectEvidenceSynthesis	version	TOKEN	EffectEvidenceSynthesis.version
+Encounter	account	REFERENCE	Encounter.account
+Encounter	appointment	REFERENCE	Encounter.appointment
+Encounter	based-on	REFERENCE	Encounter.basedOn
+Encounter	class	TOKEN	Encounter.class
+Encounter	date	DATE	Encounter.period
+Encounter	diagnosis	REFERENCE	Encounter.diagnosis.condition
+Encounter	episode-of-care	REFERENCE	Encounter.episodeOfCare
+Encounter	identifier	TOKEN	Encounter.identifier
+Encounter	length	QUANTITY	Encounter.length
+Encounter	location	REFERENCE	Encounter.location.location
+Encounter	location-period	DATE	Encounter.location.period
+Encounter	part-of	REFERENCE	Encounter.partOf
+Encounter	participant	REFERENCE	Encounter.participant.individual
+Encounter	participant-type	TOKEN	Encounter.participant.type
+Encounter	patient	REFERENCE	Encounter.subject.where(resolve() is Patient)
+Encounter	practitioner	REFERENCE	Encounter.participant.individual.where(resolve() is Practitioner)
+Encounter	reason-code	TOKEN	Encounter.reasonCode
+Encounter	reason-reference	REFERENCE	Encounter.reasonReference
+Encounter	service-provider	REFERENCE	Encounter.serviceProvider
+Encounter	special-arrangement	TOKEN	Encounter.hospitalization.specialArrangement
+Encounter	status	TOKEN	Encounter.status
+Encounter	subject	REFERENCE	Encounter.subject
+Encounter	type	TOKEN	Encounter.type
+Endpoint	connection-type	TOKEN	Endpoint.connectionType
+Endpoint	identifier	TOKEN	Endpoint.identifier
+Endpoint	name	STRING	Endpoint.name
+Endpoint	organization	REFERENCE	Endpoint.managingOrganization
+Endpoint	payload-type	TOKEN	Endpoint.payloadType
+Endpoint	status	TOKEN	Endpoint.status
+EnrollmentRequest	identifier	TOKEN	EnrollmentRequest.identifier
+EnrollmentRequest	patient	REFERENCE	EnrollmentRequest.candidate
+EnrollmentRequest	status	TOKEN	EnrollmentRequest.status
+EnrollmentRequest	subject	REFERENCE	EnrollmentRequest.candidate
+EnrollmentResponse	identifier	TOKEN	EnrollmentResponse.identifier
+EnrollmentResponse	request	REFERENCE	EnrollmentResponse.request
+EnrollmentResponse	status	TOKEN	EnrollmentResponse.status
+EpisodeOfCare	care-manager	REFERENCE	EpisodeOfCare.careManager.where(resolve() is Practitioner)
+EpisodeOfCare	condition	REFERENCE	EpisodeOfCare.diagnosis.condition
+EpisodeOfCare	date	DATE	EpisodeOfCare.period
+EpisodeOfCare	identifier	TOKEN	EpisodeOfCare.identifier
+EpisodeOfCare	incoming-referral	REFERENCE	EpisodeOfCare.referralRequest
+EpisodeOfCare	organization	REFERENCE	EpisodeOfCare.managingOrganization
+EpisodeOfCare	patient	REFERENCE	EpisodeOfCare.patient
+EpisodeOfCare	status	TOKEN	EpisodeOfCare.status
+EpisodeOfCare	type	TOKEN	EpisodeOfCare.type
+EventDefinition	composed-of	REFERENCE	EventDefinition.relatedArtifact.where(type='composed-of').resource
+EventDefinition	context	TOKEN	(EventDefinition.useContext.value as CodeableConcept)
+EventDefinition	context-quantity	QUANTITY	(EventDefinition.useContext.value as Quantity) | (EventDefinition.useContext.value as Range)
+EventDefinition	context-type	TOKEN	EventDefinition.useContext.code
+EventDefinition	context-type-quantity	COMPOSITE	EventDefinition.useContext
+EventDefinition	context-type-value	COMPOSITE	EventDefinition.useContext
+EventDefinition	date	DATE	EventDefinition.date
+EventDefinition	depends-on	REFERENCE	EventDefinition.relatedArtifact.where(type='depends-on').resource
+EventDefinition	derived-from	REFERENCE	EventDefinition.relatedArtifact.where(type='derived-from').resource
+EventDefinition	description	STRING	EventDefinition.description
+EventDefinition	effective	DATE	EventDefinition.effectivePeriod
+EventDefinition	identifier	TOKEN	EventDefinition.identifier
+EventDefinition	jurisdiction	TOKEN	EventDefinition.jurisdiction
+EventDefinition	name	STRING	EventDefinition.name
+EventDefinition	predecessor	REFERENCE	EventDefinition.relatedArtifact.where(type='predecessor').resource
+EventDefinition	publisher	STRING	EventDefinition.publisher
+EventDefinition	status	TOKEN	EventDefinition.status
+EventDefinition	successor	REFERENCE	EventDefinition.relatedArtifact.where(type='successor').resource
+EventDefinition	title	STRING	EventDefinition.title
+EventDefinition	topic	TOKEN	EventDefinition.topic
+EventDefinition	url	URI	EventDefinition.url
+EventDefinition	version	TOKEN	EventDefinition.version
+Evidence	composed-of	REFERENCE	Evidence.relatedArtifact.where(type='composed-of').resource
+Evidence	context	TOKEN	(Evidence.useContext.value as CodeableConcept)
+Evidence	context-quantity	QUANTITY	(Evidence.useContext.value as Quantity) | (Evidence.useContext.value as Range)
+Evidence	context-type	TOKEN	Evidence.useContext.code
+Evidence	context-type-quantity	COMPOSITE	Evidence.useContext
+Evidence	context-type-value	COMPOSITE	Evidence.useContext
+Evidence	date	DATE	Evidence.date
+Evidence	depends-on	REFERENCE	Evidence.relatedArtifact.where(type='depends-on').resource
+Evidence	derived-from	REFERENCE	Evidence.relatedArtifact.where(type='derived-from').resource
+Evidence	description	STRING	Evidence.description
+Evidence	effective	DATE	Evidence.effectivePeriod
+Evidence	identifier	TOKEN	Evidence.identifier
+Evidence	jurisdiction	TOKEN	Evidence.jurisdiction
+Evidence	name	STRING	Evidence.name
+Evidence	predecessor	REFERENCE	Evidence.relatedArtifact.where(type='predecessor').resource
+Evidence	publisher	STRING	Evidence.publisher
+Evidence	status	TOKEN	Evidence.status
+Evidence	successor	REFERENCE	Evidence.relatedArtifact.where(type='successor').resource
+Evidence	title	STRING	Evidence.title
+Evidence	topic	TOKEN	Evidence.topic
+Evidence	url	URI	Evidence.url
+Evidence	version	TOKEN	Evidence.version
+EvidenceVariable	composed-of	REFERENCE	EvidenceVariable.relatedArtifact.where(type='composed-of').resource
+EvidenceVariable	context	TOKEN	(EvidenceVariable.useContext.value as CodeableConcept)
+EvidenceVariable	context-quantity	QUANTITY	(EvidenceVariable.useContext.value as Quantity) | (EvidenceVariable.useContext.value as Range)
+EvidenceVariable	context-type	TOKEN	EvidenceVariable.useContext.code
+EvidenceVariable	context-type-quantity	COMPOSITE	EvidenceVariable.useContext
+EvidenceVariable	context-type-value	COMPOSITE	EvidenceVariable.useContext
+EvidenceVariable	date	DATE	EvidenceVariable.date
+EvidenceVariable	depends-on	REFERENCE	EvidenceVariable.relatedArtifact.where(type='depends-on').resource
+EvidenceVariable	derived-from	REFERENCE	EvidenceVariable.relatedArtifact.where(type='derived-from').resource
+EvidenceVariable	description	STRING	EvidenceVariable.description
+EvidenceVariable	effective	DATE	EvidenceVariable.effectivePeriod
+EvidenceVariable	identifier	TOKEN	EvidenceVariable.identifier
+EvidenceVariable	jurisdiction	TOKEN	EvidenceVariable.jurisdiction
+EvidenceVariable	name	STRING	EvidenceVariable.name
+EvidenceVariable	predecessor	REFERENCE	EvidenceVariable.relatedArtifact.where(type='predecessor').resource
+EvidenceVariable	publisher	STRING	EvidenceVariable.publisher
+EvidenceVariable	status	TOKEN	EvidenceVariable.status
+EvidenceVariable	successor	REFERENCE	EvidenceVariable.relatedArtifact.where(type='successor').resource
+EvidenceVariable	title	STRING	EvidenceVariable.title
+EvidenceVariable	topic	TOKEN	EvidenceVariable.topic
+EvidenceVariable	url	URI	EvidenceVariable.url
+EvidenceVariable	version	TOKEN	EvidenceVariable.version
+ExampleScenario	context	TOKEN	(ExampleScenario.useContext.value as CodeableConcept)
+ExampleScenario	context-quantity	QUANTITY	(ExampleScenario.useContext.value as Quantity) | (ExampleScenario.useContext.value as Range)
+ExampleScenario	context-type	TOKEN	ExampleScenario.useContext.code
+ExampleScenario	context-type-quantity	COMPOSITE	ExampleScenario.useContext
+ExampleScenario	context-type-value	COMPOSITE	ExampleScenario.useContext
+ExampleScenario	date	DATE	ExampleScenario.date
+ExampleScenario	identifier	TOKEN	ExampleScenario.identifier
+ExampleScenario	jurisdiction	TOKEN	ExampleScenario.jurisdiction
+ExampleScenario	name	STRING	ExampleScenario.name
+ExampleScenario	publisher	STRING	ExampleScenario.publisher
+ExampleScenario	status	TOKEN	ExampleScenario.status
+ExampleScenario	url	URI	ExampleScenario.url
+ExampleScenario	version	TOKEN	ExampleScenario.version
+ExplanationOfBenefit	care-team	REFERENCE	ExplanationOfBenefit.careTeam.provider
+ExplanationOfBenefit	claim	REFERENCE	ExplanationOfBenefit.claim
+ExplanationOfBenefit	coverage	REFERENCE	ExplanationOfBenefit.insurance.coverage
+ExplanationOfBenefit	created	DATE	ExplanationOfBenefit.created
+ExplanationOfBenefit	detail-udi	REFERENCE	ExplanationOfBenefit.item.detail.udi
+ExplanationOfBenefit	disposition	STRING	ExplanationOfBenefit.disposition
+ExplanationOfBenefit	encounter	REFERENCE	ExplanationOfBenefit.item.encounter
+ExplanationOfBenefit	enterer	REFERENCE	ExplanationOfBenefit.enterer
+ExplanationOfBenefit	facility	REFERENCE	ExplanationOfBenefit.facility
+ExplanationOfBenefit	identifier	TOKEN	ExplanationOfBenefit.identifier
+ExplanationOfBenefit	item-udi	REFERENCE	ExplanationOfBenefit.item.udi
+ExplanationOfBenefit	patient	REFERENCE	ExplanationOfBenefit.patient
+ExplanationOfBenefit	payee	REFERENCE	ExplanationOfBenefit.payee.party
+ExplanationOfBenefit	procedure-udi	REFERENCE	ExplanationOfBenefit.procedure.udi
+ExplanationOfBenefit	provider	REFERENCE	ExplanationOfBenefit.provider
+ExplanationOfBenefit	status	TOKEN	ExplanationOfBenefit.status
+ExplanationOfBenefit	subdetail-udi	REFERENCE	ExplanationOfBenefit.item.detail.subDetail.udi
+FamilyMemberHistory	code	TOKEN	FamilyMemberHistory.condition.code
+FamilyMemberHistory	date	DATE	FamilyMemberHistory.date
+FamilyMemberHistory	identifier	TOKEN	FamilyMemberHistory.identifier
+FamilyMemberHistory	instantiates-canonical	REFERENCE	FamilyMemberHistory.instantiatesCanonical
+FamilyMemberHistory	instantiates-uri	URI	FamilyMemberHistory.instantiatesUri
+FamilyMemberHistory	patient	REFERENCE	FamilyMemberHistory.patient
+FamilyMemberHistory	relationship	TOKEN	FamilyMemberHistory.relationship
+FamilyMemberHistory	sex	TOKEN	FamilyMemberHistory.sex
+FamilyMemberHistory	status	TOKEN	FamilyMemberHistory.status
+Flag	author	REFERENCE	Flag.author
+Flag	date	DATE	Flag.period
+Flag	encounter	REFERENCE	Flag.encounter
+Flag	identifier	TOKEN	Flag.identifier
+Flag	patient	REFERENCE	Flag.subject.where(resolve() is Patient)
+Flag	subject	REFERENCE	Flag.subject
+Goal	achievement-status	TOKEN	Goal.achievementStatus
+Goal	category	TOKEN	Goal.category
+Goal	identifier	TOKEN	Goal.identifier
+Goal	lifecycle-status	TOKEN	Goal.lifecycleStatus
+Goal	patient	REFERENCE	Goal.subject.where(resolve() is Patient)
+Goal	start-date	DATE	(Goal.start as date)
+Goal	subject	REFERENCE	Goal.subject
+Goal	target-date	DATE	(Goal.target.due as date)
+GraphDefinition	context	TOKEN	(GraphDefinition.useContext.value as CodeableConcept)
+GraphDefinition	context-quantity	QUANTITY	(GraphDefinition.useContext.value as Quantity) | (GraphDefinition.useContext.value as Range)
+GraphDefinition	context-type	TOKEN	GraphDefinition.useContext.code
+GraphDefinition	context-type-quantity	COMPOSITE	GraphDefinition.useContext
+GraphDefinition	context-type-value	COMPOSITE	GraphDefinition.useContext
+GraphDefinition	date	DATE	GraphDefinition.date
+GraphDefinition	description	STRING	GraphDefinition.description
+GraphDefinition	jurisdiction	TOKEN	GraphDefinition.jurisdiction
+GraphDefinition	name	STRING	GraphDefinition.name
+GraphDefinition	publisher	STRING	GraphDefinition.publisher
+GraphDefinition	start	TOKEN	GraphDefinition.start
+GraphDefinition	status	TOKEN	GraphDefinition.status
+GraphDefinition	url	URI	GraphDefinition.url
+GraphDefinition	version	TOKEN	GraphDefinition.version
+Group	actual	TOKEN	Group.actual
+Group	characteristic	TOKEN	Group.characteristic.code
+Group	characteristic-value	COMPOSITE	Group.characteristic
+Group	code	TOKEN	Group.code
+Group	exclude	TOKEN	Group.characteristic.exclude
+Group	identifier	TOKEN	Group.identifier
+Group	managing-entity	REFERENCE	Group.managingEntity
+Group	member	REFERENCE	Group.member.entity
+Group	type	TOKEN	Group.type
+Group	value	TOKEN	(Group.characteristic.value as CodeableConcept) | (Group.characteristic.value as boolean)
+GuidanceResponse	identifier	TOKEN	GuidanceResponse.identifier
+GuidanceResponse	patient	REFERENCE	GuidanceResponse.subject.where(resolve() is Patient)
+GuidanceResponse	request	TOKEN	GuidanceResponse.requestIdentifier
+GuidanceResponse	subject	REFERENCE	GuidanceResponse.subject
+HealthcareService	active	TOKEN	HealthcareService.active
+HealthcareService	characteristic	TOKEN	HealthcareService.characteristic
+HealthcareService	coverage-area	REFERENCE	HealthcareService.coverageArea
+HealthcareService	endpoint	REFERENCE	HealthcareService.endpoint
+HealthcareService	identifier	TOKEN	HealthcareService.identifier
+HealthcareService	location	REFERENCE	HealthcareService.location
+HealthcareService	name	STRING	HealthcareService.name
+HealthcareService	organization	REFERENCE	HealthcareService.providedBy
+HealthcareService	program	TOKEN	HealthcareService.program
+HealthcareService	service-category	TOKEN	HealthcareService.category
+HealthcareService	service-type	TOKEN	HealthcareService.type
+HealthcareService	specialty	TOKEN	HealthcareService.specialty
+ImagingStudy	basedon	REFERENCE	ImagingStudy.basedOn
+ImagingStudy	bodysite	TOKEN	ImagingStudy.series.bodySite
+ImagingStudy	dicom-class	TOKEN	ImagingStudy.series.instance.sopClass
+ImagingStudy	encounter	REFERENCE	ImagingStudy.encounter
+ImagingStudy	endpoint	REFERENCE	ImagingStudy.endpoint | ImagingStudy.series.endpoint
+ImagingStudy	identifier	TOKEN	ImagingStudy.identifier
+ImagingStudy	instance	TOKEN	ImagingStudy.series.instance.uid
+ImagingStudy	interpreter	REFERENCE	ImagingStudy.interpreter
+ImagingStudy	modality	TOKEN	ImagingStudy.series.modality
+ImagingStudy	patient	REFERENCE	ImagingStudy.subject.where(resolve() is Patient)
+ImagingStudy	performer	REFERENCE	ImagingStudy.series.performer.actor
+ImagingStudy	reason	TOKEN	ImagingStudy.reasonCode
+ImagingStudy	referrer	REFERENCE	ImagingStudy.referrer
+ImagingStudy	series	TOKEN	ImagingStudy.series.uid
+ImagingStudy	started	DATE	ImagingStudy.started
+ImagingStudy	status	TOKEN	ImagingStudy.status
+ImagingStudy	subject	REFERENCE	ImagingStudy.subject
+Immunization	date	DATE	Immunization.occurrence
+Immunization	identifier	TOKEN	Immunization.identifier
+Immunization	location	REFERENCE	Immunization.location
+Immunization	lot-number	STRING	Immunization.lotNumber
+Immunization	manufacturer	REFERENCE	Immunization.manufacturer
+Immunization	patient	REFERENCE	Immunization.patient
+Immunization	performer	REFERENCE	Immunization.performer.actor
+Immunization	reaction	REFERENCE	Immunization.reaction.detail
+Immunization	reaction-date	DATE	Immunization.reaction.date
+Immunization	reason-code	TOKEN	Immunization.reasonCode
+Immunization	reason-reference	REFERENCE	Immunization.reasonReference
+Immunization	series	STRING	Immunization.protocolApplied.series
+Immunization	status	TOKEN	Immunization.status
+Immunization	status-reason	TOKEN	Immunization.statusReason
+Immunization	target-disease	TOKEN	Immunization.protocolApplied.targetDisease
+Immunization	vaccine-code	TOKEN	Immunization.vaccineCode
+ImmunizationEvaluation	date	DATE	ImmunizationEvaluation.date
+ImmunizationEvaluation	dose-status	TOKEN	ImmunizationEvaluation.doseStatus
+ImmunizationEvaluation	identifier	TOKEN	ImmunizationEvaluation.identifier
+ImmunizationEvaluation	immunization-event	REFERENCE	ImmunizationEvaluation.immunizationEvent
+ImmunizationEvaluation	patient	REFERENCE	ImmunizationEvaluation.patient
+ImmunizationEvaluation	status	TOKEN	ImmunizationEvaluation.status
+ImmunizationEvaluation	target-disease	TOKEN	ImmunizationEvaluation.targetDisease
+ImmunizationRecommendation	date	DATE	ImmunizationRecommendation.date
+ImmunizationRecommendation	identifier	TOKEN	ImmunizationRecommendation.identifier
+ImmunizationRecommendation	information	REFERENCE	ImmunizationRecommendation.recommendation.supportingPatientInformation
+ImmunizationRecommendation	patient	REFERENCE	ImmunizationRecommendation.patient
+ImmunizationRecommendation	status	TOKEN	ImmunizationRecommendation.recommendation.forecastStatus
+ImmunizationRecommendation	support	REFERENCE	ImmunizationRecommendation.recommendation.supportingImmunization
+ImmunizationRecommendation	target-disease	TOKEN	ImmunizationRecommendation.recommendation.targetDisease
+ImmunizationRecommendation	vaccine-type	TOKEN	ImmunizationRecommendation.recommendation.vaccineCode
+ImplementationGuide	context	TOKEN	(ImplementationGuide.useContext.value as CodeableConcept)
+ImplementationGuide	context-quantity	QUANTITY	(ImplementationGuide.useContext.value as Quantity) | (ImplementationGuide.useContext.value as Range)
+ImplementationGuide	context-type	TOKEN	ImplementationGuide.useContext.code
+ImplementationGuide	context-type-quantity	COMPOSITE	ImplementationGuide.useContext
+ImplementationGuide	context-type-value	COMPOSITE	ImplementationGuide.useContext
+ImplementationGuide	date	DATE	ImplementationGuide.date
+ImplementationGuide	depends-on	REFERENCE	ImplementationGuide.dependsOn.uri
+ImplementationGuide	description	STRING	ImplementationGuide.description
+ImplementationGuide	experimental	TOKEN	ImplementationGuide.experimental
+ImplementationGuide	global	REFERENCE	ImplementationGuide.global.profile
+ImplementationGuide	jurisdiction	TOKEN	ImplementationGuide.jurisdiction
+ImplementationGuide	name	STRING	ImplementationGuide.name
+ImplementationGuide	publisher	STRING	ImplementationGuide.publisher
+ImplementationGuide	resource	REFERENCE	ImplementationGuide.definition.resource.reference
+ImplementationGuide	status	TOKEN	ImplementationGuide.status
+ImplementationGuide	title	STRING	ImplementationGuide.title
+ImplementationGuide	url	URI	ImplementationGuide.url
+ImplementationGuide	version	TOKEN	ImplementationGuide.version
+InsurancePlan	address	STRING	InsurancePlan.contact.address
+InsurancePlan	address-city	STRING	InsurancePlan.contact.address.city
+InsurancePlan	address-country	STRING	InsurancePlan.contact.address.country
+InsurancePlan	address-postalcode	STRING	InsurancePlan.contact.address.postalCode
+InsurancePlan	address-state	STRING	InsurancePlan.contact.address.state
+InsurancePlan	address-use	TOKEN	InsurancePlan.contact.address.use
+InsurancePlan	administered-by	REFERENCE	InsurancePlan.administeredBy
+InsurancePlan	endpoint	REFERENCE	InsurancePlan.endpoint
+InsurancePlan	identifier	TOKEN	InsurancePlan.identifier
+InsurancePlan	name	STRING	name | alias
+InsurancePlan	owned-by	REFERENCE	InsurancePlan.ownedBy
+InsurancePlan	phonetic	STRING	InsurancePlan.name
+InsurancePlan	status	TOKEN	InsurancePlan.status
+InsurancePlan	type	TOKEN	InsurancePlan.type
+Invoice	account	REFERENCE	Invoice.account
+Invoice	date	DATE	Invoice.date
+Invoice	identifier	TOKEN	Invoice.identifier
+Invoice	issuer	REFERENCE	Invoice.issuer
+Invoice	participant	REFERENCE	Invoice.participant.actor
+Invoice	participant-role	TOKEN	Invoice.participant.role
+Invoice	patient	REFERENCE	Invoice.subject.where(resolve() is Patient)
+Invoice	recipient	REFERENCE	Invoice.recipient
+Invoice	status	TOKEN	Invoice.status
+Invoice	subject	REFERENCE	Invoice.subject
+Invoice	totalgross	QUANTITY	Invoice.totalGross
+Invoice	totalnet	QUANTITY	Invoice.totalNet
+Invoice	type	TOKEN	Invoice.type
+Library	composed-of	REFERENCE	Library.relatedArtifact.where(type='composed-of').resource
+Library	content-type	TOKEN	Library.content.contentType
+Library	context	TOKEN	(Library.useContext.value as CodeableConcept)
+Library	context-quantity	QUANTITY	(Library.useContext.value as Quantity) | (Library.useContext.value as Range)
+Library	context-type	TOKEN	Library.useContext.code
+Library	context-type-quantity	COMPOSITE	Library.useContext
+Library	context-type-value	COMPOSITE	Library.useContext
+Library	date	DATE	Library.date
+Library	depends-on	REFERENCE	Library.relatedArtifact.where(type='depends-on').resource
+Library	derived-from	REFERENCE	Library.relatedArtifact.where(type='derived-from').resource
+Library	description	STRING	Library.description
+Library	effective	DATE	Library.effectivePeriod
+Library	identifier	TOKEN	Library.identifier
+Library	jurisdiction	TOKEN	Library.jurisdiction
+Library	name	STRING	Library.name
+Library	predecessor	REFERENCE	Library.relatedArtifact.where(type='predecessor').resource
+Library	publisher	STRING	Library.publisher
+Library	status	TOKEN	Library.status
+Library	successor	REFERENCE	Library.relatedArtifact.where(type='successor').resource
+Library	title	STRING	Library.title
+Library	topic	TOKEN	Library.topic
+Library	type	TOKEN	Library.type
+Library	url	URI	Library.url
+Library	version	TOKEN	Library.version
+Linkage	author	REFERENCE	Linkage.author
+Linkage	item	REFERENCE	Linkage.item.resource
+Linkage	source	REFERENCE	Linkage.item.resource
+List	code	TOKEN	List.code
+List	date	DATE	List.date
+List	empty-reason	TOKEN	List.emptyReason
+List	encounter	REFERENCE	List.encounter
+List	identifier	TOKEN	List.identifier
+List	item	REFERENCE	List.entry.item
+List	notes	STRING	List.note.text
+List	patient	REFERENCE	List.subject.where(resolve() is Patient)
+List	source	REFERENCE	List.source
+List	status	TOKEN	List.status
+List	subject	REFERENCE	List.subject
+List	title	STRING	List.title
+Location	address	STRING	Location.address
+Location	address-city	STRING	Location.address.city
+Location	address-country	STRING	Location.address.country
+Location	address-postalcode	STRING	Location.address.postalCode
+Location	address-state	STRING	Location.address.state
+Location	address-use	TOKEN	Location.address.use
+Location	endpoint	REFERENCE	Location.endpoint
+Location	identifier	TOKEN	Location.identifier
+Location	name	STRING	Location.name | Location.alias
+Location	near	SPECIAL	Location.position
+Location	operational-status	TOKEN	Location.operationalStatus
+Location	organization	REFERENCE	Location.managingOrganization
+Location	partof	REFERENCE	Location.partOf
+Location	status	TOKEN	Location.status
+Location	type	TOKEN	Location.type
+Measure	composed-of	REFERENCE	Measure.relatedArtifact.where(type='composed-of').resource
+Measure	context	TOKEN	(Measure.useContext.value as CodeableConcept)
+Measure	context-quantity	QUANTITY	(Measure.useContext.value as Quantity) | (Measure.useContext.value as Range)
+Measure	context-type	TOKEN	Measure.useContext.code
+Measure	context-type-quantity	COMPOSITE	Measure.useContext
+Measure	context-type-value	COMPOSITE	Measure.useContext
+Measure	date	DATE	Measure.date
+Measure	depends-on	REFERENCE	Measure.relatedArtifact.where(type='depends-on').resource | Measure.library
+Measure	derived-from	REFERENCE	Measure.relatedArtifact.where(type='derived-from').resource
+Measure	description	STRING	Measure.description
+Measure	effective	DATE	Measure.effectivePeriod
+Measure	identifier	TOKEN	Measure.identifier
+Measure	jurisdiction	TOKEN	Measure.jurisdiction
+Measure	name	STRING	Measure.name
+Measure	predecessor	REFERENCE	Measure.relatedArtifact.where(type='predecessor').resource
+Measure	publisher	STRING	Measure.publisher
+Measure	status	TOKEN	Measure.status
+Measure	successor	REFERENCE	Measure.relatedArtifact.where(type='successor').resource
+Measure	title	STRING	Measure.title
+Measure	topic	TOKEN	Measure.topic
+Measure	url	URI	Measure.url
+Measure	version	TOKEN	Measure.version
+MeasureReport	date	DATE	MeasureReport.date
+MeasureReport	evaluated-resource	REFERENCE	MeasureReport.evaluatedResource
+MeasureReport	identifier	TOKEN	MeasureReport.identifier
+MeasureReport	measure	REFERENCE	MeasureReport.measure
+MeasureReport	patient	REFERENCE	MeasureReport.subject.where(resolve() is Patient)
+MeasureReport	period	DATE	MeasureReport.period
+MeasureReport	reporter	REFERENCE	MeasureReport.reporter
+MeasureReport	status	TOKEN	MeasureReport.status
+MeasureReport	subject	REFERENCE	MeasureReport.subject
+Media	based-on	REFERENCE	Media.basedOn
+Media	created	DATE	Media.created
+Media	device	REFERENCE	Media.device
+Media	encounter	REFERENCE	Media.encounter
+Media	identifier	TOKEN	Media.identifier
+Media	modality	TOKEN	Media.modality
+Media	operator	REFERENCE	Media.operator
+Media	patient	REFERENCE	Media.subject.where(resolve() is Patient)
+Media	site	TOKEN	Media.bodySite
+Media	status	TOKEN	Media.status
+Media	subject	REFERENCE	Media.subject
+Media	type	TOKEN	Media.type
+Media	view	TOKEN	Media.view
+Medication	code	TOKEN	Medication.code
+Medication	expiration-date	DATE	Medication.batch.expirationDate
+Medication	form	TOKEN	Medication.form
+Medication	identifier	TOKEN	Medication.identifier
+Medication	ingredient	REFERENCE	(Medication.ingredient.item as Reference)
+Medication	ingredient-code	TOKEN	(Medication.ingredient.item as CodeableConcept)
+Medication	lot-number	TOKEN	Medication.batch.lotNumber
+Medication	manufacturer	REFERENCE	Medication.manufacturer
+Medication	status	TOKEN	Medication.status
+MedicationAdministration	code	TOKEN	(MedicationAdministration.medication as CodeableConcept)
+MedicationAdministration	context	REFERENCE	MedicationAdministration.context
+MedicationAdministration	device	REFERENCE	MedicationAdministration.device
+MedicationAdministration	effective-time	DATE	MedicationAdministration.effective
+MedicationAdministration	identifier	TOKEN	MedicationAdministration.identifier
+MedicationAdministration	medication	REFERENCE	(MedicationAdministration.medication as Reference)
+MedicationAdministration	patient	REFERENCE	MedicationAdministration.subject.where(resolve() is Patient)
+MedicationAdministration	performer	REFERENCE	MedicationAdministration.performer.actor
+MedicationAdministration	reason-given	TOKEN	MedicationAdministration.reasonCode
+MedicationAdministration	reason-not-given	TOKEN	MedicationAdministration.statusReason
+MedicationAdministration	request	REFERENCE	MedicationAdministration.request
+MedicationAdministration	status	TOKEN	MedicationAdministration.status
+MedicationAdministration	subject	REFERENCE	MedicationAdministration.subject
+MedicationDispense	code	TOKEN	(MedicationDispense.medication as CodeableConcept)
+MedicationDispense	context	REFERENCE	MedicationDispense.context
+MedicationDispense	destination	REFERENCE	MedicationDispense.destination
+MedicationDispense	identifier	TOKEN	MedicationDispense.identifier
+MedicationDispense	medication	REFERENCE	(MedicationDispense.medication as Reference)
+MedicationDispense	patient	REFERENCE	MedicationDispense.subject.where(resolve() is Patient)
+MedicationDispense	performer	REFERENCE	MedicationDispense.performer.actor
+MedicationDispense	prescription	REFERENCE	MedicationDispense.authorizingPrescription
+MedicationDispense	receiver	REFERENCE	MedicationDispense.receiver
+MedicationDispense	responsibleparty	REFERENCE	MedicationDispense.substitution.responsibleParty
+MedicationDispense	status	TOKEN	MedicationDispense.status
+MedicationDispense	subject	REFERENCE	MedicationDispense.subject
+MedicationDispense	type	TOKEN	MedicationDispense.type
+MedicationDispense	whenhandedover	DATE	MedicationDispense.whenHandedOver
+MedicationDispense	whenprepared	DATE	MedicationDispense.whenPrepared
+MedicationKnowledge	classification	TOKEN	MedicationKnowledge.medicineClassification.classification
+MedicationKnowledge	classification-type	TOKEN	MedicationKnowledge.medicineClassification.type
+MedicationKnowledge	code	TOKEN	MedicationKnowledge.code
+MedicationKnowledge	doseform	TOKEN	MedicationKnowledge.doseForm
+MedicationKnowledge	ingredient	REFERENCE	(MedicationKnowledge.ingredient.item as Reference)
+MedicationKnowledge	ingredient-code	TOKEN	(MedicationKnowledge.ingredient.item as CodeableConcept)
+MedicationKnowledge	manufacturer	REFERENCE	MedicationKnowledge.manufacturer
+MedicationKnowledge	monitoring-program-name	TOKEN	MedicationKnowledge.monitoringProgram.name
+MedicationKnowledge	monitoring-program-type	TOKEN	MedicationKnowledge.monitoringProgram.type
+MedicationKnowledge	monograph	REFERENCE	MedicationKnowledge.monograph.source
+MedicationKnowledge	monograph-type	TOKEN	MedicationKnowledge.monograph.type
+MedicationKnowledge	source-cost	TOKEN	MedicationKnowledge.cost.source
+MedicationKnowledge	status	TOKEN	MedicationKnowledge.status
+MedicationRequest	authoredon	DATE	MedicationRequest.authoredOn
+MedicationRequest	category	TOKEN	MedicationRequest.category
+MedicationRequest	code	TOKEN	(MedicationRequest.medication as CodeableConcept)
+MedicationRequest	date	DATE	MedicationRequest.dosageInstruction.timing.event
+MedicationRequest	encounter	REFERENCE	MedicationRequest.encounter
+MedicationRequest	identifier	TOKEN	MedicationRequest.identifier
+MedicationRequest	intended-dispenser	REFERENCE	MedicationRequest.dispenseRequest.performer
+MedicationRequest	intended-performer	REFERENCE	MedicationRequest.performer
+MedicationRequest	intended-performertype	TOKEN	MedicationRequest.performerType
+MedicationRequest	intent	TOKEN	MedicationRequest.intent
+MedicationRequest	medication	REFERENCE	(MedicationRequest.medication as Reference)
+MedicationRequest	patient	REFERENCE	MedicationRequest.subject.where(resolve() is Patient)
+MedicationRequest	priority	TOKEN	MedicationRequest.priority
+MedicationRequest	requester	REFERENCE	MedicationRequest.requester
+MedicationRequest	status	TOKEN	MedicationRequest.status
+MedicationRequest	subject	REFERENCE	MedicationRequest.subject
+MedicationStatement	category	TOKEN	MedicationStatement.category
+MedicationStatement	code	TOKEN	(MedicationStatement.medication as CodeableConcept)
+MedicationStatement	context	REFERENCE	MedicationStatement.context
+MedicationStatement	effective	DATE	MedicationStatement.effective
+MedicationStatement	identifier	TOKEN	MedicationStatement.identifier
+MedicationStatement	medication	REFERENCE	(MedicationStatement.medication as Reference)
+MedicationStatement	part-of	REFERENCE	MedicationStatement.partOf
+MedicationStatement	patient	REFERENCE	MedicationStatement.subject.where(resolve() is Patient)
+MedicationStatement	source	REFERENCE	MedicationStatement.informationSource
+MedicationStatement	status	TOKEN	MedicationStatement.status
+MedicationStatement	subject	REFERENCE	MedicationStatement.subject
+MedicinalProduct	identifier	TOKEN	MedicinalProduct.identifier
+MedicinalProduct	name	STRING	MedicinalProduct.name.productName
+MedicinalProduct	name-language	TOKEN	MedicinalProduct.name.countryLanguage.language
+MedicinalProductAuthorization	country	TOKEN	MedicinalProductAuthorization.country
+MedicinalProductAuthorization	holder	REFERENCE	MedicinalProductAuthorization.holder
+MedicinalProductAuthorization	identifier	TOKEN	MedicinalProductAuthorization.identifier
+MedicinalProductAuthorization	status	TOKEN	MedicinalProductAuthorization.status
+MedicinalProductAuthorization	subject	REFERENCE	MedicinalProductAuthorization.subject
+MedicinalProductContraindication	subject	REFERENCE	MedicinalProductContraindication.subject
+MedicinalProductIndication	subject	REFERENCE	MedicinalProductIndication.subject
+MedicinalProductInteraction	subject	REFERENCE	MedicinalProductInteraction.subject
+MedicinalProductPackaged	identifier	TOKEN	MedicinalProductPackaged.identifier
+MedicinalProductPackaged	subject	REFERENCE	MedicinalProductPackaged.subject
+MedicinalProductPharmaceutical	identifier	TOKEN	MedicinalProductPharmaceutical.identifier
+MedicinalProductPharmaceutical	route	TOKEN	MedicinalProductPharmaceutical.routeOfAdministration.code
+MedicinalProductPharmaceutical	target-species	TOKEN	MedicinalProductPharmaceutical.routeOfAdministration.targetSpecies.code
+MedicinalProductUndesirableEffect	subject	REFERENCE	MedicinalProductUndesirableEffect.subject
+MessageDefinition	category	TOKEN	MessageDefinition.category
+MessageDefinition	context	TOKEN	(MessageDefinition.useContext.value as CodeableConcept)
+MessageDefinition	context-quantity	QUANTITY	(MessageDefinition.useContext.value as Quantity) | (MessageDefinition.useContext.value as Range)
+MessageDefinition	context-type	TOKEN	MessageDefinition.useContext.code
+MessageDefinition	context-type-quantity	COMPOSITE	MessageDefinition.useContext
+MessageDefinition	context-type-value	COMPOSITE	MessageDefinition.useContext
+MessageDefinition	date	DATE	MessageDefinition.date
+MessageDefinition	description	STRING	MessageDefinition.description
+MessageDefinition	event	TOKEN	MessageDefinition.event
+MessageDefinition	focus	TOKEN	MessageDefinition.focus.code
+MessageDefinition	identifier	TOKEN	MessageDefinition.identifier
+MessageDefinition	jurisdiction	TOKEN	MessageDefinition.jurisdiction
+MessageDefinition	name	STRING	MessageDefinition.name
+MessageDefinition	parent	REFERENCE	MessageDefinition.parent
+MessageDefinition	publisher	STRING	MessageDefinition.publisher
+MessageDefinition	status	TOKEN	MessageDefinition.status
+MessageDefinition	title	STRING	MessageDefinition.title
+MessageDefinition	url	URI	MessageDefinition.url
+MessageDefinition	version	TOKEN	MessageDefinition.version
+MessageHeader	author	REFERENCE	MessageHeader.author
+MessageHeader	code	TOKEN	MessageHeader.response.code
+MessageHeader	destination	STRING	MessageHeader.destination.name
+MessageHeader	destination-uri	URI	MessageHeader.destination.endpoint
+MessageHeader	enterer	REFERENCE	MessageHeader.enterer
+MessageHeader	event	TOKEN	MessageHeader.event
+MessageHeader	focus	REFERENCE	MessageHeader.focus
+MessageHeader	receiver	REFERENCE	MessageHeader.destination.receiver
+MessageHeader	response-id	TOKEN	MessageHeader.response.identifier
+MessageHeader	responsible	REFERENCE	MessageHeader.responsible
+MessageHeader	sender	REFERENCE	MessageHeader.sender
+MessageHeader	source	STRING	MessageHeader.source.name
+MessageHeader	source-uri	URI	MessageHeader.source.endpoint
+MessageHeader	target	REFERENCE	MessageHeader.destination.target
+MolecularSequence	chromosome	TOKEN	MolecularSequence.referenceSeq.chromosome
+MolecularSequence	chromosome-variant-coordinate	COMPOSITE	MolecularSequence.variant
+MolecularSequence	chromosome-window-coordinate	COMPOSITE	MolecularSequence.referenceSeq
+MolecularSequence	identifier	TOKEN	MolecularSequence.identifier
+MolecularSequence	patient	REFERENCE	MolecularSequence.patient
+MolecularSequence	referenceseqid	TOKEN	MolecularSequence.referenceSeq.referenceSeqId
+MolecularSequence	referenceseqid-variant-coordinate	COMPOSITE	MolecularSequence.variant
+MolecularSequence	referenceseqid-window-coordinate	COMPOSITE	MolecularSequence.referenceSeq
+MolecularSequence	type	TOKEN	MolecularSequence.type
+MolecularSequence	variant-end	NUMBER	MolecularSequence.variant.end
+MolecularSequence	variant-start	NUMBER	MolecularSequence.variant.start
+MolecularSequence	window-end	NUMBER	MolecularSequence.referenceSeq.windowEnd
+MolecularSequence	window-start	NUMBER	MolecularSequence.referenceSeq.windowStart
+NamingSystem	contact	STRING	NamingSystem.contact.name
+NamingSystem	context	TOKEN	(NamingSystem.useContext.value as CodeableConcept)
+NamingSystem	context-quantity	QUANTITY	(NamingSystem.useContext.value as Quantity) | (NamingSystem.useContext.value as Range)
+NamingSystem	context-type	TOKEN	NamingSystem.useContext.code
+NamingSystem	context-type-quantity	COMPOSITE	NamingSystem.useContext
+NamingSystem	context-type-value	COMPOSITE	NamingSystem.useContext
+NamingSystem	date	DATE	NamingSystem.date
+NamingSystem	description	STRING	NamingSystem.description
+NamingSystem	id-type	TOKEN	NamingSystem.uniqueId.type
+NamingSystem	jurisdiction	TOKEN	NamingSystem.jurisdiction
+NamingSystem	kind	TOKEN	NamingSystem.kind
+NamingSystem	name	STRING	NamingSystem.name
+NamingSystem	period	DATE	NamingSystem.uniqueId.period
+NamingSystem	publisher	STRING	NamingSystem.publisher
+NamingSystem	responsible	STRING	NamingSystem.responsible
+NamingSystem	status	TOKEN	NamingSystem.status
+NamingSystem	telecom	TOKEN	NamingSystem.contact.telecom
+NamingSystem	type	TOKEN	NamingSystem.type
+NamingSystem	value	STRING	NamingSystem.uniqueId.value
+NutritionOrder	additive	TOKEN	NutritionOrder.enteralFormula.additiveType
+NutritionOrder	datetime	DATE	NutritionOrder.dateTime
+NutritionOrder	encounter	REFERENCE	NutritionOrder.encounter
+NutritionOrder	formula	TOKEN	NutritionOrder.enteralFormula.baseFormulaType
+NutritionOrder	identifier	TOKEN	NutritionOrder.identifier
+NutritionOrder	instantiates-canonical	REFERENCE	NutritionOrder.instantiatesCanonical
+NutritionOrder	instantiates-uri	URI	NutritionOrder.instantiatesUri
+NutritionOrder	oraldiet	TOKEN	NutritionOrder.oralDiet.type
+NutritionOrder	patient	REFERENCE	NutritionOrder.patient
+NutritionOrder	provider	REFERENCE	NutritionOrder.orderer
+NutritionOrder	status	TOKEN	NutritionOrder.status
+NutritionOrder	supplement	TOKEN	NutritionOrder.supplement.type
+Observation	based-on	REFERENCE	Observation.basedOn
+Observation	category	TOKEN	Observation.category
+Observation	code	TOKEN	Observation.code
+Observation	code-value-concept	COMPOSITE	Observation
+Observation	code-value-date	COMPOSITE	Observation
+Observation	code-value-quantity	COMPOSITE	Observation
+Observation	code-value-string	COMPOSITE	Observation
+Observation	combo-code	TOKEN	Observation.code | Observation.component.code
+Observation	combo-code-value-concept	COMPOSITE	Observation | Observation.component
+Observation	combo-code-value-quantity	COMPOSITE	Observation | Observation.component
+Observation	combo-data-absent-reason	TOKEN	Observation.dataAbsentReason | Observation.component.dataAbsentReason
+Observation	combo-value-concept	TOKEN	(Observation.value as CodeableConcept) | (Observation.component.value as CodeableConcept)
+Observation	combo-value-quantity	QUANTITY	(Observation.value as Quantity) | (Observation.value as SampledData) | (Observation.component.value as Quantity) | (Observation.component.value as SampledData)
+Observation	component-code	TOKEN	Observation.component.code
+Observation	component-code-value-concept	COMPOSITE	Observation.component
+Observation	component-code-value-quantity	COMPOSITE	Observation.component
+Observation	component-data-absent-reason	TOKEN	Observation.component.dataAbsentReason
+Observation	component-value-concept	TOKEN	(Observation.component.value as CodeableConcept)
+Observation	component-value-quantity	QUANTITY	(Observation.component.value as Quantity) | (Observation.component.value as SampledData)
+Observation	data-absent-reason	TOKEN	Observation.dataAbsentReason
+Observation	date	DATE	Observation.effective
+Observation	derived-from	REFERENCE	Observation.derivedFrom
+Observation	device	REFERENCE	Observation.device
+Observation	encounter	REFERENCE	Observation.encounter
+Observation	focus	REFERENCE	Observation.focus
+Observation	has-member	REFERENCE	Observation.hasMember
+Observation	identifier	TOKEN	Observation.identifier
+Observation	method	TOKEN	Observation.method
+Observation	part-of	REFERENCE	Observation.partOf
+Observation	patient	REFERENCE	Observation.subject.where(resolve() is Patient)
+Observation	performer	REFERENCE	Observation.performer
+Observation	specimen	REFERENCE	Observation.specimen
+Observation	status	TOKEN	Observation.status
+Observation	subject	REFERENCE	Observation.subject
+Observation	value-concept	TOKEN	(Observation.value as CodeableConcept)
+Observation	value-date	DATE	(Observation.value as dateTime) | (Observation.value as Period)
+Observation	value-quantity	QUANTITY	(Observation.value as Quantity) | (Observation.value as SampledData)
+Observation	value-string	STRING	(Observation.value as string) | (Observation.value as CodeableConcept).text
+OperationDefinition	base	REFERENCE	OperationDefinition.base
+OperationDefinition	code	TOKEN	OperationDefinition.code
+OperationDefinition	context	TOKEN	(OperationDefinition.useContext.value as CodeableConcept)
+OperationDefinition	context-quantity	QUANTITY	(OperationDefinition.useContext.value as Quantity) | (OperationDefinition.useContext.value as Range)
+OperationDefinition	context-type	TOKEN	OperationDefinition.useContext.code
+OperationDefinition	context-type-quantity	COMPOSITE	OperationDefinition.useContext
+OperationDefinition	context-type-value	COMPOSITE	OperationDefinition.useContext
+OperationDefinition	date	DATE	OperationDefinition.date
+OperationDefinition	description	STRING	OperationDefinition.description
+OperationDefinition	input-profile	REFERENCE	OperationDefinition.inputProfile
+OperationDefinition	instance	TOKEN	OperationDefinition.instance
+OperationDefinition	jurisdiction	TOKEN	OperationDefinition.jurisdiction
+OperationDefinition	kind	TOKEN	OperationDefinition.kind
+OperationDefinition	name	STRING	OperationDefinition.name
+OperationDefinition	output-profile	REFERENCE	OperationDefinition.outputProfile
+OperationDefinition	publisher	STRING	OperationDefinition.publisher
+OperationDefinition	status	TOKEN	OperationDefinition.status
+OperationDefinition	system	TOKEN	OperationDefinition.system
+OperationDefinition	title	STRING	OperationDefinition.title
+OperationDefinition	type	TOKEN	OperationDefinition.type
+OperationDefinition	url	URI	OperationDefinition.url
+OperationDefinition	version	TOKEN	OperationDefinition.version
+Organization	active	TOKEN	Organization.active
+Organization	address	STRING	Organization.address
+Organization	address-city	STRING	Organization.address.city
+Organization	address-country	STRING	Organization.address.country
+Organization	address-postalcode	STRING	Organization.address.postalCode
+Organization	address-state	STRING	Organization.address.state
+Organization	address-use	TOKEN	Organization.address.use
+Organization	endpoint	REFERENCE	Organization.endpoint
+Organization	identifier	TOKEN	Organization.identifier
+Organization	name	STRING	Organization.name | Organization.alias
+Organization	partof	REFERENCE	Organization.partOf
+Organization	phonetic	STRING	Organization.name
+Organization	type	TOKEN	Organization.type
+OrganizationAffiliation	active	TOKEN	OrganizationAffiliation.active
+OrganizationAffiliation	date	DATE	OrganizationAffiliation.period
+OrganizationAffiliation	email	TOKEN	OrganizationAffiliation.telecom.where(system='email')
+OrganizationAffiliation	endpoint	REFERENCE	OrganizationAffiliation.endpoint
+OrganizationAffiliation	identifier	TOKEN	OrganizationAffiliation.identifier
+OrganizationAffiliation	location	REFERENCE	OrganizationAffiliation.location
+OrganizationAffiliation	network	REFERENCE	OrganizationAffiliation.network
+OrganizationAffiliation	participating-organization	REFERENCE	OrganizationAffiliation.participatingOrganization
+OrganizationAffiliation	phone	TOKEN	OrganizationAffiliation.telecom.where(system='phone')
+OrganizationAffiliation	primary-organization	REFERENCE	OrganizationAffiliation.organization
+OrganizationAffiliation	role	TOKEN	OrganizationAffiliation.code
+OrganizationAffiliation	service	REFERENCE	OrganizationAffiliation.healthcareService
+OrganizationAffiliation	specialty	TOKEN	OrganizationAffiliation.specialty
+OrganizationAffiliation	telecom	TOKEN	OrganizationAffiliation.telecom
+Patient	active	TOKEN	Patient.active
+Patient	address	STRING	Patient.address
+Patient	address-city	STRING	Patient.address.city
+Patient	address-country	STRING	Patient.address.country
+Patient	address-postalcode	STRING	Patient.address.postalCode
+Patient	address-state	STRING	Patient.address.state
+Patient	address-use	TOKEN	Patient.address.use
+Patient	birthdate	DATE	Patient.birthDate
+Patient	death-date	DATE	(Patient.deceased as dateTime)
+Patient	deceased	TOKEN	Patient.deceased.exists() and Patient.deceased != false
+Patient	email	TOKEN	Patient.telecom.where(system='email')
+Patient	family	STRING	Patient.name.family
+Patient	gender	TOKEN	Patient.gender
+Patient	general-practitioner	REFERENCE	Patient.generalPractitioner
+Patient	given	STRING	Patient.name.given
+Patient	identifier	TOKEN	Patient.identifier
+Patient	language	TOKEN	Patient.communication.language
+Patient	link	REFERENCE	Patient.link.other
+Patient	name	STRING	Patient.name
+Patient	organization	REFERENCE	Patient.managingOrganization
+Patient	phone	TOKEN	Patient.telecom.where(system='phone')
+Patient	phonetic	STRING	Patient.name
+Patient	telecom	TOKEN	Patient.telecom
+PaymentNotice	created	DATE	PaymentNotice.created
+PaymentNotice	identifier	TOKEN	PaymentNotice.identifier
+PaymentNotice	payment-status	TOKEN	PaymentNotice.paymentStatus
+PaymentNotice	provider	REFERENCE	PaymentNotice.provider
+PaymentNotice	request	REFERENCE	PaymentNotice.request
+PaymentNotice	response	REFERENCE	PaymentNotice.response
+PaymentNotice	status	TOKEN	PaymentNotice.status
+PaymentReconciliation	created	DATE	PaymentReconciliation.created
+PaymentReconciliation	disposition	STRING	PaymentReconciliation.disposition
+PaymentReconciliation	identifier	TOKEN	PaymentReconciliation.identifier
+PaymentReconciliation	outcome	TOKEN	PaymentReconciliation.outcome
+PaymentReconciliation	payment-issuer	REFERENCE	PaymentReconciliation.paymentIssuer
+PaymentReconciliation	request	REFERENCE	PaymentReconciliation.request
+PaymentReconciliation	requestor	REFERENCE	PaymentReconciliation.requestor
+PaymentReconciliation	status	TOKEN	PaymentReconciliation.status
+Person	address	STRING	Person.address
+Person	address-city	STRING	Person.address.city
+Person	address-country	STRING	Person.address.country
+Person	address-postalcode	STRING	Person.address.postalCode
+Person	address-state	STRING	Person.address.state
+Person	address-use	TOKEN	Person.address.use
+Person	birthdate	DATE	Person.birthDate
+Person	email	TOKEN	Person.telecom.where(system='email')
+Person	gender	TOKEN	Person.gender
+Person	identifier	TOKEN	Person.identifier
+Person	link	REFERENCE	Person.link.target
+Person	name	STRING	Person.name
+Person	organization	REFERENCE	Person.managingOrganization
+Person	patient	REFERENCE	Person.link.target.where(resolve() is Patient)
+Person	phone	TOKEN	Person.telecom.where(system='phone')
+Person	phonetic	STRING	Person.name
+Person	practitioner	REFERENCE	Person.link.target.where(resolve() is Practitioner)
+Person	relatedperson	REFERENCE	Person.link.target.where(resolve() is RelatedPerson)
+Person	telecom	TOKEN	Person.telecom
+PlanDefinition	composed-of	REFERENCE	PlanDefinition.relatedArtifact.where(type='composed-of').resource
+PlanDefinition	context	TOKEN	(PlanDefinition.useContext.value as CodeableConcept)
+PlanDefinition	context-quantity	QUANTITY	(PlanDefinition.useContext.value as Quantity) | (PlanDefinition.useContext.value as Range)
+PlanDefinition	context-type	TOKEN	PlanDefinition.useContext.code
+PlanDefinition	context-type-quantity	COMPOSITE	PlanDefinition.useContext
+PlanDefinition	context-type-value	COMPOSITE	PlanDefinition.useContext
+PlanDefinition	date	DATE	PlanDefinition.date
+PlanDefinition	definition	REFERENCE	PlanDefinition.action.definition
+PlanDefinition	depends-on	REFERENCE	PlanDefinition.relatedArtifact.where(type='depends-on').resource | PlanDefinition.library
+PlanDefinition	derived-from	REFERENCE	PlanDefinition.relatedArtifact.where(type='derived-from').resource
+PlanDefinition	description	STRING	PlanDefinition.description
+PlanDefinition	effective	DATE	PlanDefinition.effectivePeriod
+PlanDefinition	identifier	TOKEN	PlanDefinition.identifier
+PlanDefinition	jurisdiction	TOKEN	PlanDefinition.jurisdiction
+PlanDefinition	name	STRING	PlanDefinition.name
+PlanDefinition	predecessor	REFERENCE	PlanDefinition.relatedArtifact.where(type='predecessor').resource
+PlanDefinition	publisher	STRING	PlanDefinition.publisher
+PlanDefinition	status	TOKEN	PlanDefinition.status
+PlanDefinition	successor	REFERENCE	PlanDefinition.relatedArtifact.where(type='successor').resource
+PlanDefinition	title	STRING	PlanDefinition.title
+PlanDefinition	topic	TOKEN	PlanDefinition.topic
+PlanDefinition	type	TOKEN	PlanDefinition.type
+PlanDefinition	url	URI	PlanDefinition.url
+PlanDefinition	version	TOKEN	PlanDefinition.version
+Practitioner	active	TOKEN	Practitioner.active
+Practitioner	address	STRING	Practitioner.address
+Practitioner	address-city	STRING	Practitioner.address.city
+Practitioner	address-country	STRING	Practitioner.address.country
+Practitioner	address-postalcode	STRING	Practitioner.address.postalCode
+Practitioner	address-state	STRING	Practitioner.address.state
+Practitioner	address-use	TOKEN	Practitioner.address.use
+Practitioner	communication	TOKEN	Practitioner.communication
+Practitioner	email	TOKEN	Practitioner.telecom.where(system='email')
+Practitioner	family	STRING	Practitioner.name.family
+Practitioner	gender	TOKEN	Practitioner.gender
+Practitioner	given	STRING	Practitioner.name.given
+Practitioner	identifier	TOKEN	Practitioner.identifier
+Practitioner	name	STRING	Practitioner.name
+Practitioner	phone	TOKEN	Practitioner.telecom.where(system='phone')
+Practitioner	phonetic	STRING	Practitioner.name
+Practitioner	telecom	TOKEN	Practitioner.telecom
+PractitionerRole	active	TOKEN	PractitionerRole.active
+PractitionerRole	date	DATE	PractitionerRole.period
+PractitionerRole	email	TOKEN	PractitionerRole.telecom.where(system='email')
+PractitionerRole	endpoint	REFERENCE	PractitionerRole.endpoint
+PractitionerRole	identifier	TOKEN	PractitionerRole.identifier
+PractitionerRole	location	REFERENCE	PractitionerRole.location
+PractitionerRole	organization	REFERENCE	PractitionerRole.organization
+PractitionerRole	phone	TOKEN	PractitionerRole.telecom.where(system='phone')
+PractitionerRole	practitioner	REFERENCE	PractitionerRole.practitioner
+PractitionerRole	role	TOKEN	PractitionerRole.code
+PractitionerRole	service	REFERENCE	PractitionerRole.healthcareService
+PractitionerRole	specialty	TOKEN	PractitionerRole.specialty
+PractitionerRole	telecom	TOKEN	PractitionerRole.telecom
+Procedure	based-on	REFERENCE	Procedure.basedOn
+Procedure	category	TOKEN	Procedure.category
+Procedure	code	TOKEN	Procedure.code
+Procedure	date	DATE	Procedure.performed
+Procedure	encounter	REFERENCE	Procedure.encounter
+Procedure	identifier	TOKEN	Procedure.identifier
+Procedure	instantiates-canonical	REFERENCE	Procedure.instantiatesCanonical
+Procedure	instantiates-uri	URI	Procedure.instantiatesUri
+Procedure	location	REFERENCE	Procedure.location
+Procedure	part-of	REFERENCE	Procedure.partOf
+Procedure	patient	REFERENCE	Procedure.subject.where(resolve() is Patient)
+Procedure	performer	REFERENCE	Procedure.performer.actor
+Procedure	reason-code	TOKEN	Procedure.reasonCode
+Procedure	reason-reference	REFERENCE	Procedure.reasonReference
+Procedure	status	TOKEN	Procedure.status
+Procedure	subject	REFERENCE	Procedure.subject
+Provenance	agent	REFERENCE	Provenance.agent.who
+Provenance	agent-role	TOKEN	Provenance.agent.role
+Provenance	agent-type	TOKEN	Provenance.agent.type
+Provenance	entity	REFERENCE	Provenance.entity.what
+Provenance	location	REFERENCE	Provenance.location
+Provenance	patient	REFERENCE	Provenance.target.where(resolve() is Patient)
+Provenance	recorded	DATE	Provenance.recorded
+Provenance	signature-type	TOKEN	Provenance.signature.type
+Provenance	target	REFERENCE	Provenance.target
+Provenance	when	DATE	(Provenance.occurred as dateTime)
+Questionnaire	code	TOKEN	Questionnaire.item.code
+Questionnaire	context	TOKEN	(Questionnaire.useContext.value as CodeableConcept)
+Questionnaire	context-quantity	QUANTITY	(Questionnaire.useContext.value as Quantity) | (Questionnaire.useContext.value as Range)
+Questionnaire	context-type	TOKEN	Questionnaire.useContext.code
+Questionnaire	context-type-quantity	COMPOSITE	Questionnaire.useContext
+Questionnaire	context-type-value	COMPOSITE	Questionnaire.useContext
+Questionnaire	date	DATE	Questionnaire.date
+Questionnaire	definition	URI	Questionnaire.item.definition
+Questionnaire	description	STRING	Questionnaire.description
+Questionnaire	effective	DATE	Questionnaire.effectivePeriod
+Questionnaire	identifier	TOKEN	Questionnaire.identifier
+Questionnaire	jurisdiction	TOKEN	Questionnaire.jurisdiction
+Questionnaire	name	STRING	Questionnaire.name
+Questionnaire	publisher	STRING	Questionnaire.publisher
+Questionnaire	status	TOKEN	Questionnaire.status
+Questionnaire	subject-type	TOKEN	Questionnaire.subjectType
+Questionnaire	title	STRING	Questionnaire.title
+Questionnaire	url	URI	Questionnaire.url
+Questionnaire	version	TOKEN	Questionnaire.version
+QuestionnaireResponse	author	REFERENCE	QuestionnaireResponse.author
+QuestionnaireResponse	authored	DATE	QuestionnaireResponse.authored
+QuestionnaireResponse	based-on	REFERENCE	QuestionnaireResponse.basedOn
+QuestionnaireResponse	encounter	REFERENCE	QuestionnaireResponse.encounter
+QuestionnaireResponse	identifier	TOKEN	QuestionnaireResponse.identifier
+QuestionnaireResponse	part-of	REFERENCE	QuestionnaireResponse.partOf
+QuestionnaireResponse	patient	REFERENCE	QuestionnaireResponse.subject.where(resolve() is Patient)
+QuestionnaireResponse	questionnaire	REFERENCE	QuestionnaireResponse.questionnaire
+QuestionnaireResponse	source	REFERENCE	QuestionnaireResponse.source
+QuestionnaireResponse	status	TOKEN	QuestionnaireResponse.status
+QuestionnaireResponse	subject	REFERENCE	QuestionnaireResponse.subject
+RelatedPerson	active	TOKEN	RelatedPerson.active
+RelatedPerson	address	STRING	RelatedPerson.address
+RelatedPerson	address-city	STRING	RelatedPerson.address.city
+RelatedPerson	address-country	STRING	RelatedPerson.address.country
+RelatedPerson	address-postalcode	STRING	RelatedPerson.address.postalCode
+RelatedPerson	address-state	STRING	RelatedPerson.address.state
+RelatedPerson	address-use	TOKEN	RelatedPerson.address.use
+RelatedPerson	birthdate	DATE	RelatedPerson.birthDate
+RelatedPerson	email	TOKEN	RelatedPerson.telecom.where(system='email')
+RelatedPerson	gender	TOKEN	RelatedPerson.gender
+RelatedPerson	identifier	TOKEN	RelatedPerson.identifier
+RelatedPerson	name	STRING	RelatedPerson.name
+RelatedPerson	patient	REFERENCE	RelatedPerson.patient
+RelatedPerson	phone	TOKEN	RelatedPerson.telecom.where(system='phone')
+RelatedPerson	phonetic	STRING	RelatedPerson.name
+RelatedPerson	relationship	TOKEN	RelatedPerson.relationship
+RelatedPerson	telecom	TOKEN	RelatedPerson.telecom
+RequestGroup	author	REFERENCE	RequestGroup.author
+RequestGroup	authored	DATE	RequestGroup.authoredOn
+RequestGroup	code	TOKEN	RequestGroup.code
+RequestGroup	encounter	REFERENCE	RequestGroup.encounter
+RequestGroup	group-identifier	TOKEN	RequestGroup.groupIdentifier
+RequestGroup	identifier	TOKEN	RequestGroup.identifier
+RequestGroup	instantiates-canonical	REFERENCE	RequestGroup.instantiatesCanonical
+RequestGroup	instantiates-uri	URI	RequestGroup.instantiatesUri
+RequestGroup	intent	TOKEN	RequestGroup.intent
+RequestGroup	participant	REFERENCE	RequestGroup.action.participant
+RequestGroup	patient	REFERENCE	RequestGroup.subject.where(resolve() is Patient)
+RequestGroup	priority	TOKEN	RequestGroup.priority
+RequestGroup	status	TOKEN	RequestGroup.status
+RequestGroup	subject	REFERENCE	RequestGroup.subject
+ResearchDefinition	composed-of	REFERENCE	ResearchDefinition.relatedArtifact.where(type='composed-of').resource
+ResearchDefinition	context	TOKEN	(ResearchDefinition.useContext.value as CodeableConcept)
+ResearchDefinition	context-quantity	QUANTITY	(ResearchDefinition.useContext.value as Quantity) | (ResearchDefinition.useContext.value as Range)
+ResearchDefinition	context-type	TOKEN	ResearchDefinition.useContext.code
+ResearchDefinition	context-type-quantity	COMPOSITE	ResearchDefinition.useContext
+ResearchDefinition	context-type-value	COMPOSITE	ResearchDefinition.useContext
+ResearchDefinition	date	DATE	ResearchDefinition.date
+ResearchDefinition	depends-on	REFERENCE	ResearchDefinition.relatedArtifact.where(type='depends-on').resource | ResearchDefinition.library
+ResearchDefinition	derived-from	REFERENCE	ResearchDefinition.relatedArtifact.where(type='derived-from').resource
+ResearchDefinition	description	STRING	ResearchDefinition.description
+ResearchDefinition	effective	DATE	ResearchDefinition.effectivePeriod
+ResearchDefinition	identifier	TOKEN	ResearchDefinition.identifier
+ResearchDefinition	jurisdiction	TOKEN	ResearchDefinition.jurisdiction
+ResearchDefinition	name	STRING	ResearchDefinition.name
+ResearchDefinition	predecessor	REFERENCE	ResearchDefinition.relatedArtifact.where(type='predecessor').resource
+ResearchDefinition	publisher	STRING	ResearchDefinition.publisher
+ResearchDefinition	status	TOKEN	ResearchDefinition.status
+ResearchDefinition	successor	REFERENCE	ResearchDefinition.relatedArtifact.where(type='successor').resource
+ResearchDefinition	title	STRING	ResearchDefinition.title
+ResearchDefinition	topic	TOKEN	ResearchDefinition.topic
+ResearchDefinition	url	URI	ResearchDefinition.url
+ResearchDefinition	version	TOKEN	ResearchDefinition.version
+ResearchElementDefinition	composed-of	REFERENCE	ResearchElementDefinition.relatedArtifact.where(type='composed-of').resource
+ResearchElementDefinition	context	TOKEN	(ResearchElementDefinition.useContext.value as CodeableConcept)
+ResearchElementDefinition	context-quantity	QUANTITY	(ResearchElementDefinition.useContext.value as Quantity) | (ResearchElementDefinition.useContext.value as Range)
+ResearchElementDefinition	context-type	TOKEN	ResearchElementDefinition.useContext.code
+ResearchElementDefinition	context-type-quantity	COMPOSITE	ResearchElementDefinition.useContext
+ResearchElementDefinition	context-type-value	COMPOSITE	ResearchElementDefinition.useContext
+ResearchElementDefinition	date	DATE	ResearchElementDefinition.date
+ResearchElementDefinition	depends-on	REFERENCE	ResearchElementDefinition.relatedArtifact.where(type='depends-on').resource | ResearchElementDefinition.library
+ResearchElementDefinition	derived-from	REFERENCE	ResearchElementDefinition.relatedArtifact.where(type='derived-from').resource
+ResearchElementDefinition	description	STRING	ResearchElementDefinition.description
+ResearchElementDefinition	effective	DATE	ResearchElementDefinition.effectivePeriod
+ResearchElementDefinition	identifier	TOKEN	ResearchElementDefinition.identifier
+ResearchElementDefinition	jurisdiction	TOKEN	ResearchElementDefinition.jurisdiction
+ResearchElementDefinition	name	STRING	ResearchElementDefinition.name
+ResearchElementDefinition	predecessor	REFERENCE	ResearchElementDefinition.relatedArtifact.where(type='predecessor').resource
+ResearchElementDefinition	publisher	STRING	ResearchElementDefinition.publisher
+ResearchElementDefinition	status	TOKEN	ResearchElementDefinition.status
+ResearchElementDefinition	successor	REFERENCE	ResearchElementDefinition.relatedArtifact.where(type='successor').resource
+ResearchElementDefinition	title	STRING	ResearchElementDefinition.title
+ResearchElementDefinition	topic	TOKEN	ResearchElementDefinition.topic
+ResearchElementDefinition	url	URI	ResearchElementDefinition.url
+ResearchElementDefinition	version	TOKEN	ResearchElementDefinition.version
+ResearchStudy	category	TOKEN	ResearchStudy.category
+ResearchStudy	date	DATE	ResearchStudy.period
+ResearchStudy	focus	TOKEN	ResearchStudy.focus
+ResearchStudy	identifier	TOKEN	ResearchStudy.identifier
+ResearchStudy	keyword	TOKEN	ResearchStudy.keyword
+ResearchStudy	location	TOKEN	ResearchStudy.location
+ResearchStudy	partof	REFERENCE	ResearchStudy.partOf
+ResearchStudy	principalinvestigator	REFERENCE	ResearchStudy.principalInvestigator
+ResearchStudy	protocol	REFERENCE	ResearchStudy.protocol
+ResearchStudy	site	REFERENCE	ResearchStudy.site
+ResearchStudy	sponsor	REFERENCE	ResearchStudy.sponsor
+ResearchStudy	status	TOKEN	ResearchStudy.status
+ResearchStudy	title	STRING	ResearchStudy.title
+ResearchSubject	date	DATE	ResearchSubject.period
+ResearchSubject	identifier	TOKEN	ResearchSubject.identifier
+ResearchSubject	individual	REFERENCE	ResearchSubject.individual
+ResearchSubject	patient	REFERENCE	ResearchSubject.individual
+ResearchSubject	status	TOKEN	ResearchSubject.status
+ResearchSubject	study	REFERENCE	ResearchSubject.study
+RiskAssessment	condition	REFERENCE	RiskAssessment.condition
+RiskAssessment	date	DATE	(RiskAssessment.occurrence as dateTime)
+RiskAssessment	encounter	REFERENCE	RiskAssessment.encounter
+RiskAssessment	identifier	TOKEN	RiskAssessment.identifier
+RiskAssessment	method	TOKEN	RiskAssessment.method
+RiskAssessment	patient	REFERENCE	RiskAssessment.subject.where(resolve() is Patient)
+RiskAssessment	performer	REFERENCE	RiskAssessment.performer
+RiskAssessment	probability	NUMBER	RiskAssessment.prediction.probability
+RiskAssessment	risk	TOKEN	RiskAssessment.prediction.qualitativeRisk
+RiskAssessment	subject	REFERENCE	RiskAssessment.subject
+RiskEvidenceSynthesis	context	TOKEN	(RiskEvidenceSynthesis.useContext.value as CodeableConcept)
+RiskEvidenceSynthesis	context-quantity	QUANTITY	(RiskEvidenceSynthesis.useContext.value as Quantity) | (RiskEvidenceSynthesis.useContext.value as Range)
+RiskEvidenceSynthesis	context-type	TOKEN	RiskEvidenceSynthesis.useContext.code
+RiskEvidenceSynthesis	context-type-quantity	COMPOSITE	RiskEvidenceSynthesis.useContext
+RiskEvidenceSynthesis	context-type-value	COMPOSITE	RiskEvidenceSynthesis.useContext
+RiskEvidenceSynthesis	date	DATE	RiskEvidenceSynthesis.date
+RiskEvidenceSynthesis	description	STRING	RiskEvidenceSynthesis.description
+RiskEvidenceSynthesis	effective	DATE	RiskEvidenceSynthesis.effectivePeriod
+RiskEvidenceSynthesis	identifier	TOKEN	RiskEvidenceSynthesis.identifier
+RiskEvidenceSynthesis	jurisdiction	TOKEN	RiskEvidenceSynthesis.jurisdiction
+RiskEvidenceSynthesis	name	STRING	RiskEvidenceSynthesis.name
+RiskEvidenceSynthesis	publisher	STRING	RiskEvidenceSynthesis.publisher
+RiskEvidenceSynthesis	status	TOKEN	RiskEvidenceSynthesis.status
+RiskEvidenceSynthesis	title	STRING	RiskEvidenceSynthesis.title
+RiskEvidenceSynthesis	url	URI	RiskEvidenceSynthesis.url
+RiskEvidenceSynthesis	version	TOKEN	RiskEvidenceSynthesis.version
+Schedule	active	TOKEN	Schedule.active
+Schedule	actor	REFERENCE	Schedule.actor
+Schedule	date	DATE	Schedule.planningHorizon
+Schedule	identifier	TOKEN	Schedule.identifier
+Schedule	service-category	TOKEN	Schedule.serviceCategory
+Schedule	service-type	TOKEN	Schedule.serviceType
+Schedule	specialty	TOKEN	Schedule.specialty
+SearchParameter	base	TOKEN	SearchParameter.base
+SearchParameter	code	TOKEN	SearchParameter.code
+SearchParameter	component	REFERENCE	SearchParameter.component.definition
+SearchParameter	context	TOKEN	(SearchParameter.useContext.value as CodeableConcept)
+SearchParameter	context-quantity	QUANTITY	(SearchParameter.useContext.value as Quantity) | (SearchParameter.useContext.value as Range)
+SearchParameter	context-type	TOKEN	SearchParameter.useContext.code
+SearchParameter	context-type-quantity	COMPOSITE	SearchParameter.useContext
+SearchParameter	context-type-value	COMPOSITE	SearchParameter.useContext
+SearchParameter	date	DATE	SearchParameter.date
+SearchParameter	derived-from	REFERENCE	SearchParameter.derivedFrom
+SearchParameter	description	STRING	SearchParameter.description
+SearchParameter	jurisdiction	TOKEN	SearchParameter.jurisdiction
+SearchParameter	name	STRING	SearchParameter.name
+SearchParameter	publisher	STRING	SearchParameter.publisher
+SearchParameter	status	TOKEN	SearchParameter.status
+SearchParameter	target	TOKEN	SearchParameter.target
+SearchParameter	type	TOKEN	SearchParameter.type
+SearchParameter	url	URI	SearchParameter.url
+SearchParameter	version	TOKEN	SearchParameter.version
+ServiceRequest	authored	DATE	ServiceRequest.authoredOn
+ServiceRequest	based-on	REFERENCE	ServiceRequest.basedOn
+ServiceRequest	body-site	TOKEN	ServiceRequest.bodySite
+ServiceRequest	category	TOKEN	ServiceRequest.category
+ServiceRequest	code	TOKEN	ServiceRequest.code
+ServiceRequest	encounter	REFERENCE	ServiceRequest.encounter
+ServiceRequest	identifier	TOKEN	ServiceRequest.identifier
+ServiceRequest	instantiates-canonical	REFERENCE	ServiceRequest.instantiatesCanonical
+ServiceRequest	instantiates-uri	URI	ServiceRequest.instantiatesUri
+ServiceRequest	intent	TOKEN	ServiceRequest.intent
+ServiceRequest	occurrence	DATE	ServiceRequest.occurrence
+ServiceRequest	patient	REFERENCE	ServiceRequest.subject.where(resolve() is Patient)
+ServiceRequest	performer	REFERENCE	ServiceRequest.performer
+ServiceRequest	performer-type	TOKEN	ServiceRequest.performerType
+ServiceRequest	priority	TOKEN	ServiceRequest.priority
+ServiceRequest	replaces	REFERENCE	ServiceRequest.replaces
+ServiceRequest	requester	REFERENCE	ServiceRequest.requester
+ServiceRequest	requisition	TOKEN	ServiceRequest.requisition
+ServiceRequest	specimen	REFERENCE	ServiceRequest.specimen
+ServiceRequest	status	TOKEN	ServiceRequest.status
+ServiceRequest	subject	REFERENCE	ServiceRequest.subject
+Slot	appointment-type	TOKEN	Slot.appointmentType
+Slot	identifier	TOKEN	Slot.identifier
+Slot	schedule	REFERENCE	Slot.schedule
+Slot	service-category	TOKEN	Slot.serviceCategory
+Slot	service-type	TOKEN	Slot.serviceType
+Slot	specialty	TOKEN	Slot.specialty
+Slot	start	DATE	Slot.start
+Slot	status	TOKEN	Slot.status
+Specimen	accession	TOKEN	Specimen.accessionIdentifier
+Specimen	bodysite	TOKEN	Specimen.collection.bodySite
+Specimen	collected	DATE	Specimen.collection.collected
+Specimen	collector	REFERENCE	Specimen.collection.collector
+Specimen	container	TOKEN	Specimen.container.type
+Specimen	container-id	TOKEN	Specimen.container.identifier
+Specimen	identifier	TOKEN	Specimen.identifier
+Specimen	parent	REFERENCE	Specimen.parent
+Specimen	patient	REFERENCE	Specimen.subject.where(resolve() is Patient)
+Specimen	status	TOKEN	Specimen.status
+Specimen	subject	REFERENCE	Specimen.subject
+Specimen	type	TOKEN	Specimen.type
+SpecimenDefinition	container	TOKEN	SpecimenDefinition.typeTested.container.type
+SpecimenDefinition	identifier	TOKEN	SpecimenDefinition.identifier
+SpecimenDefinition	type	TOKEN	SpecimenDefinition.typeCollected
+StructureDefinition	abstract	TOKEN	StructureDefinition.abstract
+StructureDefinition	base	REFERENCE	StructureDefinition.baseDefinition
+StructureDefinition	base-path	TOKEN	StructureDefinition.snapshot.element.base.path | StructureDefinition.differential.element.base.path
+StructureDefinition	context	TOKEN	(StructureDefinition.useContext.value as CodeableConcept)
+StructureDefinition	context-quantity	QUANTITY	(StructureDefinition.useContext.value as Quantity) | (StructureDefinition.useContext.value as Range)
+StructureDefinition	context-type	TOKEN	StructureDefinition.useContext.code
+StructureDefinition	context-type-quantity	COMPOSITE	StructureDefinition.useContext
+StructureDefinition	context-type-value	COMPOSITE	StructureDefinition.useContext
+StructureDefinition	date	DATE	StructureDefinition.date
+StructureDefinition	derivation	TOKEN	StructureDefinition.derivation
+StructureDefinition	description	STRING	StructureDefinition.description
+StructureDefinition	experimental	TOKEN	StructureDefinition.experimental
+StructureDefinition	ext-context	TOKEN	StructureDefinition.context.type
+StructureDefinition	identifier	TOKEN	StructureDefinition.identifier
+StructureDefinition	jurisdiction	TOKEN	StructureDefinition.jurisdiction
+StructureDefinition	keyword	TOKEN	StructureDefinition.keyword
+StructureDefinition	kind	TOKEN	StructureDefinition.kind
+StructureDefinition	name	STRING	StructureDefinition.name
+StructureDefinition	path	TOKEN	StructureDefinition.snapshot.element.path | StructureDefinition.differential.element.path
+StructureDefinition	publisher	STRING	StructureDefinition.publisher
+StructureDefinition	status	TOKEN	StructureDefinition.status
+StructureDefinition	title	STRING	StructureDefinition.title
+StructureDefinition	type	URI	StructureDefinition.type
+StructureDefinition	url	URI	StructureDefinition.url
+StructureDefinition	valueset	REFERENCE	StructureDefinition.snapshot.element.binding.valueSet
+StructureDefinition	version	TOKEN	StructureDefinition.version
+StructureMap	context	TOKEN	(StructureMap.useContext.value as CodeableConcept)
+StructureMap	context-quantity	QUANTITY	(StructureMap.useContext.value as Quantity) | (StructureMap.useContext.value as Range)
+StructureMap	context-type	TOKEN	StructureMap.useContext.code
+StructureMap	context-type-quantity	COMPOSITE	StructureMap.useContext
+StructureMap	context-type-value	COMPOSITE	StructureMap.useContext
+StructureMap	date	DATE	StructureMap.date
+StructureMap	description	STRING	StructureMap.description
+StructureMap	identifier	TOKEN	StructureMap.identifier
+StructureMap	jurisdiction	TOKEN	StructureMap.jurisdiction
+StructureMap	name	STRING	StructureMap.name
+StructureMap	publisher	STRING	StructureMap.publisher
+StructureMap	status	TOKEN	StructureMap.status
+StructureMap	title	STRING	StructureMap.title
+StructureMap	url	URI	StructureMap.url
+StructureMap	version	TOKEN	StructureMap.version
+Subscription	contact	TOKEN	Subscription.contact
+Subscription	criteria	STRING	Subscription.criteria
+Subscription	payload	TOKEN	Subscription.channel.payload
+Subscription	status	TOKEN	Subscription.status
+Subscription	type	TOKEN	Subscription.channel.type
+Subscription	url	URI	Subscription.channel.endpoint
+Substance	category	TOKEN	Substance.category
+Substance	code	TOKEN	Substance.code | (Substance.ingredient.substance as CodeableConcept)
+Substance	container-identifier	TOKEN	Substance.instance.identifier
+Substance	expiry	DATE	Substance.instance.expiry
+Substance	identifier	TOKEN	Substance.identifier
+Substance	quantity	QUANTITY	Substance.instance.quantity
+Substance	status	TOKEN	Substance.status
+Substance	substance-reference	REFERENCE	(Substance.ingredient.substance as Reference)
+SubstanceSpecification	code	TOKEN	SubstanceSpecification.code.code
+SupplyDelivery	identifier	TOKEN	SupplyDelivery.identifier
+SupplyDelivery	patient	REFERENCE	SupplyDelivery.patient
+SupplyDelivery	receiver	REFERENCE	SupplyDelivery.receiver
+SupplyDelivery	status	TOKEN	SupplyDelivery.status
+SupplyDelivery	supplier	REFERENCE	SupplyDelivery.supplier
+SupplyRequest	category	TOKEN	SupplyRequest.category
+SupplyRequest	date	DATE	SupplyRequest.authoredOn
+SupplyRequest	identifier	TOKEN	SupplyRequest.identifier
+SupplyRequest	requester	REFERENCE	SupplyRequest.requester
+SupplyRequest	status	TOKEN	SupplyRequest.status
+SupplyRequest	subject	REFERENCE	SupplyRequest.deliverTo
+SupplyRequest	supplier	REFERENCE	SupplyRequest.supplier
+Task	authored-on	DATE	Task.authoredOn
+Task	based-on	REFERENCE	Task.basedOn
+Task	business-status	TOKEN	Task.businessStatus
+Task	code	TOKEN	Task.code
+Task	encounter	REFERENCE	Task.encounter
+Task	focus	REFERENCE	Task.focus
+Task	group-identifier	TOKEN	Task.groupIdentifier
+Task	identifier	TOKEN	Task.identifier
+Task	intent	TOKEN	Task.intent
+Task	modified	DATE	Task.lastModified
+Task	owner	REFERENCE	Task.owner
+Task	part-of	REFERENCE	Task.partOf
+Task	patient	REFERENCE	Task.for.where(resolve() is Patient)
+Task	performer	TOKEN	Task.performerType
+Task	period	DATE	Task.executionPeriod
+Task	priority	TOKEN	Task.priority
+Task	requester	REFERENCE	Task.requester
+Task	status	TOKEN	Task.status
+Task	subject	REFERENCE	Task.for
+TerminologyCapabilities	context	TOKEN	(TerminologyCapabilities.useContext.value as CodeableConcept)
+TerminologyCapabilities	context-quantity	QUANTITY	(TerminologyCapabilities.useContext.value as Quantity) | (TerminologyCapabilities.useContext.value as Range)
+TerminologyCapabilities	context-type	TOKEN	TerminologyCapabilities.useContext.code
+TerminologyCapabilities	context-type-quantity	COMPOSITE	TerminologyCapabilities.useContext
+TerminologyCapabilities	context-type-value	COMPOSITE	TerminologyCapabilities.useContext
+TerminologyCapabilities	date	DATE	TerminologyCapabilities.date
+TerminologyCapabilities	description	STRING	TerminologyCapabilities.description
+TerminologyCapabilities	jurisdiction	TOKEN	TerminologyCapabilities.jurisdiction
+TerminologyCapabilities	name	STRING	TerminologyCapabilities.name
+TerminologyCapabilities	publisher	STRING	TerminologyCapabilities.publisher
+TerminologyCapabilities	status	TOKEN	TerminologyCapabilities.status
+TerminologyCapabilities	title	STRING	TerminologyCapabilities.title
+TerminologyCapabilities	url	URI	TerminologyCapabilities.url
+TerminologyCapabilities	version	TOKEN	TerminologyCapabilities.version
+TestReport	identifier	TOKEN	TestReport.identifier
+TestReport	issued	DATE	TestReport.issued
+TestReport	participant	URI	TestReport.participant.uri
+TestReport	result	TOKEN	TestReport.result
+TestReport	tester	STRING	TestReport.tester
+TestReport	testscript	REFERENCE	TestReport.testScript
+TestScript	context	TOKEN	(TestScript.useContext.value as CodeableConcept)
+TestScript	context-quantity	QUANTITY	(TestScript.useContext.value as Quantity) | (TestScript.useContext.value as Range)
+TestScript	context-type	TOKEN	TestScript.useContext.code
+TestScript	context-type-quantity	COMPOSITE	TestScript.useContext
+TestScript	context-type-value	COMPOSITE	TestScript.useContext
+TestScript	date	DATE	TestScript.date
+TestScript	description	STRING	TestScript.description
+TestScript	identifier	TOKEN	TestScript.identifier
+TestScript	jurisdiction	TOKEN	TestScript.jurisdiction
+TestScript	name	STRING	TestScript.name
+TestScript	publisher	STRING	TestScript.publisher
+TestScript	status	TOKEN	TestScript.status
+TestScript	testscript-capability	STRING	TestScript.metadata.capability.description
+TestScript	title	STRING	TestScript.title
+TestScript	url	URI	TestScript.url
+TestScript	version	TOKEN	TestScript.version
+ValueSet	code	TOKEN	ValueSet.expansion.contains.code | ValueSet.compose.include.concept.code
+ValueSet	context	TOKEN	(ValueSet.useContext.value as CodeableConcept)
+ValueSet	context-quantity	QUANTITY	(ValueSet.useContext.value as Quantity) | (ValueSet.useContext.value as Range)
+ValueSet	context-type	TOKEN	ValueSet.useContext.code
+ValueSet	context-type-quantity	COMPOSITE	ValueSet.useContext
+ValueSet	context-type-value	COMPOSITE	ValueSet.useContext
+ValueSet	date	DATE	ValueSet.date
+ValueSet	description	STRING	ValueSet.description
+ValueSet	expansion	URI	ValueSet.expansion.identifier
+ValueSet	identifier	TOKEN	ValueSet.identifier
+ValueSet	jurisdiction	TOKEN	ValueSet.jurisdiction
+ValueSet	name	STRING	ValueSet.name
+ValueSet	publisher	STRING	ValueSet.publisher
+ValueSet	reference	URI	ValueSet.compose.include.system
+ValueSet	status	TOKEN	ValueSet.status
+ValueSet	title	STRING	ValueSet.title
+ValueSet	url	URI	ValueSet.url
+ValueSet	version	TOKEN	ValueSet.version
+VerificationResult	target	REFERENCE	VerificationResult.target
+VisionPrescription	datewritten	DATE	VisionPrescription.dateWritten
+VisionPrescription	encounter	REFERENCE	VisionPrescription.encounter
+VisionPrescription	identifier	TOKEN	VisionPrescription.identifier
+VisionPrescription	patient	REFERENCE	VisionPrescription.patient
+VisionPrescription	prescriber	REFERENCE	VisionPrescription.prescriber
+VisionPrescription	status	TOKEN	VisionPrescription.status

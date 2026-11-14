@@ -33,9 +33,13 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.String as FhirR4String
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
-import io.kotest.matchers.collections.shouldContainInOrder
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.string.shouldContain
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 
 class DownloaderImplTest {
@@ -161,7 +165,7 @@ class DownloaderImplTest {
       }
     }
 
-    result.map { it.id } shouldContainInOrder listOf("pa-123", "en-123", "ob-123", "con-123")
+    result.map { it.id } shouldContainExactly listOf("pa-123", "en-123", "ob-123", "con-123")
   }
 
   @Test
@@ -194,7 +198,7 @@ class DownloaderImplTest {
                     Bundle.Entry(
                       resource =
                         Encounter(
-                          id = "pa-123",
+                          id = "en-123",
                           status = Enumeration(value = Encounter.EncounterStatus.Planned),
                           `class` =
                             Coding(
@@ -280,7 +284,7 @@ class DownloaderImplTest {
     val result = mutableListOf<DownloadState>()
     downloader.download().collectIndexed { _, value -> result.add(value) }
 
-    result.map { it::class } shouldContainInOrder
+    result.map { it::class } shouldContainExactly
       listOf(
         DownloadState.Started::class,
         DownloadState.Success::class,
@@ -289,8 +293,30 @@ class DownloaderImplTest {
         DownloadState.Success::class,
       )
 
-    result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainInOrder
+    result.filterIsInstance<DownloadState.Success>().map { it.completed } shouldContainExactly
       listOf(1, 2, 4)
+  }
+
+  // ResourceSyncException keeps only the exception message, so a failure without one reaches the
+  // app as Unknown Exception. Enable once the exception itself is kept.
+  @Ignore
+  @Test
+  fun downloaderShouldKeepTheCauseOfAFailureWithoutAMessage() = runTest {
+    val testDataSource =
+      object : DataSource {
+        override suspend fun download(downloadRequest: DownloadRequest): Resource =
+          throw IllegalStateException()
+
+        override suspend fun upload(request: UploadRequest): Resource {
+          throw UnsupportedOperationException()
+        }
+      }
+    val downloader =
+      DownloaderImpl(testDataSource, TestDownloadWorkManager(listOf(DownloadRequest.of("Patient"))))
+
+    val failure = downloader.download().toList().filterIsInstance<DownloadState.Failure>().single()
+
+    failure.syncError.exceptionStacktrace.shouldNotBeNull() shouldContain "IllegalStateException"
   }
 
   companion object {

@@ -28,6 +28,13 @@ class DatabaseEncryptionKeyProviderTest {
   @AfterTest fun tearDown() = deleteTestKeys()
 
   @Test
+  fun getOrCreatePassphrase_sameAlias_returnsTheSameKey() {
+    val key = DatabaseEncryptionKeyProvider.getOrCreatePassphrase(ALIAS_NAME)
+
+    assertContentEquals(key, DatabaseEncryptionKeyProvider.getOrCreatePassphrase(ALIAS_NAME))
+  }
+
+  @Test
   fun getOrCreatePassphrase_sameAlias_returnsTheSameKeyAfterTheCacheIsCleared() {
     val key = DatabaseEncryptionKeyProvider.getOrCreatePassphrase(ALIAS_NAME)
     DatabaseEncryptionKeyProvider.clearKeyCache()

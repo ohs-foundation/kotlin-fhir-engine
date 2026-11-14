@@ -22,6 +22,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import co.touchlab.kermit.Logger
 import dev.ohs.fhir.engine.FhirEngine
+import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 import kotlinx.serialization.json.Json
 
@@ -43,6 +44,9 @@ abstract class FhirSyncWorker(appContext: Context, workerParams: WorkerParameter
 
   abstract override fun getUploadStrategy(): UploadStrategy
 
+  /** The server to sync with. Tests override it to use a fake. */
+  internal open fun getDataSource(): DataSource? = FhirEngineProvider.getDataSource()
+
   private val json = Json { ignoreUnknownKeys = true }
 
   override suspend fun doWork(): Result {
@@ -51,6 +55,7 @@ abstract class FhirSyncWorker(appContext: Context, workerParams: WorkerParameter
         runSync(
           taskName = inputData.getString(UNIQUE_WORK_NAME),
           onProgress = { setProgress(buildWorkData(it)) },
+          dataSource = getDataSource(),
         )
       } catch (e: IllegalStateException) {
         return Result.failure(buildErrorData(e))

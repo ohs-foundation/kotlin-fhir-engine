@@ -17,16 +17,22 @@ package dev.ohs.fhir.engine.search
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import dev.ohs.fhir.engine.search.filter.ReferenceParamFilterCriterion
-import dev.ohs.fhir.engine.search.filter.TokenFilterValue
+import dev.ohs.fhir.model.r4.Code
+import dev.ohs.fhir.model.r4.CodeableConcept
+import dev.ohs.fhir.model.r4.Coding
 import dev.ohs.fhir.model.r4.ContactPoint
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
+import dev.ohs.fhir.model.r4.Identifier
 import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.String as FhirString
+import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -206,10 +212,7 @@ class SearchTest {
             TokenClientParam("gender"),
             {
               value =
-                TokenFilterValue.coding(
-                  "http://hl7.org/fhir/ValueSet/administrative-gender",
-                  "male",
-                )
+                of(coding("http://hl7.org/fhir/ValueSet/administrative-gender", "male", "Male"))
             },
           )
         }
@@ -245,7 +248,14 @@ class SearchTest {
         .apply {
           filter(
             TokenClientParam("vaccine-code"),
-            { value = TokenFilterValue.coding("http://snomed.info/sct", "260385009") },
+            {
+              value =
+                of(
+                  CodeableConcept(
+                    coding = listOf(coding("http://snomed.info/sct", "260385009", "Allergy X")),
+                  ),
+                )
+            },
           )
         }
         .getQuery()
@@ -274,13 +284,69 @@ class SearchTest {
   }
 
   @Test
+  fun search_filter_token_codeableConcept_withTwoCodings() {
+    val query =
+      Search(ResourceType.Immunization)
+        .apply {
+          filter(
+            TokenClientParam("vaccine-code"),
+            {
+              value =
+                of(
+                  CodeableConcept(
+                    coding =
+                      listOf(
+                        coding("http://snomed.info/sct", "260385009", "Allergy X"),
+                        coding("http://hl7.org/fhir/sid/cvx", "140", "Influenza"),
+                      ),
+                  ),
+                )
+            },
+          )
+        }
+        .getQuery()
+
+    assertEquals(
+      """
+      SELECT a.resourceUuid, a.serializedResource
+      FROM ResourceEntity a
+      WHERE a.resourceUuid IN (
+      SELECT resourceUuid FROM TokenIndexEntity
+      WHERE resourceType = ? AND index_name = ? AND ((index_value = ? AND IFNULL(index_system,'') = ?) OR (index_value = ? AND IFNULL(index_system,'') = ?))
+      )
+      """
+        .trimIndent(),
+      query.query,
+    )
+    assertEquals(
+      listOf(
+        ResourceType.Immunization.name,
+        "vaccine-code",
+        "260385009",
+        "http://snomed.info/sct",
+        "140",
+        "http://hl7.org/fhir/sid/cvx",
+      ),
+      query.args,
+    )
+  }
+
+  @Test
   fun search_filter_token_identifier() {
     val query =
       Search(ResourceType.Patient)
         .apply {
           filter(
             TokenClientParam("identifier"),
-            { value = TokenFilterValue.coding("http://acme.org/patient", "12345") },
+            {
+              value =
+                of(
+                  Identifier(
+                    system = Uri(value = "http://acme.org/patient"),
+                    value = FhirString(value = "12345"),
+                  ),
+                )
+            },
           )
         }
         .getQuery()
@@ -312,7 +378,7 @@ class SearchTest {
   fun search_filter_token_codeType() {
     val query =
       Search(ResourceType.Patient)
-        .apply { filter(TokenClientParam("gender"), { value = TokenFilterValue.string("male") }) }
+        .apply { filter(TokenClientParam("gender"), { value = of(Code(value = "male")) }) }
         .getQuery()
 
     assertEquals(
@@ -337,7 +403,7 @@ class SearchTest {
   fun search_filter_token_boolean() {
     val query =
       Search(ResourceType.Patient)
-        .apply { filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) }) }
+        .apply { filter(TokenClientParam("active"), { value = of(true) }) }
         .getQuery()
 
     assertEquals(
@@ -365,7 +431,7 @@ class SearchTest {
         .apply {
           filter(
             TokenClientParam("identifier"),
-            { value = TokenFilterValue.string("16009886-bd57-11eb-8529-0242ac130003") },
+            { value = of(Uri(value = "16009886-bd57-11eb-8529-0242ac130003")) },
           )
         }
         .getQuery()
@@ -396,9 +462,7 @@ class SearchTest {
   fun search_filter_token_string() {
     val query =
       Search(ResourceType.Patient)
-        .apply {
-          filter(TokenClientParam("phone"), { value = TokenFilterValue.string("+14845219791") })
-        }
+        .apply { filter(TokenClientParam("phone"), { value = of("+14845219791") }) }
         .getQuery()
 
     assertEquals(
@@ -620,6 +684,49 @@ class SearchTest {
   }
 
   @Test
+  fun search_filter_quantity_canonical_match() {
+    val query =
+      Search(ResourceType.Observation)
+        .apply {
+          filter(
+            QuantityClientParam("value-quantity"),
+            {
+              prefix = SearchComparator.Eq
+              value = BigDecimal.parseString("5403")
+              system = "http://unitsofmeasure.org"
+              unit = "mg"
+            },
+          )
+        }
+        .getQuery()
+
+    assertEquals(
+      """
+      SELECT a.resourceUuid, a.serializedResource
+      FROM ResourceEntity a
+      WHERE a.resourceUuid IN (
+      SELECT resourceUuid FROM QuantityIndexEntity
+      WHERE resourceType = ? AND index_name = ? AND (index_system = ? AND index_code = ? AND index_value >= ? AND index_value < ?)
+      )
+      """
+        .trimIndent(),
+      query.query,
+    )
+    // kotlin-fhir-path canonicalizes mg to g1, android-fhir's UCUM service gives g.
+    assertEquals(
+      listOfNotNull(
+        ResourceType.Observation.name,
+        "value-quantity",
+        "http://unitsofmeasure.org",
+        "g1",
+        5.4025,
+        5.4035,
+      ),
+      query.args,
+    )
+  }
+
+  @Test
   fun search_filter_uri() {
     val query =
       Search(ResourceType.Library)
@@ -695,8 +802,13 @@ class SearchTest {
   @Test
   fun search_filter_shouldAppendIndexNameOnly_forTokenFilter_withCodeOnly() {
     val query =
-      Search(ResourceType.Patient)
-        .apply { filter(TokenClientParam("gender"), { value = TokenFilterValue.string("male") }) }
+      Search(ResourceType.Condition)
+        .apply {
+          filter(
+            TokenClientParam("clinical-status"),
+            { value = of(Coding(code = Code(value = "test-code"))) },
+          )
+        }
         .getQuery()
 
     assertEquals(
@@ -711,24 +823,23 @@ class SearchTest {
         .trimIndent(),
       query.query,
     )
-    assertEquals(
-      listOf(ResourceType.Patient.name, "gender", "male"),
-      query.args,
-    )
+    assertEquals(listOf("Condition", "clinical-status", "test-code"), query.args)
   }
 
   @Test
   fun search_filter_shouldAppendIndexNameAndSystem_forTokenFilter_withCodeAndSystem() {
     val query =
-      Search(ResourceType.Patient)
+      Search(ResourceType.Condition)
         .apply {
           filter(
-            TokenClientParam("gender"),
+            TokenClientParam("clinical-status"),
             {
               value =
-                TokenFilterValue.coding(
-                  "http://hl7.org/fhir/administrative-gender",
-                  "male",
+                of(
+                  Coding(
+                    code = Code(value = "test-code"),
+                    system = Uri(value = "http://my-code-system.org"),
+                  ),
                 )
             },
           )
@@ -749,10 +860,10 @@ class SearchTest {
     )
     assertEquals(
       listOf(
-        ResourceType.Patient.name,
-        "gender",
-        "male",
-        "http://hl7.org/fhir/administrative-gender",
+        "Condition",
+        "clinical-status",
+        "test-code",
+        "http://my-code-system.org",
       ),
       query.args,
     )
@@ -982,6 +1093,195 @@ class SearchTest {
       listOf(ResourceType.Patient.name, "birthdate", epochDay("2013-03-14")),
       query.args,
     )
+  }
+
+  @Test
+  fun search_filter_date_approximate() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val value = FhirDate.fromString("2013-03-14")!!
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                this.value = of(value)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      assertEquals(
+        """
+        SELECT a.resourceUuid, a.serializedResource
+        FROM ResourceEntity a
+        WHERE a.resourceUuid IN (
+        SELECT resourceUuid FROM DateIndexEntity
+        WHERE resourceType = ? AND index_name = ? AND (index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?)
+        )
+        """
+          .trimIndent(),
+        query.query,
+      )
+      assertEquals(
+        listOf(ResourceType.Patient.name, "birthdate", 15777L, 15779L, 15777L, 15779L),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_filter_date_approximate_month() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                value = of(FhirDate.fromString("2013-02")!!)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      // February 2013 is days 15737 to 15764. "Now" is March 2013, days 15765 to 15795.
+      assertEquals(
+        listOf(ResourceType.Patient.name, "birthdate", 15734L, 15767L, 15734L, 15767L),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_filter_dateTime_approximate() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val value = FhirDateTime.fromString("2013-03-14")!!
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                this.value = of(value)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      assertEquals(
+        """
+        SELECT a.resourceUuid, a.serializedResource
+        FROM ResourceEntity a
+        WHERE a.resourceUuid IN (
+        SELECT resourceUuid FROM DateTimeIndexEntity
+        WHERE resourceType = ? AND index_name = ? AND (index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?)
+        )
+        """
+          .trimIndent(),
+        query.query,
+      )
+      assertEquals(
+        listOf(
+          ResourceType.Patient.name,
+          "birthdate",
+          1363167360000L,
+          1363357439999L,
+          1363167360000L,
+          1363357439999L,
+        ),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_filter_dateTime_approximate_month() {
+    val now = Instant.parse("2013-03-20T12:00:00Z")
+    searchClock =
+      object : Clock {
+        override fun now() = now
+      }
+    try {
+      val query =
+        Search(ResourceType.Patient)
+          .apply {
+            filter(
+              DateClientParam("birthdate"),
+              {
+                value = of(FhirDateTime.fromString("2013-02")!!)
+                prefix = SearchComparator.Ap
+              },
+            )
+          }
+          .getQuery()
+
+      // February 2013 is 1359676800000 to 1362095999999 ms. "Now" is March 2013, 1362096000000 to
+      // 1364774399999 ms. Each end widens by a tenth of its distance to the matching end of March.
+      assertEquals(
+        listOf(
+          ResourceType.Patient.name,
+          "birthdate",
+          1359434880000L,
+          1362363839999L,
+          1359434880000L,
+          1362363839999L,
+        ),
+        query.args,
+      )
+    } finally {
+      searchClock = Clock.System
+    }
+  }
+
+  @Test
+  fun search_CarePlan_filter_with_large_list_of_patient_reference() {
+    val references = (1..990).map { "Patient/patient-$it" }
+    val criteria =
+      references.map<String, ReferenceParamFilterCriterion.() -> Unit> { { value = it } }
+
+    val query =
+      Search(ResourceType.CarePlan)
+        .apply { filter(ReferenceClientParam("subject"), *criteria.toTypedArray()) }
+        .getQuery()
+
+    assertEquals(
+      """
+      SELECT a.resourceUuid, a.serializedResource
+      FROM ResourceEntity a
+      WHERE a.resourceUuid IN (
+      SELECT resourceUuid FROM ReferenceIndexEntity
+      WHERE resourceType = ? AND index_name = ? AND (((((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR (((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))) OR ((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))))) OR (((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))) OR ((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))))) OR ((((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR (((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))) OR ((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))))) OR (((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))) OR ((((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))))) OR (((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))) OR ((((index_value = ? OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)))) OR ((((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))) OR (((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?)) OR ((index_value = ? OR index_value = ?) OR (index_value = ? OR index_value = ?))))))))))
+      )
+      """
+        .trimIndent(),
+      query.query,
+    )
+    assertEquals(listOf("CarePlan", "subject") + references, query.args)
   }
 
   @Test
@@ -1742,7 +2042,7 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "44054006") },
+              { value = of(coding("http://snomed.info/sct", "44054006", "Diabetes")) },
             )
           }
         }
@@ -1794,15 +2094,20 @@ class SearchTest {
               TokenClientParam("vaccine-code"),
               {
                 value =
-                  TokenFilterValue.coding(
-                    "http://hl7.org/fhir/sid/cvx",
-                    "140",
+                  of(
+                    coding(
+                      "http://hl7.org/fhir/sid/cvx",
+                      "140",
+                      "Influenza, seasonal, injectable, preservative free",
+                    ),
                   )
               },
             )
             filter(
               TokenClientParam("status"),
-              { value = TokenFilterValue.coding("http://hl7.org/fhir/event-status", "completed") },
+              {
+                value = of(coding("http://hl7.org/fhir/event-status", "completed", "Body Weight"))
+              },
             )
           }
 
@@ -1876,7 +2181,7 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "44054006") },
+              { value = of(coding("http://snomed.info/sct", "44054006", "Diabetes")) },
             )
           }
           has(
@@ -1885,7 +2190,7 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "827069000") },
+              { value = of(coding("http://snomed.info/sct", "827069000", "Hypertension stage 1")) },
             )
           }
         }
@@ -1984,7 +2289,14 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "44054006") },
+              {
+                value =
+                  of(
+                    CodeableConcept(
+                      coding = listOf(coding("http://snomed.info/sct", "44054006", "Diabetes")),
+                    ),
+                  )
+              },
             )
           }
         }
@@ -2033,7 +2345,14 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "44054006") },
+              {
+                value =
+                  of(
+                    CodeableConcept(
+                      coding = listOf(coding("http://snomed.info/sct", "44054006", "Diabetes")),
+                    ),
+                  )
+              },
             )
             sort(DateClientParam("recorded-date"), Order.DESCENDING)
           }
@@ -2092,9 +2411,7 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("status"),
-              {
-                value = TokenFilterValue.coding("http://hl7.org/fhir/encounter-status", "arrived")
-              },
+              { value = of(coding("http://hl7.org/fhir/encounter-status", "arrived", "")) },
             )
             sort(DateClientParam("date"), Order.DESCENDING)
           }
@@ -2105,7 +2422,14 @@ class SearchTest {
           ) {
             filter(
               TokenClientParam("code"),
-              { value = TokenFilterValue.coding("http://snomed.info/sct", "44054006") },
+              {
+                value =
+                  of(
+                    CodeableConcept(
+                      coding = listOf(coding("http://snomed.info/sct", "44054006", "Diabetes")),
+                    ),
+                  )
+              },
             )
             sort(DateClientParam("recorded-date"), Order.DESCENDING)
           }
@@ -2230,7 +2554,7 @@ class SearchTest {
             resourceType = ResourceType.Practitioner,
             referenceParam = ReferenceClientParam("general-practitioner"),
           ) {
-            filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) })
+            filter(TokenClientParam("active"), { value = of(true) })
           }
         }
         .getIncludeQuery(listOf(UUID_1, UUID_2))
@@ -2276,7 +2600,7 @@ class SearchTest {
             resourceType = ResourceType.Practitioner,
             referenceParam = ReferenceClientParam("general-practitioner"),
           ) {
-            filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) })
+            filter(TokenClientParam("active"), { value = of(true) })
             sort(StringClientParam("given"), Order.DESCENDING)
           }
         }
@@ -2329,7 +2653,7 @@ class SearchTest {
             resourceType = ResourceType.Practitioner,
             referenceParam = ReferenceClientParam("general-practitioner"),
           ) {
-            filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) })
+            filter(TokenClientParam("active"), { value = of(true) })
             sort(StringClientParam("given"), Order.DESCENDING)
           }
 
@@ -2337,7 +2661,7 @@ class SearchTest {
             resourceType = ResourceType.Organization,
             referenceParam = ReferenceClientParam("organization"),
           ) {
-            filter(TokenClientParam("active"), { value = TokenFilterValue.boolean(true) })
+            filter(TokenClientParam("active"), { value = of(true) })
             sort(StringClientParam("name"), Order.DESCENDING)
           }
         }
@@ -2588,6 +2912,13 @@ class SearchTest {
     )
   }
 }
+
+private fun coding(system: String, code: String, display: String) =
+  Coding(
+    system = Uri(value = system),
+    code = Code(value = code),
+    display = FhirString(value = display),
+  )
 
 private val UUID_1 = Uuid.parse("00000000-0000-0000-0000-000000000001")
 private val UUID_2 = Uuid.parse("00000000-0000-0000-0000-000000000002")

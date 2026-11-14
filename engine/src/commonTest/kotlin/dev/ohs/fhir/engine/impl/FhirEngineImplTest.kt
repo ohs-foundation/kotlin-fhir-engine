@@ -16,57 +16,82 @@
 package dev.ohs.fhir.engine.impl
 
 import dev.ohs.fhir.engine.FhirEngine
-import dev.ohs.fhir.engine.FhirEngineConfiguration
-import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhir.engine.LocalChange
+import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
+import dev.ohs.fhir.engine.db.impl.DatabaseConfig
+import dev.ohs.fhir.engine.db.impl.DatabaseImpl
+import dev.ohs.fhir.engine.db.impl.fhirJsonParser
 import dev.ohs.fhir.engine.get
+import dev.ohs.fhir.engine.index.ResourceIndexer
+import dev.ohs.fhir.engine.index.SearchParamDefinitionsProviderImpl
+import dev.ohs.fhir.engine.search.DateClientParam
+import dev.ohs.fhir.engine.search.LOCAL_LAST_UPDATED
 import dev.ohs.fhir.engine.search.ReferenceClientParam
+import dev.ohs.fhir.engine.search.TokenClientParam
 import dev.ohs.fhir.engine.search.count
+import dev.ohs.fhir.engine.search.filter.TokenParamFilterCriterion
 import dev.ohs.fhir.engine.search.include
 import dev.ohs.fhir.engine.search.search
+import dev.ohs.fhir.engine.sync.AcceptLocalConflictResolver
+import dev.ohs.fhir.engine.sync.AcceptRemoteConflictResolver
+import dev.ohs.fhir.engine.sync.ResourceSyncException
+import dev.ohs.fhir.engine.sync.upload.HttpCreateMethod
+import dev.ohs.fhir.engine.sync.upload.HttpUpdateMethod
+import dev.ohs.fhir.engine.sync.upload.ResourceUploadResponseMapping
+import dev.ohs.fhir.engine.sync.upload.SyncUploadProgress
+import dev.ohs.fhir.engine.sync.upload.UploadRequestResult
+import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 import dev.ohs.fhir.engine.testPlatformContext
 import dev.ohs.fhir.engine.testStorageDirectory
+import dev.ohs.fhir.model.r4.Address
+import dev.ohs.fhir.model.r4.Canonical
+import dev.ohs.fhir.model.r4.Code
+import dev.ohs.fhir.model.r4.CodeableConcept
+import dev.ohs.fhir.model.r4.Coding
+import dev.ohs.fhir.model.r4.Enumeration
+import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.HumanName
+import dev.ohs.fhir.model.r4.Id
+import dev.ohs.fhir.model.r4.Instant as FhirInstant
+import dev.ohs.fhir.model.r4.Meta
+import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Practitioner
 import dev.ohs.fhir.model.r4.Reference
+import dev.ohs.fhir.model.r4.Resource
+import dev.ohs.fhir.model.r4.SearchParameter.SearchComparator
 import dev.ohs.fhir.model.r4.String as FhirString
+import dev.ohs.fhir.model.r4.Uri
+import dev.ohs.fhir.model.r4.terminologies.AdministrativeGender
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 
 class FhirEngineImplTest {
 
   /**
-   * Initializes [FhirEngineProvider] and returns a [FhirEngine] seeded with [TEST_PATIENT_1].
-   *
-   * Called at the start of each test's [runTest] instead of from an async `@BeforeTest`: on
-   * Kotlin/Wasm `runTest` returns a `Promise` that the test framework does not await for
-   * `@BeforeTest`, so the seed would not reliably be applied before the test body runs.
-   * `@AfterTest` clears the singleton between tests, so [FhirEngineProvider.init] runs fresh each
-   * time.
+   * An engine over a fresh in-memory database seeded with [TEST_PATIENT_1]. [tearDown] closes the
+   * database. Tests call this inside [runTest] because Kotlin/Wasm does not await an async
+   * `@BeforeTest`. The database is in memory because on web an OPFS file reopened after close hangs
+   * the browser.
    */
-  private suspend fun setUpEngine(): FhirEngine {
-    FhirEngineProvider.init(
-      FhirEngineConfiguration(storageDirectory = testStorageDirectory()),
-      testPlatformContext(),
-    )
-    return FhirEngineProvider.getInstance(testPlatformContext()).apply {
-      clearDatabase()
-      create(TEST_PATIENT_1)
-    }
-  }
+  private suspend fun setUpEngine(): FhirEngine = setUpEngineWithDatabase().first
+
+  private val databases = mutableListOf<Database>()
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.resetForTesting()
+    databases.forEach { it.close() }
+    databases.clear()
   }
 
   @Test
@@ -97,9 +122,7 @@ class FhirEngineImplTest {
     val ids = fhirEngine.create(TEST_PATIENT_2)
 
     assertEquals(listOf("test_patient_2"), ids)
-    val retrieved = fhirEngine.get(ResourceType.Patient, TEST_PATIENT_2_ID)
-    assertIs<Patient>(retrieved)
-    assertEquals(TEST_PATIENT_2_ID, retrieved.id)
+    assertResourceEquals(TEST_PATIENT_2, fhirEngine.get<Patient>(TEST_PATIENT_2_ID))
   }
 
   @Test
@@ -108,13 +131,9 @@ class FhirEngineImplTest {
 
     val ids = fhirEngine.create(TEST_PATIENT_1, TEST_PATIENT_2)
 
-    assertEquals(2, ids.size)
-    assertTrue(ids.contains("test_patient_1"))
-    assertTrue(ids.contains("test_patient_2"))
-    val p1 = fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID)
-    val p2 = fhirEngine.get(ResourceType.Patient, TEST_PATIENT_2_ID)
-    assertIs<Patient>(p1)
-    assertIs<Patient>(p2)
+    assertEquals(listOf("test_patient_1", "test_patient_2"), ids)
+    assertResourceEquals(TEST_PATIENT_1, fhirEngine.get<Patient>(TEST_PATIENT_1_ID))
+    assertResourceEquals(TEST_PATIENT_2, fhirEngine.get<Patient>(TEST_PATIENT_2_ID))
   }
 
   @Test
@@ -134,17 +153,18 @@ class FhirEngineImplTest {
     val ids = fhirEngine.create(patient)
 
     assertEquals(1, ids.size)
-    assertTrue(ids.first().isNotEmpty())
-    val retrieved = fhirEngine.get(ResourceType.Patient, ids.first())
-    assertIs<Patient>(retrieved)
-    assertEquals("FamilyName", (retrieved as Patient).name.first().family?.value)
+    assertResourceEquals(patient.copy(id = ids.first()), fhirEngine.get<Patient>(ids.first()))
   }
 
   @Test
   fun update_nonexistentResource_shouldThrowResourceNotFoundException() = runTest {
     val fhirEngine = setUpEngine()
 
-    assertFailsWith<ResourceNotFoundException> { fhirEngine.update(TEST_PATIENT_2) }
+    val exception = assertFailsWith<ResourceNotFoundException> { fhirEngine.update(TEST_PATIENT_2) }
+    assertEquals(
+      "Resource not found with type Patient and id $TEST_PATIENT_2_ID!",
+      exception.message,
+    )
   }
 
   @Test
@@ -173,10 +193,8 @@ class FhirEngineImplTest {
 
     fhirEngine.update(updatedPatient1, updatedPatient2)
 
-    val retrieved1 = fhirEngine.get(ResourceType.Patient, "test-update-patient-001") as Patient
-    val retrieved2 = fhirEngine.get(ResourceType.Patient, "test-update-patient-002") as Patient
-    assertEquals("UpdatedFamily1", retrieved1.name.first().family?.value)
-    assertEquals("UpdatedFamily2", retrieved2.name.first().family?.value)
+    assertResourceEquals(updatedPatient1, fhirEngine.get<Patient>("test-update-patient-001"))
+    assertResourceEquals(updatedPatient2, fhirEngine.get<Patient>("test-update-patient-002"))
   }
 
   @Test
@@ -197,19 +215,7 @@ class FhirEngineImplTest {
       fhirEngine.update(updatedPatient1, nonExistentPatient)
     }
 
-    val retrieved = fhirEngine.get(ResourceType.Patient, "test-update-patient-001") as Patient
-    assertEquals("Original", retrieved.name.first().family?.value)
-  }
-
-  @Test
-  fun update_existingAndNonExistingResource_shouldThrowResourceNotFoundException() = runTest {
-    val fhirEngine = setUpEngine()
-    val patient1 = Patient(id = "test-update-patient-001")
-    fhirEngine.create(patient1)
-
-    val nonExistentPatient = Patient(id = "test-update-patient-002")
-
-    assertFailsWith<ResourceNotFoundException> { fhirEngine.update(patient1, nonExistentPatient) }
+    assertResourceEquals(patient1, fhirEngine.get<Patient>("test-update-patient-001"))
   }
 
   @Test
@@ -220,19 +226,17 @@ class FhirEngineImplTest {
       assertFailsWith<ResourceNotFoundException> {
         fhirEngine.get(ResourceType.Patient, "nonexistent_patient")
       }
-    assertNotNull(exception.message)
-    assertTrue(exception.message!!.contains("Patient"))
-    assertTrue(exception.message!!.contains("nonexistent_patient"))
+    assertEquals(
+      "Resource not found with type Patient and id nonexistent_patient!",
+      exception.message,
+    )
   }
 
   @Test
   fun load_shouldReturnResource() = runTest {
     val fhirEngine = setUpEngine()
 
-    val result = fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID)
-
-    assertIs<Patient>(result)
-    assertEquals(TEST_PATIENT_1_ID, result.id)
+    assertResourceEquals(TEST_PATIENT_1, fhirEngine.get<Patient>(TEST_PATIENT_1_ID))
   }
 
   @Test
@@ -240,10 +244,12 @@ class FhirEngineImplTest {
     val fhirEngine = setUpEngine()
     fhirEngine.create(Patient(id = "clear-1"), Patient(id = "clear-2"))
     assertEquals(3, fhirEngine.count<Patient> {})
+    assertEquals(1, fhirEngine.getLocalChanges(ResourceType.Patient, TEST_PATIENT_1_ID).size)
 
     fhirEngine.clearDatabase()
 
     assertEquals(0, fhirEngine.count<Patient> {})
+    assertTrue(fhirEngine.getLocalChanges(ResourceType.Patient, TEST_PATIENT_1_ID).isEmpty())
   }
 
   @Test
@@ -313,17 +319,49 @@ class FhirEngineImplTest {
   }
 
   @Test
+  fun search_shouldReturnPatientsFilteredByParamId() = runTest {
+    val fhirEngine = setUpEngine()
+    val patient1 = Patient(id = "patient-1")
+    val patient2 = Patient(id = "patient-2")
+    val patient3 = Patient(id = "patient-45")
+    val patient4 = Patient(id = "patient-4355")
+    val patient5 = Patient(id = "patient-899")
+    val patient6 = Patient(id = "patient-883376")
+    fhirEngine.create(patient1, patient2, patient3, patient4, patient5, patient6)
+
+    val filterValues: List<TokenParamFilterCriterion.() -> Unit> =
+      listOf(patient2, patient3, patient1, patient5, patient4, patient6).map { p ->
+        { value = of(p.id!!) }
+      }
+    val patientSearchResult =
+      fhirEngine.search<Patient> { filter(TokenClientParam("_id"), *filterValues.toTypedArray()) }
+
+    assertEquals(
+      listOf(
+        "patient-1",
+        "patient-2",
+        "patient-4355",
+        "patient-45",
+        "patient-883376",
+        "patient-899",
+      ),
+      patientSearchResult.map { it.resource.id }.sortedBy { it },
+    )
+  }
+
+  @Test
   fun getLocalChanges_shouldReturnSingleLocalChange() = runTest {
     val fhirEngine = setUpEngine()
-    val patient = Patient(id = "lc-1")
+    val patient = fhirJsonParser.decodeFromString<Patient>(DATE_TEST_PATIENT_JSON)
     fhirEngine.create(patient)
 
-    val changes = fhirEngine.getLocalChanges(ResourceType.Patient, "lc-1")
+    val changes = fhirEngine.getLocalChanges(ResourceType.Patient, "f001")
 
     assertEquals(1, changes.size)
-    assertEquals("lc-1", changes.first().resourceId)
+    assertEquals("f001", changes.first().resourceId)
     assertEquals(ResourceType.Patient.name, changes.first().resourceType)
     assertEquals(LocalChange.Type.INSERT, changes.first().type)
+    assertEquals(fhirJsonParser.encodeToString(patient), changes.first().payload)
   }
 
   @Test
@@ -369,9 +407,14 @@ class FhirEngineImplTest {
     val fhirEngine = setUpEngine()
     fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID, true)
 
-    assertFailsWith<ResourceNotFoundException> {
-      fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID)
-    }
+    val exception =
+      assertFailsWith<ResourceNotFoundException> {
+        fhirEngine.get(ResourceType.Patient, TEST_PATIENT_1_ID)
+      }
+    assertEquals(
+      "Resource not found with type Patient and id $TEST_PATIENT_1_ID!",
+      exception.message,
+    )
     assertTrue(fhirEngine.getLocalChanges(ResourceType.Patient, TEST_PATIENT_1_ID).isEmpty())
   }
 
@@ -395,7 +438,10 @@ class FhirEngineImplTest {
       assertFailsWith<IllegalStateException> {
         fhirEngine.purge(ResourceType.Patient, TEST_PATIENT_1_ID)
       }
-    assertTrue(exception.message!!.contains("has local changes"))
+    assertEquals(
+      "Resource with type Patient and id $TEST_PATIENT_1_ID has local changes, either sync with server or FORCE_PURGE required",
+      exception.message,
+    )
   }
 
   @Test
@@ -405,7 +451,10 @@ class FhirEngineImplTest {
       assertFailsWith<ResourceNotFoundException> {
         fhirEngine.purge(ResourceType.Patient, "nonexistent_patient")
       }
-    assertTrue(exception.message!!.contains("nonexistent_patient"))
+    assertEquals(
+      "Resource not found with type Patient and id nonexistent_patient!",
+      exception.message,
+    )
   }
 
   @Test
@@ -413,11 +462,18 @@ class FhirEngineImplTest {
     val fhirEngine = setUpEngine()
     fhirEngine.withTransaction {
       create(Patient(id = "txn-1", name = listOf(HumanName(family = FhirString(value = "A")))))
-      create(Patient(id = "txn-2", name = listOf(HumanName(family = FhirString(value = "B")))))
+      create(
+        Observation(
+          id = "txn-obs",
+          status = Enumeration(value = Observation.ObservationStatus.Final),
+          code = CodeableConcept(),
+          subject = Reference(reference = FhirString(value = "Patient/txn-1")),
+        ),
+      )
     }
 
     assertEquals("A", fhirEngine.get<Patient>("txn-1").name.first().family?.value)
-    assertEquals("B", fhirEngine.get<Patient>("txn-2").name.first().family?.value)
+    assertEquals("Patient/txn-1", fhirEngine.get<Observation>("txn-obs").subject?.reference?.value)
   }
 
   @Test
@@ -436,11 +492,538 @@ class FhirEngineImplTest {
     }
   }
 
+  @Test
+  fun search_xFhirQuery_genderParam_returnsMatchingPatients() = runTest {
+    val fhirEngine = setUpEngine()
+    fhirEngine.create(
+      buildPatient("3", "C", AdministrativeGender.Female),
+      buildPatient("2", "B", AdministrativeGender.Female),
+      buildPatient("1", "A", AdministrativeGender.Male),
+    )
+
+    val result = fhirEngine.search("Patient?gender=female")
+
+    assertEquals(2, result.size)
+    assertTrue(
+      result.all { (it.resource as Patient).gender?.value == AdministrativeGender.Female },
+    )
+  }
+
+  @Test
+  fun search_xFhirQuery_sortParam_returnsSortedPatients() = runTest {
+    val fhirEngine = setUpEngine()
+    fhirEngine.create(
+      buildPatient("3", "C", AdministrativeGender.Female),
+      buildPatient("2", "B", AdministrativeGender.Female),
+      buildPatient("1", "A", AdministrativeGender.Male),
+    )
+
+    val result = fhirEngine.search("Patient?_sort=-name").map { it.resource as Patient }
+
+    assertEquals(
+      listOf("C", "B", "A"),
+      result.mapNotNull { it.name.firstOrNull()?.given?.firstOrNull()?.value },
+    )
+  }
+
+  @Test
+  fun search_xFhirQuery_noParams_returnsAllPatients() = runTest {
+    val fhirEngine = setUpEngine()
+
+    assertEquals(1, fhirEngine.search("Patient").size)
+  }
+
+  @Test
+  fun search_xFhirQuery_unrecognizedResourceType_throws() = runTest {
+    val fhirEngine = setUpEngine()
+
+    val exception =
+      assertFailsWith<IllegalArgumentException> {
+        fhirEngine.search("CustomResource?active=true&gender=male&_sort=name&_count=2")
+      }
+
+    assertEquals("Unknown code CustomResource for enum ResourceType", exception.message)
+  }
+
+  @Test
+  fun search_xFhirQuery_tagParam_returnsTaggedPatients() = runTest {
+    val fhirEngine = setUpEngine()
+    fhirEngine.create(
+      buildPatient("1", "Patient1", AdministrativeGender.Female)
+        .copy(meta = Meta(tag = listOf(coding("https://d-tree.org/", "Tag1", "Tag 1")))),
+      buildPatient("2", "Patient2", AdministrativeGender.Female)
+        .copy(meta = Meta(tag = listOf(coding("http://d-tree.org/", "Tag2", "Tag 2")))),
+    )
+
+    val result = fhirEngine.search("Patient?_tag=Tag1").map { it.resource as Patient }
+
+    assertEquals(1, result.size)
+    assertTrue(result.all { patient -> patient.meta!!.tag.all { it.code?.value == "Tag1" } })
+  }
+
+  @Test
+  fun search_xFhirQuery_profileParam_returnsProfiledPatients() = runTest {
+    val fhirEngine = setUpEngine()
+    val profile = "http://fhir.org/STU3/StructureDefinition/Example-Patient-Profile-1"
+    fhirEngine.create(
+      buildPatient("3", "C", AdministrativeGender.Female)
+        .copy(meta = Meta(profile = listOf(Canonical(value = profile)))),
+      buildPatient("4", "C", AdministrativeGender.Female)
+        .copy(
+          meta = Meta(profile = listOf(Canonical(value = "http://d-tree.org/Diabetes-Patient"))),
+        ),
+    )
+
+    val result = fhirEngine.search("Patient?_profile=$profile").map { it.resource as Patient }
+
+    assertEquals(1, result.size)
+    assertTrue(result.all { patient -> patient.meta!!.profile.all { it.value == profile } })
+  }
+
+  @Test
+  fun syncUpload_uploadLocalChange_success() = runTest {
+    val fhirEngine = setUpEngine()
+    val localChanges = mutableListOf<LocalChange>()
+    val emittedProgress = mutableListOf<SyncUploadProgress>()
+
+    fhirEngine
+      .syncUpload(
+        UploadStrategy.forBundleRequest(
+          methodForCreate = HttpCreateMethod.PUT,
+          methodForUpdate = HttpUpdateMethod.PATCH,
+          squash = true,
+          bundleSize = 500,
+        ),
+      ) { lcs, _ ->
+        localChanges.addAll(lcs)
+        flowOf(
+          UploadRequestResult.Success(listOf(ResourceUploadResponseMapping(lcs, TEST_PATIENT_1))),
+        )
+      }
+      .collect { emittedProgress.add(it) }
+
+    assertEquals(1, localChanges.size)
+    with(localChanges[0]) {
+      assertEquals(ResourceType.Patient.name, resourceType)
+      assertEquals(TEST_PATIENT_1.id, resourceId)
+      assertEquals(LocalChange.Type.INSERT, type)
+      assertEquals(fhirJsonParser.encodeToString(TEST_PATIENT_1), payload)
+    }
+    assertEquals(listOf(SyncUploadProgress(1, 1), SyncUploadProgress(0, 1)), emittedProgress)
+  }
+
+  @Test
+  fun syncUpload_uploadLocalChange_failure() = runTest {
+    val fhirEngine = setUpEngine()
+    val emittedProgress = mutableListOf<SyncUploadProgress>()
+    val uploadError = ResourceSyncException(ResourceType.Patient, "Did not work")
+
+    fhirEngine
+      .syncUpload(
+        UploadStrategy.forBundleRequest(
+          methodForCreate = HttpCreateMethod.PUT,
+          methodForUpdate = HttpUpdateMethod.PATCH,
+          squash = true,
+          bundleSize = 500,
+        ),
+      ) { lcs, _ ->
+        flowOf(UploadRequestResult.Failure(lcs, uploadError))
+      }
+      .collect { emittedProgress.add(it) }
+
+    assertEquals(
+      listOf(SyncUploadProgress(1, 1), SyncUploadProgress(1, 1, uploadError)),
+      emittedProgress,
+    )
+  }
+
+  @Test
+  fun syncUpload_individualRequestStrategy_consumesLocalChanges() = runTest {
+    val (fhirEngine, database) = setUpEngineWithDatabase()
+    assertEquals(1, database.getLocalChangesCount())
+
+    fhirEngine
+      .syncUpload(
+        UploadStrategy.forIndividualRequest(
+          methodForCreate = HttpCreateMethod.PUT,
+          methodForUpdate = HttpUpdateMethod.PATCH,
+          squash = true,
+        ),
+      ) { lcs, _ ->
+        flowOf(
+          UploadRequestResult.Success(listOf(ResourceUploadResponseMapping(lcs, TEST_PATIENT_1))),
+        )
+      }
+      .collect {}
+
+    assertEquals(0, database.getLocalChangesCount())
+  }
+
+  @Test
+  fun syncDownload_downloadResources() = runTest {
+    val fhirEngine = setUpEngine()
+
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(TEST_PATIENT_2)) }
+
+    assertResourceEquals(TEST_PATIENT_2, fhirEngine.get<Patient>(TEST_PATIENT_2_ID))
+  }
+
+  @Test
+  fun syncDownload_acceptRemoteConflict_removesLocalChange() = runTest {
+    val (fhirEngine, database) = setUpEngineWithDatabase()
+    val originalPatient =
+      Patient(
+        id = "original-001",
+        meta = Meta(versionId = Id(value = "1"), lastUpdated = fhirInstant("2022-12-02T10:15:30Z")),
+        name =
+          listOf(
+            HumanName(
+              family = FhirString(value = "Stark"),
+              given = listOf(FhirString(value = "Tony")),
+            ),
+          ),
+      )
+    fhirEngine.syncDownload(AcceptRemoteConflictResolver) { flowOf(listOf(originalPatient)) }
+    fhirEngine.update(
+      originalPatient.copy(address = listOf(Address(city = FhirString(value = "Malibu")))),
+    )
+    val remoteChange =
+      originalPatient.copy(
+        meta = Meta(versionId = Id(value = "2"), lastUpdated = fhirInstant("2022-12-03T10:15:30Z")),
+        address = listOf(Address(country = FhirString(value = "USA"))),
+      )
+
+    fhirEngine.syncDownload(AcceptRemoteConflictResolver) { flowOf(listOf(remoteChange)) }
+
+    assertTrue(database.getAllLocalChanges().none { it.resourceId == "original-001" })
+    assertResourceEquals(remoteChange, fhirEngine.get<Patient>("original-001"))
+  }
+
+  @Test
+  fun syncDownload_acceptLocalConflict_keepsLocalChangeAgainstRemoteVersion() = runTest {
+    val (fhirEngine, database) = setUpEngineWithDatabase()
+    val originalPatient =
+      Patient(
+        id = "original-002",
+        meta = Meta(versionId = Id(value = "1"), lastUpdated = fhirInstant("2022-12-02T10:15:30Z")),
+        name =
+          listOf(
+            HumanName(
+              family = FhirString(value = "Stark"),
+              given = listOf(FhirString(value = "Tony")),
+            ),
+          ),
+      )
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(originalPatient)) }
+    var localChange =
+      originalPatient.copy(address = listOf(Address(city = FhirString(value = "Malibu"))))
+    fhirEngine.update(localChange)
+    localChange =
+      localChange.copy(
+        address =
+          localChange.address +
+            Address(city = FhirString(value = "Malibu"), state = FhirString(value = "California")),
+      )
+    fhirEngine.update(localChange)
+    val remoteChange =
+      originalPatient.copy(
+        meta = Meta(versionId = Id(value = "2"), lastUpdated = fhirInstant("2022-12-03T10:15:30Z")),
+        address = listOf(Address(country = FhirString(value = "USA"))),
+      )
+
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(remoteChange)) }
+
+    val localChangeDiff =
+      """[{"op":"remove","path":"/address/0/country"},{"op":"add","path":"/address/0/city","value":"Malibu"},{"op":"add","path":"/address/-","value":{"city":"Malibu","state":"California"}}]"""
+    assertEquals(
+      localChangeDiff,
+      database.getAllLocalChanges().first { it.resourceId == "original-002" }.payload,
+    )
+    assertResourceEquals(localChange, fhirEngine.get<Patient>("original-002"))
+  }
+
+  @Test
+  fun syncDownload_updatesResourceEntityVersionIdAndLastUpdatedFromServer() = runTest {
+    val (fhirEngine, database) = setUpEngineWithDatabase()
+    val originalPatient =
+      Patient(
+        id = "original-002",
+        meta = Meta(versionId = Id(value = "1"), lastUpdated = fhirInstant("2022-12-02T10:15:30Z")),
+      )
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(originalPatient)) }
+    val updatedPatient =
+      originalPatient.copy(
+        meta = Meta(versionId = Id(value = "2"), lastUpdated = fhirInstant("2022-12-03T10:15:30Z")),
+        address = listOf(Address(country = FhirString(value = "USA"))),
+      )
+
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(updatedPatient)) }
+
+    val entity = database.selectEntity(ResourceType.Patient, "original-002")
+    assertEquals("2", entity.versionId)
+    assertEquals(Instant.parse("2022-12-03T10:15:30Z"), entity.lastUpdatedRemote)
+  }
+
+  @Test
+  fun syncDownload_updatesLocalChangeVersionIdFromServer() = runTest {
+    val fhirEngine = setUpEngine()
+    val originalPatient =
+      Patient(
+        id = "original-002",
+        meta = Meta(versionId = Id(value = "1"), lastUpdated = fhirInstant("2022-12-02T10:15:30Z")),
+      )
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(originalPatient)) }
+    fhirEngine.update(
+      originalPatient.copy(address = listOf(Address(city = FhirString(value = "Malibu")))),
+    )
+    val updatedPatient =
+      originalPatient.copy(
+        meta = Meta(versionId = Id(value = "2"), lastUpdated = fhirInstant("2022-12-03T10:15:30Z")),
+        address = listOf(Address(country = FhirString(value = "USA"))),
+      )
+
+    fhirEngine.syncDownload(AcceptLocalConflictResolver) { flowOf(listOf(updatedPatient)) }
+
+    assertEquals(
+      "2",
+      fhirEngine.getLocalChanges(ResourceType.Patient, "original-002").first().versionId,
+    )
+  }
+
+  @Test
+  fun create_allowsSearchByLocalLastUpdated() = runTest {
+    val fhirEngine = setUpEngine()
+    awaitNextMillisecond(fhirEngine.getLocalChanges(ResourceType.Patient, TEST_PATIENT_1_ID)[0])
+    fhirEngine.create(Patient(id = "patient-id-create"))
+    val timestamp =
+      fhirEngine.getLocalChanges(ResourceType.Patient, "patient-id-create")[0].timestamp
+
+    val result =
+      fhirEngine.search<Patient> {
+        filter(
+          DateClientParam(LOCAL_LAST_UPDATED),
+          {
+            value = of(FhirDateTime.fromString(timestamp.toString())!!)
+            prefix = SearchComparator.Eq
+          },
+        )
+      }
+
+    assertEquals(listOf("patient-id-create"), result.map { it.resource.id })
+  }
+
+  @Test
+  fun update_allowsSearchByLocalLastUpdated() = runTest {
+    val fhirEngine = setUpEngine()
+    fhirEngine.create(Patient(id = "patient-id-update"))
+    val created = fhirEngine.getLocalChanges(ResourceType.Patient, "patient-id-update")[0]
+    awaitNextMillisecond(created)
+    fhirEngine.update(
+      Patient(
+        id = "patient-id-update",
+        name =
+          listOf(
+            HumanName(
+              family = FhirString(value = "Doe"),
+              given = listOf(FhirString(value = "John")),
+            ),
+          ),
+      ),
+    )
+    val updatedAt =
+      fhirEngine.getLocalChanges(ResourceType.Patient, "patient-id-update")[1].timestamp
+
+    val result =
+      fhirEngine.search<Patient> {
+        filter(
+          DateClientParam(LOCAL_LAST_UPDATED),
+          {
+            value = of(FhirDateTime.fromString(updatedAt.toString())!!)
+            prefix = SearchComparator.Eq
+          },
+        )
+      }
+
+    assertTrue(updatedAt > created.timestamp)
+    assertEquals(listOf("patient-id-update"), result.map { it.resource.id })
+  }
+
+  /** Same as [setUpEngine], also returning the database for tests that inspect it directly. */
+  private suspend fun setUpEngineWithDatabase(): Pair<FhirEngine, Database> {
+    val database =
+      DatabaseImpl(
+        testPlatformContext(),
+        ResourceIndexer(SearchParamDefinitionsProviderImpl()),
+        testStorageDirectory(),
+        DatabaseConfig(inMemory = true),
+      )
+    databases.add(database)
+    return FhirEngineImpl(database).apply { create(TEST_PATIENT_1) } to database
+  }
+
+  private fun buildPatient(id: String, given: String, gender: AdministrativeGender) =
+    Patient(
+      id = id,
+      gender = Enumeration(value = gender),
+      name = listOf(HumanName(given = listOf(FhirString(value = given)))),
+    )
+
+  private fun coding(system: String, code: String, display: String) =
+    Coding(
+      system = Uri(value = system),
+      code = Code(value = code),
+      display = FhirString(value = display),
+    )
+
+  /**
+   * Spins until the wall clock passes [change]'s millisecond, so the next write gets a later local
+   * last updated time than [change] and an Eq search can tell them apart.
+   */
+  private fun awaitNextMillisecond(change: LocalChange) {
+    while (Clock.System.now().toEpochMilliseconds() <= change.timestamp.toEpochMilliseconds()) {}
+  }
+
+  private fun assertResourceEquals(expected: Resource, actual: Resource) =
+    assertEquals(fhirJsonParser.encodeToString(expected), fhirJsonParser.encodeToString(actual))
+
+  private fun fhirInstant(iso: String) = FhirInstant(value = FhirDateTime.fromString(iso))
+
   companion object {
+    /** android-fhir engine/test-data/date_test_patient.json */
+    private val DATE_TEST_PATIENT_JSON =
+      """
+      {
+        "resourceType": "Patient",
+        "id": "f001",
+        "text": {
+          "status": "generated",
+          "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative with Details</b></p><p><b>id</b>: f001</p><p><b>identifier</b>: 738472983 (USUAL), ?? (USUAL)</p><p><b>active</b>: true</p><p><b>name</b>: Pieter van de Heuvel </p><p><b>telecom</b>: ph: 0648352638(MOBILE), p.heuvel@gmail.com(HOME)</p><p><b>gender</b>: male</p><p><b>birthDate</b>: 17/11/1944</p><p><b>deceased</b>: false</p><p><b>address</b>: Van Egmondkade 23 Amsterdam 1024 RJ NLD (HOME)</p><p><b>maritalStatus</b>: Getrouwd <span>(Details : {http://terminology.hl7.org/CodeSystem/v3-MaritalStatus code 'M' = 'Married', given as 'Married'})</span></p><p><b>multipleBirth</b>: true</p><h3>Contacts</h3><table><tr><td>-</td><td><b>Relationship</b></td><td><b>Name</b></td><td><b>Telecom</b></td></tr><tr><td>*</td><td>Emergency Contact <span>(Details : {http://terminology.hl7.org/CodeSystem/v2-0131 code 'C' = 'Emergency Contact)</span></td><td>Sarah Abels </td><td>ph: 0690383372(MOBILE)</td></tr></table><h3>Communications</h3><table><tr><td>-</td><td><b>Language</b></td><td><b>Preferred</b></td></tr><tr><td>*</td><td>Nederlands <span>(Details : {urn:ietf:bcp:47 code 'nl' = 'Dutch', given as 'Dutch'})</span></td><td>true</td></tr></table><p><b>managingOrganization</b>: <a>Burgers University Medical Centre</a></p></div>"
+        },
+        "identifier": [
+          {
+            "use": "usual",
+            "system": "urn:oid:2.16.840.1.113883.2.4.6.3",
+            "value": "738472983"
+          },
+          {
+            "use": "usual",
+            "system": "urn:oid:2.16.840.1.113883.2.4.6.3"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "usual",
+            "family": "van de Heuvel",
+            "given": [
+              "Pieter"
+            ],
+            "suffix": [
+              "MSc"
+            ]
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "0648352638",
+            "use": "mobile"
+          },
+          {
+            "system": "email",
+            "value": "p.heuvel@gmail.com",
+            "use": "home"
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1944-11-17",
+        "deceasedBoolean": false,
+        "address": [
+          {
+            "use": "home",
+            "line": [
+              "Van Egmondkade 23"
+            ],
+            "city": "Amsterdam",
+            "postalCode": "1024 RJ",
+            "country": "NLD"
+          }
+        ],
+        "maritalStatus": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+              "code": "M",
+              "display": "Married"
+            }
+          ],
+          "text": "Getrouwd"
+        },
+        "multipleBirthBoolean": true,
+        "contact": [
+          {
+            "relationship": [
+              {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/v2-0131",
+                    "code": "C"
+                  }
+                ]
+              }
+            ],
+            "name": {
+              "use": "usual",
+              "family": "Abels",
+              "given": [
+                "Sarah"
+              ]
+            },
+            "telecom": [
+              {
+                "system": "phone",
+                "value": "0690383372",
+                "use": "mobile"
+              }
+            ]
+          }
+        ],
+        "communication": [
+          {
+            "language": {
+              "coding": [
+                {
+                  "system": "urn:ietf:bcp:47",
+                  "code": "nl",
+                  "display": "Dutch"
+                }
+              ],
+              "text": "Nederlands"
+            },
+            "preferred": true
+          }
+        ],
+        "managingOrganization": {
+          "reference": "Organization/f001",
+          "display": "Burgers University Medical Centre"
+        }
+      }
+      """
+        .trimIndent()
+
     private const val TEST_PATIENT_1_ID = "test_patient_1"
-    private val TEST_PATIENT_1 = Patient(id = TEST_PATIENT_1_ID)
+    private val TEST_PATIENT_1 =
+      Patient(id = TEST_PATIENT_1_ID, gender = Enumeration(value = AdministrativeGender.Male))
 
     private const val TEST_PATIENT_2_ID = "test_patient_2"
-    private val TEST_PATIENT_2 = Patient(id = TEST_PATIENT_2_ID)
+    private val TEST_PATIENT_2 =
+      Patient(
+        id = TEST_PATIENT_2_ID,
+        gender = Enumeration(value = AdministrativeGender.Male),
+        meta =
+          Meta(
+            lastUpdated = FhirInstant(value = FhirDateTime.fromString("2022-12-02T10:15:30Z")),
+          ),
+      )
   }
 }

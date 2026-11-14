@@ -38,12 +38,16 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * The multiplier used to determine the range for the `ap` search prefix. See
  * https://www.hl7.org/fhir/search.html#prefix for more details.
  */
 private const val APPROXIMATION_COEFFICIENT = 0.1
+
+/** Supplies "now" for approximate (`ap`) date searches. Tests swap in a fixed clock. */
+internal var searchClock: Clock = Clock.System
 
 /**
  * SQLite supports signed and unsigned integers with a maximum length of 8 bytes. The signed
@@ -499,11 +503,9 @@ internal fun getConditionParamPairForDate(
   val (start, end) = fhirDateToEpochDayRange(value)
   return when (prefix) {
     SearchComparator.Ap -> {
-      val now = Clock.System.now().toEpochMilliseconds()
-      val nowDay = now / 86400000L
-      val currentRange = nowDay to nowDay
-      val (diffStart, diffEnd) =
-        getApproximateDateRange(start..end, currentRange.first..currentRange.second)
+      val (nowStart, nowEnd) =
+        fhirDateToEpochDayRange(FhirDate.fromString(todayAtPrecisionOf(value))!!)
+      val (diffStart, diffEnd) = getApproximateDateRange(start..end, nowStart..nowEnd)
       ConditionParam(
         "index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?",
         diffStart,
@@ -549,8 +551,13 @@ internal fun getConditionParamPairForDateTime(
   val (start, end) = fhirDateTimeToEpochMillisRange(value)
   return when (prefix) {
     SearchComparator.Ap -> {
-      val nowMs = Clock.System.now().toEpochMilliseconds()
-      val (diffStart, diffEnd) = getApproximateDateRange(start..end, nowMs..nowMs)
+      val (nowStart, nowEnd) =
+        when (value) {
+          is FhirDateTime.DateTime -> searchClock.now().toEpochMilliseconds().let { it to it }
+          else ->
+            fhirDateTimeToEpochMillisRange(FhirDateTime.fromString(todayAtPrecisionOf(value))!!)
+        }
+      val (diffStart, diffEnd) = getApproximateDateRange(start..end, nowStart..nowEnd)
       ConditionParam(
         "index_from BETWEEN ? AND ? AND index_to BETWEEN ? AND ?",
         diffStart,
@@ -742,6 +749,22 @@ private fun getApproximateDateRange(
 
 /** The widened [start]..[end] bounds produced for an approximate (`ap`) date search. */
 private data class ApproximateDateRange(val start: Long, val end: Long)
+
+/**
+ * Today's date in UTC, cut to [value]'s precision, such as "2013-03" for a month. Approximate
+ * (`ap`) searches measure from it, so `ap 2013-02` widens by a tenth of the distance to this month.
+ * android-fhir does the same but takes today in the device time zone.
+ */
+private fun todayAtPrecisionOf(value: Any): String {
+  val today = searchClock.now().toLocalDateTime(TimeZone.UTC).date.toString()
+  return when (value) {
+    is FhirDate.YearMonth,
+    is FhirDateTime.YearMonth, -> today.take(7)
+    is FhirDate.Year,
+    is FhirDateTime.Year, -> today.take(4)
+    else -> today
+  }
+}
 
 /**
  * Converts a [FhirDate] to its inclusive `[start, end]` epoch-day range (a year or month spans

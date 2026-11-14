@@ -363,15 +363,14 @@ For periodic sync, `PeriodicSyncJobStatus` combines `currentSyncJobStatus` with 
 
 #### Compressing uploads (gzip)
 
-`NetworkConfiguration(uploadWithGzip = true)` compresses upload request bodies with gzip.
-
-This only works on Android and Desktop. Ktor can only compress request bodies on the JVM. On iOS
-and js/wasmJs it would label the body as gzip but send it uncompressed, and the server would
-reject it. The engine therefore ignores the flag on those platforms, sends uploads uncompressed,
-and logs a warning. Tracked upstream as
+`NetworkConfiguration(uploadWithGzip = true)` gzips upload request bodies. It works on Android
+and Desktop, where the KMP engine gzips the body itself and sends a `Content-Length` header, as
+android-fhir does. iOS and js/wasmJs have no gzip encoder, so the KMP engine sends uploads
+uncompressed there and logs a warning. Ktor's own encoder only works on the JVM, see
 [KTOR-8198](https://youtrack.jetbrains.com/issue/KTOR-8198).
 
-Downloads are not affected. Response decompression works on every platform.
+Downloads are decompressed on Android, iOS and web. On Desktop, Ktor's Java client only asks for
+and decompresses gzipped responses when `uploadWithGzip` is on.
 
 ### Web (Wasm)
 
