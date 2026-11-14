@@ -297,9 +297,9 @@ class DownloaderImplTest {
       listOf(1, 2, 4)
   }
 
-  @Ignore(
-    "ResourceSyncException keeps only the exception message, so a failure without one reaches the app as Unknown Exception",
-  )
+  // ResourceSyncException keeps only the exception message, so a failure without one reaches the
+  // app as Unknown Exception. Enable once the exception itself is kept.
+  @Ignore
   @Test
   fun downloaderShouldKeepTheCauseOfAFailureWithoutAMessage() = runTest {
     val testDataSource =

@@ -138,9 +138,9 @@ class KtorHttpServiceTest {
     requestData!!.url.encodedPath.shouldBeEqual("/fhir/")
   }
 
-  @Ignore(
-    "Ktor's DefaultRequest drops the base URL path when it has no trailing slash, so the request goes to /Patient",
-  )
+  // Ktor's DefaultRequest drops the base URL path when it has no trailing slash, so the request
+  // goes to /Patient. Enable once the base URL keeps its path.
+  @Ignore
   @Test
   fun should_keep_base_url_path_without_trailing_slash() = runTest {
     var requestData: HttpRequestData? = null
