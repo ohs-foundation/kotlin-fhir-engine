@@ -32,15 +32,21 @@ keeps the original's shape for source compatibility but not every knob is functi
 
 | Knob                                                       | Status | Notes                                                                                                                  |
 |:-----------------------------------------------------------|:-------|:-----------------------------------------------------------------------------------------------------------------------|
-| `serverConfiguration` (baseUrl, authenticator, httpLogger) | ✅      |                                                                                                                        |
+| `serverConfiguration` (baseUrl, authenticator, httpLogger) | ⚠️     | A `baseUrl` with a path needs a trailing `/`. Without it the path is dropped, so `https://hapi.fhir.org/baseR4` sends requests to `/Patient`. android-fhir rejects such a URL at init. |
 | `NetworkConfiguration` timeouts                            | ✅      | `writeTimeOut` maps to the socket timeout.                                                                             |
 | `customSearchParameters`                                   | ✅      | See [Custom search parameters](conformance.md#custom-search-parameters).                                               |
 | `storageDirectory`                                         | ✅      | Desktop and web only. See [Platform support](conformance.md#platform-support).                                         |
-| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. Broken labeling on iOS and web. See [Platform support](conformance.md#platform-support). |
+| `uploadWithGzip`                                           | ⚠️     | Works on Android and Desktop. iOS and web send uploads uncompressed and log a warning. See [Platform support](conformance.md#platform-support). |
 | `httpCache`                                                | ⚠️     | Toggles Ktor's default in-memory cache. `CacheConfiguration.cacheDir` and `maxSize` are ignored.                       |
 | `enableEncryptionIfSupported`                              | ⚠️     | Renamed `enableEncryption`. Android and iOS. Where it cannot encrypt it throws at init instead of storing plaintext as android-fhir does. See [Platform support](conformance.md#platform-support). |
 | `databaseErrorStrategy`                                    | ✅      | `RECREATE_AT_OPEN` recreates an encrypted database the current key cannot open, as in android-fhir.                   |
 | `testMode`                                                 | ✅      | In-memory database on every platform.                                                                                  |
+
+## Sync errors
+
+`ResourceSyncException` keeps only the exception message, where android-fhir keeps the exception.
+The type and stack trace are lost, and a failure without a message reaches the app as
+`Unknown Exception`. ⚠️
 
 ## Database
 
