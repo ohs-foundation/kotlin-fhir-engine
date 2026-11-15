@@ -65,6 +65,9 @@ jobs:
       - name: Check every android-fhir engine test is mapped
         run: python3 scripts/test_parity.py android-fhir && git diff --exit-code docs/test-parity.csv
 
+      - name: Check the list of ignored tests is up to date
+        run: python3 scripts/ignored_tests.py && git diff --exit-code docs/ignored-tests.md
+
       # Every module, not just the engine the test jobs build. iOS compiles in the ios job.
       - name: Compile Android, desktop and web
         run: >
