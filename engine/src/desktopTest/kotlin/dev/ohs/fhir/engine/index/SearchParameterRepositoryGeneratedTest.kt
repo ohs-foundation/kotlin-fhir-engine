@@ -17,80 +17,65 @@ package dev.ohs.fhir.engine.index
 
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.assertEquals
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
+/**
+ * Checks the generated search parameters against the `@SearchParamDefinition` annotations of the
+ * HAPI R4 model classes, which android-fhir's version of this test reads by reflection.
+ * `hapi-search-param-definitions.tsv` holds those annotations, so the expected values do not come
+ * from the bundle the generator parses.
+ */
 @RunWith(Parameterized::class)
 class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceType) {
 
   @Test
-  fun getSearchParamList_matchesFhirR4Spec() {
-    assertEquals(expectedFor(resourceType.name), getSearchParamList(resourceType.name).toSet())
+  fun getSearchParamList_matchesHapiAnnotations() {
+    assertEquals(
+      expectedFor(resourceType.name).sortedWith(order),
+      getSearchParamList(resourceType.name).sortedWith(order),
+    )
   }
 
-  private fun expectedFor(name: String): Set<SearchParamDefinition> {
-    val result = mutableSetOf<SearchParamDefinition>()
-    for (entry in spec.entry) {
-      val sp = entry.resource
-      val expression = sp.expression ?: continue
-      if (expression.isEmpty()) continue
-      val type = SearchParamType.valueOf(sp.type.uppercase())
-      for ((base, path) in resourceToPathMap(sp)) {
-        when (base) {
-          name -> result.add(SearchParamDefinition(sp.name, type, path))
-          "Resource" -> {
-            val rewrittenPath = "$name.${path.substringAfter(".")}"
-            result.add(SearchParamDefinition(sp.name, type, rewrittenPath))
-          }
-        }
-      }
-    }
-    return result
-  }
+  private fun expectedFor(name: String): List<SearchParamDefinition> =
+    hapiDefinitions.filter { it.first == name }.map { it.second } + baseSearchParameters(name)
 
-  private fun resourceToPathMap(sp: SpecSearchParameter): Map<String, String> {
-    val expression = sp.expression!!
-    return if (sp.base.size == 1) {
-      mapOf(sp.base.single() to expression)
-    } else {
-      expression
-        .split("|")
-        .groupBy { it.split(".").first().trim().removePrefix("(") }
-        .mapValues { entry -> entry.value.joinToString(" | ") { it.trim() } }
-    }
-  }
-
-  @Serializable private data class SpecBundle(val entry: List<SpecEntry>)
-
-  @Serializable private data class SpecEntry(val resource: SpecSearchParameter)
-
-  @Serializable
-  private data class SpecSearchParameter(
-    val name: String,
-    val base: List<String>,
-    val type: String,
-    val expression: String? = null,
-  )
+  // The HAPI model classes do not declare these, so they are added by hand as android-fhir does.
+  private fun baseSearchParameters(name: String) =
+    listOf(
+      SearchParamDefinition("_id", SearchParamType.TOKEN, "$name.id"),
+      SearchParamDefinition("_lastUpdated", SearchParamType.DATE, "$name.meta.lastUpdated"),
+      SearchParamDefinition("_profile", SearchParamType.URI, "$name.meta.profile"),
+      SearchParamDefinition("_security", SearchParamType.TOKEN, "$name.meta.security"),
+      SearchParamDefinition("_source", SearchParamType.URI, "$name.meta.source"),
+      SearchParamDefinition("_tag", SearchParamType.TOKEN, "$name.meta.tag"),
+    )
 
   private companion object {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val order = compareBy<SearchParamDefinition>({ it.name }, { it.path })
 
-    private val spec: SpecBundle by lazy {
+    private val hapiDefinitions: List<Pair<String, SearchParamDefinition>> by lazy {
       val stream =
         SearchParameterRepositoryGeneratedTest::class
           .java
-          .getResourceAsStream("/search-parameters.json")
-          ?: error(
-            "search-parameters.json is not on the test classpath — check the resources.srcDir wiring in engine/build.gradle.kts",
-          )
-      stream.bufferedReader().use { json.decodeFromString(SpecBundle.serializer(), it.readText()) }
+          .getResourceAsStream("/hapi-search-param-definitions.tsv")
+          ?: error("hapi-search-param-definitions.tsv is not on the test classpath")
+      stream.bufferedReader().useLines { lines ->
+        lines
+          .filterNot { it.startsWith("#") }
+          .map { line ->
+            val (type, name, paramType, path) = line.split("\t")
+            type to SearchParamDefinition(name, SearchParamType.valueOf(paramType), path)
+          }
+          .toList()
+      }
     }
 
+    // android-fhir only instantiates concrete resources, so the abstract types are left out.
     @Parameterized.Parameters(name = "{0}")
     @JvmStatic
-    fun data(): List<ResourceType> = ResourceType.entries
+    fun data(): List<ResourceType> =
+      ResourceType.entries - ResourceType.Resource - ResourceType.DomainResource
   }
 }

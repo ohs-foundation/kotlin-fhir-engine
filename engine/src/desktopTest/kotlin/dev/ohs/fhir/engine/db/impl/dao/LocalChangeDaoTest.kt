@@ -21,18 +21,20 @@ import dev.ohs.fhir.engine.db.impl.ResourceDatabase
 import dev.ohs.fhir.engine.db.impl.entities.LocalChangeEntity
 import dev.ohs.fhir.engine.db.impl.entities.ResourceEntity
 import dev.ohs.fhir.engine.db.impl.fhirJsonParser
+import dev.ohs.fhir.engine.resourceTypeEnum
+import dev.ohs.fhir.model.r4.CarePlan
 import dev.ohs.fhir.model.r4.CodeableConcept
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.Observation
 import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Reference
+import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.String as FhirString
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.Dispatchers
@@ -42,13 +44,14 @@ import kotlinx.coroutines.test.runTest
  * Lives in desktopTest (not commonTest) because it constructs a [ResourceDatabase] directly, which
  * needs the desktop in-memory Room builder + BundledSQLiteDriver.
  *
- * KMP-adapted assertions (engine-kmp's serialization/diff/reference-extraction differ from HAPI):
- * - payload (INSERT) is `FhirR4Json` output; payload (UPDATE) is an RFC 6902 patch with
- *   JSON-pointer paths (no escaped slashes), produced by JsonDiff — not HAPI's zjsonpatch.
- * - reference paths are JSON-pointer (e.g. "/subject"), not FhirTerser paths ("subject");
- *   references are extracted into a Set, so assertions are order-independent.
+ * KMP adaptations, since the KMP engine serializes, diffs and extracts references differently from
+ * HAPI:
+ * - The INSERT payload is `fhirJsonParser` output.
+ * - The UPDATE payload is an RFC 6902 patch from JsonDiff, not HAPI's zjsonpatch, with plain JSON
+ *   pointer paths (no escaped slashes).
+ * - Reference paths are JSON pointers (e.g. "/activity/0/detail/performer/0"), not FhirTerser paths
+ *   ("activity.detail.performer").
  * - `LocalChangeEntity.type` is stored as an Int (`Type.*.value`).
- * - Uses [Observation] (constructible, has reference fields) where the engine used CarePlan/Task.
  */
 class LocalChangeDaoTest {
   private lateinit var database: ResourceDatabase
@@ -69,6 +72,10 @@ class LocalChangeDaoTest {
     database.close()
   }
 
+  private companion object {
+    const val PRACTITIONER = "Practitioner/Practitioner123"
+  }
+
   private fun observation(id: String, subject: String, encounter: String? = null) =
     Observation(
       id = id,
@@ -78,11 +85,34 @@ class LocalChangeDaoTest {
       encounter = encounter?.let { Reference(reference = FhirString(value = it)) },
     )
 
-  private fun resourceEntity(uuid: Uuid, resource: Observation) =
+  private fun carePlan(
+    subject: String = "Patient/Patient1",
+    performer: String,
+    author: String? = null,
+  ) =
+    CarePlan(
+      id = "CarePlan1",
+      status = Enumeration(value = CarePlan.RequestStatus.Active),
+      intent = Enumeration(value = CarePlan.CarePlanIntent.Plan),
+      subject = Reference(reference = FhirString(value = subject)),
+      author = author?.let { Reference(reference = FhirString(value = it)) },
+      activity =
+        listOf(
+          CarePlan.Activity(
+            detail =
+              CarePlan.Activity.Detail(
+                status = Enumeration(value = CarePlan.CarePlanActivityStatus.Not_Started),
+                performer = listOf(Reference(reference = FhirString(value = performer))),
+              ),
+          ),
+        ),
+    )
+
+  private fun resourceEntity(uuid: Uuid, resource: Resource) =
     ResourceEntity(
       id = 0,
       resourceUuid = uuid,
-      resourceType = ResourceType.Observation,
+      resourceType = resource.resourceTypeEnum,
       resourceId = resource.id!!,
       serializedResource = fhirJsonParser.encodeToString(resource),
       versionId = null,
@@ -91,78 +121,93 @@ class LocalChangeDaoTest {
     )
 
   private fun List<dev.ohs.fhir.engine.db.impl.entities.LocalChangeResourceReferenceEntity>
-    .pathValuePairs() = map { it.resourceReferencePath to it.resourceReferenceValue }.toSet()
+    .pathValuePairs() = map { it.resourceReferencePath to it.resourceReferenceValue }
+
+  private val updatePatch =
+    """[{"op":"add","path":"/author","value":{"reference":"$PRACTITIONER"}},""" +
+      """{"op":"replace","path":"/activity/0/detail/performer/0/reference","value":"$PRACTITIONER"}]"""
 
   @Test
   fun addInsert_shouldAddLocalChangeAndLocalChangeReferences() = runTest {
-    val obs = observation("o1", "Patient/Patient1", "Encounter/Enc1")
+    val carePlan = carePlan(performer = "Patient/Patient1")
     val uuid = Uuid.random()
-    localChangeDao.addInsert(obs, uuid, Clock.System.now())
+    localChangeDao.addInsert(carePlan, uuid, Clock.System.now())
 
     val changes = localChangeDao.getLocalChanges(uuid)
     assertEquals(1, changes.size)
     val change = changes[0]
     assertEquals(uuid, change.resourceUuid)
-    assertEquals("o1", change.resourceId)
+    assertEquals("CarePlan1", change.resourceId)
     assertEquals(LocalChangeEntity.Type.INSERT.value, change.type)
-    assertEquals(fhirJsonParser.encodeToString(obs), change.payload)
+    assertEquals(fhirJsonParser.encodeToString(carePlan), change.payload)
 
-    val references = localChangeDao.getReferencesForLocalChange(change.id)
-    assertEquals(2, references.size)
     assertEquals(
-      setOf("/subject" to "Patient/Patient1", "/encounter" to "Encounter/Enc1"),
-      references.pathValuePairs(),
+      listOf(
+        "/subject" to "Patient/Patient1",
+        "/activity/0/detail/performer/0" to "Patient/Patient1",
+      ),
+      localChangeDao.getReferencesForLocalChange(change.id).pathValuePairs(),
     )
   }
 
   @Test
   fun addUpdate_shouldAddLocalChangeAndLocalChangeReferences() = runTest {
-    val original = observation("o1", "Patient/1", "Encounter/1")
+    val original = carePlan(performer = "Patient/Patient1")
     val uuid = Uuid.random()
     localChangeDao.addInsert(original, uuid, Clock.System.now())
 
-    val updated = observation("o1", "Patient/2", "Encounter/1")
+    val updated = carePlan(performer = PRACTITIONER, author = PRACTITIONER)
     localChangeDao.addUpdate(resourceEntity(uuid, original), updated, Clock.System.now())
 
     val changes = localChangeDao.getLocalChanges(uuid)
     assertEquals(2, changes.size)
-    assertEquals(LocalChangeEntity.Type.INSERT.value, changes[0].type)
+    val insert = changes[0]
+    assertEquals(uuid, insert.resourceUuid)
+    assertEquals("CarePlan1", insert.resourceId)
+    assertEquals(LocalChangeEntity.Type.INSERT.value, insert.type)
+    assertEquals(fhirJsonParser.encodeToString(original), insert.payload)
 
     val update = changes[1]
     assertEquals(uuid, update.resourceUuid)
-    assertEquals("o1", update.resourceId)
+    assertEquals("CarePlan1", update.resourceId)
     assertEquals(LocalChangeEntity.Type.UPDATE.value, update.type)
-    assertEquals(
-      """[{"op":"replace","path":"/subject/reference","value":"Patient/2"}]""",
-      update.payload,
-    )
+    assertEquals(updatePatch, update.payload)
 
-    // The reference diff between the two versions: the old subject is removed, the new one added.
-    val references = localChangeDao.getReferencesForLocalChange(update.id)
+    // The removed nested performer, then the newly added author and nested performer.
     assertEquals(
-      setOf("/subject" to "Patient/1", "/subject" to "Patient/2"),
-      references.pathValuePairs(),
+      listOf(
+        "/activity/0/detail/performer/0" to "Patient/Patient1",
+        "/author" to PRACTITIONER,
+        "/activity/0/detail/performer/0" to PRACTITIONER,
+      ),
+      localChangeDao.getReferencesForLocalChange(update.id).pathValuePairs(),
     )
   }
 
   @Test
   fun addDelete_shouldAddOnlyLocalChangeEntity() = runTest {
-    val obs = observation("o1", "Patient/1")
+    val carePlan = carePlan(performer = "Patient/Patient1")
     val uuid = Uuid.random()
-    localChangeDao.addInsert(obs, uuid, Clock.System.now())
+    localChangeDao.addInsert(carePlan, uuid, Clock.System.now())
 
     localChangeDao.addDelete(
-      resourceId = "o1",
+      resourceId = "CarePlan1",
       resourceUuid = uuid,
-      resourceType = ResourceType.Observation,
+      resourceType = ResourceType.CarePlan,
       remoteVersionId = null,
     )
 
     val changes = localChangeDao.getLocalChanges(uuid)
     assertEquals(2, changes.size)
-    assertEquals(LocalChangeEntity.Type.INSERT.value, changes[0].type)
+    val insert = changes[0]
+    assertEquals(uuid, insert.resourceUuid)
+    assertEquals("CarePlan1", insert.resourceId)
+    assertEquals(LocalChangeEntity.Type.INSERT.value, insert.type)
+    assertEquals(fhirJsonParser.encodeToString(carePlan), insert.payload)
 
     val delete = changes[1]
+    assertEquals(uuid, delete.resourceUuid)
+    assertEquals("CarePlan1", delete.resourceId)
     assertEquals(LocalChangeEntity.Type.DELETE.value, delete.type)
     assertEquals("", delete.payload)
     assertEquals(0, localChangeDao.getReferencesForLocalChange(delete.id).size)
@@ -174,9 +219,11 @@ class LocalChangeDaoTest {
     val patient = Patient(id = "Patient1")
     localChangeDao.addInsert(patient, patientUuid, Clock.System.now())
 
-    val obsUuid = Uuid.random()
-    val obs = observation("o1", "Patient/Patient1")
-    localChangeDao.addInsert(obs, obsUuid, Clock.System.now())
+    val carePlanUuid = Uuid.random()
+    val original = carePlan(performer = "Patient/Patient1")
+    localChangeDao.addInsert(original, carePlanUuid, Clock.System.now())
+    val updated = carePlan(performer = PRACTITIONER, author = PRACTITIONER)
+    localChangeDao.addUpdate(resourceEntity(carePlanUuid, original), updated, Clock.System.now())
 
     val referringUuids =
       localChangeDao.updateResourceIdAndReferences(
@@ -185,20 +232,49 @@ class LocalChangeDaoTest {
         updatedResourceId = "SyncedPatient1",
       )
 
-    // The Observation referenced the Patient, so it is reported as referring.
-    assertEquals(listOf(obsUuid), referringUuids)
+    // The CarePlan referenced the Patient, so it is reported as referring.
+    assertEquals(listOf(carePlanUuid), referringUuids)
 
-    // The Patient's own local change now carries the new id.
+    // The Patient's own local change carries the new id.
     val patientChanges = localChangeDao.getLocalChanges(patientUuid)
     assertEquals(1, patientChanges.size)
     assertEquals("SyncedPatient1", patientChanges[0].resourceId)
 
-    // The Observation's INSERT payload + references now point at the new id.
-    val obsChanges = localChangeDao.getLocalChanges(obsUuid)
-    assertEquals(1, obsChanges.size)
-    assertEquals(LocalChangeEntity.Type.INSERT.value, obsChanges[0].type)
-    val references = localChangeDao.getReferencesForLocalChange(obsChanges[0].id)
-    assertEquals(setOf("/subject" to "Patient/SyncedPatient1"), references.pathValuePairs())
+    // The CarePlan's INSERT and UPDATE come back in that order.
+    val carePlanChanges = localChangeDao.getLocalChanges(carePlanUuid)
+    assertEquals(2, carePlanChanges.size)
+
+    val insert = carePlanChanges[0]
+    assertEquals(carePlanUuid, insert.resourceUuid)
+    assertEquals("CarePlan1", insert.resourceId)
+    assertEquals(LocalChangeEntity.Type.INSERT.value, insert.type)
+    assertEquals(
+      fhirJsonParser.encodeToString(
+        carePlan(subject = "Patient/SyncedPatient1", performer = "Patient/SyncedPatient1"),
+      ),
+      insert.payload,
+    )
+    assertEquals(
+      listOf(
+        "/subject" to "Patient/SyncedPatient1",
+        "/activity/0/detail/performer/0" to "Patient/SyncedPatient1",
+      ),
+      localChangeDao.getReferencesForLocalChange(insert.id).pathValuePairs(),
+    )
+
+    val update = carePlanChanges[1]
+    assertEquals(carePlanUuid, update.resourceUuid)
+    assertEquals("CarePlan1", update.resourceId)
+    assertEquals(LocalChangeEntity.Type.UPDATE.value, update.type)
+    assertEquals(updatePatch, update.payload)
+    assertEquals(
+      listOf(
+        "/activity/0/detail/performer/0" to "Patient/SyncedPatient1",
+        "/author" to PRACTITIONER,
+        "/activity/0/detail/performer/0" to PRACTITIONER,
+      ),
+      localChangeDao.getReferencesForLocalChange(update.id).pathValuePairs(),
+    )
   }
 
   @Test
@@ -237,20 +313,18 @@ class LocalChangeDaoTest {
     val byResourceId = localChangeDao.getAllLocalChanges().associateBy { it.resourceId }
 
     val single = localChangeDao.getReferencesForLocalChanges(listOf(byResourceId["1"]!!.id))
-    assertEquals(2, single.size)
     assertEquals(
-      setOf("Patient/1", "Encounter/1"),
-      single.map { it.resourceReferenceValue }.toSet(),
+      listOf("Encounter/1", "Patient/1"),
+      single.map { it.resourceReferenceValue }.sorted(),
     )
 
     val multiple =
       localChangeDao.getReferencesForLocalChanges(
         listOf(byResourceId["1"]!!.id, byResourceId["2"]!!.id),
       )
-    assertEquals(4, multiple.size)
-    assertTrue(
-      multiple.map { it.resourceReferenceValue }.toSet() ==
-        setOf("Patient/1", "Encounter/1", "Patient/2", "Encounter/2"),
+    assertEquals(
+      listOf("Encounter/1", "Encounter/2", "Patient/1", "Patient/2"),
+      multiple.map { it.resourceReferenceValue }.sorted(),
     )
   }
 }

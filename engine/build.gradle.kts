@@ -214,11 +214,6 @@ kotlin {
     val desktopBenchmark by getting {
       dependencies { implementation(libs.kotlinx.benchmark.runtime) }
     }
-    val desktopTest by getting {
-      // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
-      // the codegen consumes at build time, so the test classpath needs access to it.
-      resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
-    }
     getByName("androidDeviceTest") {
       dependencies {
         implementation(libs.androidx.test.core)
