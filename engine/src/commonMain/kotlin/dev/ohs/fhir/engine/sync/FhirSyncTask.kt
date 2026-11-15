@@ -61,13 +61,21 @@ interface FhirSyncTask {
 suspend fun FhirSyncTask.runSync(
   taskName: String?,
   onProgress: suspend (SyncJobStatus) -> Unit,
+): SyncJobStatus = runSync(taskName, onProgress, FhirEngineProvider.getDataSource())
+
+/**
+ * Same as the public runSync, but syncs with [dataSource] instead of the server set in
+ * FhirEngineProvider.init. FhirSyncWorker passes its overridable getDataSource here.
+ */
+internal suspend fun FhirSyncTask.runSync(
+  taskName: String?,
+  onProgress: suspend (SyncJobStatus) -> Unit,
+  dataSource: DataSource?,
 ): SyncJobStatus {
   val fhirDataStore = FhirEngineProvider.getFhirDataStore()
-  val dataSource =
-    FhirEngineProvider.getDataSource()
-      ?: throw IllegalStateException(
-        "FhirEngineConfiguration.ServerConfiguration is not set. Call FhirEngineProvider.init to initialize with appropriate configuration.",
-      )
+  checkNotNull(dataSource) {
+    "No server configured. Set FhirEngineConfiguration.serverConfiguration in FhirEngineProvider.init."
+  }
 
   val uploadStrategy = getUploadStrategy()
   val synchronizer =
