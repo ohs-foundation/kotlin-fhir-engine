@@ -62,7 +62,7 @@ class FhirEngineProviderTest {
   }
 
   @Test
-  fun testMode_usesAnInMemoryDatabaseThatSupportsReadsAndWrites() = runTest {
+  fun testMode_engineSupportsReadsAndWrites() = runTest {
     FhirEngineProvider.init(FhirEngineConfiguration(testMode = true), testPlatformContext())
     val engine = FhirEngineProvider.getInstance(testPlatformContext())
 
