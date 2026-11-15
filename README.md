@@ -12,13 +12,14 @@ A Kotlin Multiplatform library for building offline-capable healthcare applicati
 FHIR R4 standard. It provides on-device FHIR resource persistence, a type-safe search API, and
 synchronization with remote FHIR servers.
 
-## Conformance
+## Status
 
-The library targets FHIR R4 (v4.0.1). See [Conformance](docs/conformance.md) for feature by
-feature support of the [Search](https://hl7.org/fhir/R4/search.html) and
-[RESTful API](https://hl7.org/fhir/R4/http.html) specifications and per platform support. It
-documents what is supported and what is not. Parity with the original android-fhir engine is
-documented in [android-fhir parity](docs/android-fhir-parity.md).
+The library targets FHIR R4 (v4.0.1).
+
+- [Migrating from android-fhir](docs/migrating-from-android-fhir.md): what stays the same and what
+  changes.
+- [Known issues](docs/known-issues.md): bugs, and what isn't supported yet, including per platform.
+- [Ignored tests](docs/ignored-tests.md): every test skipped because of a known bug, and why.
 
 ## Supported platforms
 
