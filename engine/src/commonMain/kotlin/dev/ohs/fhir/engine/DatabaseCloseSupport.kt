@@ -16,7 +16,7 @@
 package dev.ohs.fhir.engine
 
 /**
- * Whether [FhirEngineProvider.resetForTesting] may close the database on this platform. False on
- * web, where closing breaks the SQLite Web Worker and every later database call hangs.
+ * Whether [FhirEngineProvider.cleanup] may close the database on this platform. False on web, where
+ * closing breaks the SQLite Web Worker and every later database call hangs.
  */
 internal expect fun canCloseDatabaseOnReset(): Boolean

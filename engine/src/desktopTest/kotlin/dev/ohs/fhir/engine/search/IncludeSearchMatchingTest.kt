@@ -71,7 +71,7 @@ class IncludeSearchMatchingTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
   }
 
   @Test

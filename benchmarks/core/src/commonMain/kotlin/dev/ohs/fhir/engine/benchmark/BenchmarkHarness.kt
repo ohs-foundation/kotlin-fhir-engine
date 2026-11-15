@@ -229,7 +229,7 @@ object BenchmarkHarness {
     resetDatabase: Boolean = true,
     reuseStorage: Boolean = false,
   ): FhirEngine {
-    if (FhirEngineProvider.isInitialized()) FhirEngineProvider.resetForTesting()
+    if (FhirEngineProvider.isInitialized()) FhirEngineProvider.cleanup()
     if (resetDatabase) deleteBenchmarkDatabase(platformContext)
     val directory =
       if (reuseStorage) {
