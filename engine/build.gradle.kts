@@ -218,6 +218,7 @@ kotlin {
       dependencies {
         implementation(libs.androidx.test.core)
         implementation(libs.androidx.test.runner)
+        implementation(libs.androidx.work.testing)
         implementation(libs.kotlin.test.junit)
       }
     }
