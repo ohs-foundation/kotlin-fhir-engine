@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Checks that every android-fhir engine test is mapped to a KMP engine test, or has a reason.
+
+Reads docs/test-parity.csv, adds rows for android-fhir tests that have a KMP test with the same
+name, and fails when an android-fhir test has no row, or a row points at a KMP test that no longer
+exists.
+
+Usage: scripts/test_parity.py [path to the android-fhir checkout]
+"""
+
+import csv
+import glob
+import os
+import re
+import sys
+from collections import Counter
+
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CSV_PATH = os.path.join(REPO, "docs", "test-parity.csv")
+FIELDS = ["android_file", "android_test", "status", "kmp_file", "kmp_test", "note"]
+STATUSES = ["ported", "ignored", "partial", "not-applicable", "missing"]
+TEST = re.compile(r"((?:@\w+(?:\([^)]*\))?\s*)*)@Test\b[\s\S]{0,300}?fun\s+(`[^`]+`|\w+)")
+
+
+def tests(root):
+    """Returns (path relative to root, test name, is ignored) for every @Test under root."""
+    found = []
+    for path in sorted(glob.glob(os.path.join(root, "**", "*.kt"), recursive=True)):
+        text = open(path, encoding="utf-8").read()
+        for match in TEST.finditer(text):
+            # An @Ignore may sit before or after @Test.
+            ignored = "@Ignore" in match.group(0)
+            found.append((os.path.relpath(path, root), match.group(2).strip("`"), ignored))
+    return found
+
+
+def norm(name):
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def main():
+    android_root = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+        os.path.dirname(REPO), "android-fhir"
+    )
+    android = []
+    for source_set in ["test", "androidTest"]:
+        root = os.path.join(android_root, "engine", "src", source_set)
+        android += [(os.path.join(source_set, f), n) for f, n, _ in tests(root)]
+    if not android:
+        sys.exit(f"No android-fhir tests found under {android_root}")
+
+    kmp_root = os.path.join(REPO, "engine", "src")
+    kmp = tests(kmp_root)
+    kmp_by_name = {}
+    for f, n, ignored in kmp:
+        kmp_by_name.setdefault(norm(n), []).append((f, n, ignored))
+
+    rows = {}
+    if os.path.exists(CSV_PATH):
+        for row in csv.DictReader(open(CSV_PATH, encoding="utf-8")):
+            rows[(row["android_file"], row["android_test"])] = row
+
+    problems = []
+    for f, n in android:
+        row = rows.get((f, n))
+        if row is None:
+            matches = kmp_by_name.get(norm(n), [])
+            same_file = [m for m in matches if os.path.basename(m[0]) == os.path.basename(f)]
+            if not matches:
+                problems.append(f"no row: {f} :: {n}")
+                continue
+            kf, kn, _ = (same_file or matches)[0]
+            row = rows[(f, n)] = dict(
+                android_file=f, android_test=n, status="ported", kmp_file=kf, kmp_test=kn, note=""
+            )
+        if row["status"] not in STATUSES:
+            problems.append(f"unknown status {row['status']!r}: {f} :: {n}")
+        names = [x.strip() for x in row["kmp_test"].split(";") if x.strip()]
+        for name in names:
+            if norm(name) not in kmp_by_name:
+                problems.append(f"KMP test not found {name!r}: {f} :: {n}")
+        # Keep ported and ignored in step with the code, so un-ignoring a test updates the table.
+        if row["status"] in ("ported", "ignored") and names:
+            ignored = any(i for name in names for _, _, i in kmp_by_name.get(norm(name), []))
+            row["status"] = "ignored" if ignored else "ported"
+
+    android_keys = {(f, n) for f, n in android}
+    for key in list(rows):
+        if key not in android_keys:
+            problems.append(f"row for a test android-fhir no longer has: {key[0]} :: {key[1]}")
+            del rows[key]
+
+    with open(CSV_PATH, "w", encoding="utf-8", newline="") as out:
+        writer = csv.DictWriter(out, FIELDS, extrasaction="ignore", lineterminator="\n")
+        writer.writeheader()
+        for f, n in android:
+            if (f, n) in rows:
+                writer.writerow(rows[(f, n)])
+
+    counts = Counter(rows[k]["status"] for k in rows if k in android_keys)
+    print(f"{len(android)} android-fhir tests")
+    for status in STATUSES:
+        print(f"  {counts[status]:4} {status}")
+    for problem in problems:
+        print(problem)
+    sys.exit(1 if problems else 0)
+
+
+if __name__ == "__main__":
+    main()
