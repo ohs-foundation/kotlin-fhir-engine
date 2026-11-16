@@ -15,6 +15,7 @@
  */
 package dev.ohs.fhir.engine.sync.upload
 
+import dev.ohs.fhir.engine.canCloseDatabaseOnReset
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.db.impl.DatabaseConfig
@@ -62,7 +63,10 @@ class HttpPostResourceConsolidatorTest {
 
   @AfterTest
   fun tearDown() {
-    database.close()
+    // On web, closing an in-memory database here can hang the browser, as
+    // FhirEngineProvider.cleanup
+    // also avoids.
+    if (canCloseDatabaseOnReset()) database.close()
   }
 
   @Test
