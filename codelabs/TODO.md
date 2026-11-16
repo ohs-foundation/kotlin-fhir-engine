@@ -3,14 +3,15 @@
 ## To confirm
 - [x] App runs on an emulator against a local HAPI server: Sync, Update, and Search work.
 - [x] Update swaps the cities of `Aaron697` and `Abby752` on the server (PATCH upload).
-- [ ] Desktop, web, and iOS apps run against HAPI: Sync, Update, and Search work. Desktop and web
-      Sync and Update are confirmed; iOS has not been run.
+- [ ] Desktop, web, and iOS apps run against HAPI: Sync, Update, and Search work. Confirmed on the
+      iOS simulator and desktop. On the web, Sync and Update are confirmed but not Search.
 - [ ] The web app's database persists in OPFS across reloads.
 - [x] iOS: the `iosApp` Xcode project builds with the `:shared:embedAndSignAppleFrameworkForXcode`
       build phase.
-- [ ] The README steps work from a clean clone in Android Studio.
-- [ ] Keeping a standalone build is acceptable. The root Spotless config covers its `.kt` files
-      but not its `.gradle.kts` files.
+- [ ] The README steps work from a clean clone in Android Studio. A sparse clone builds with the
+      Android Studio JDK; opening it in Android Studio is not confirmed.
+- [ ] Keeping a standalone build is acceptable. The root Spotless config covers its `.kt` and
+      `.gradle.kts` files.
 
 ## Pending
 - [ ] Keep the README code in step with the starter. The solution exists only in the README.

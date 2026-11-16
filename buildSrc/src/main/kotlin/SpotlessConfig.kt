@@ -41,7 +41,13 @@ fun Project.configureSpotless() {
       toggleOffOn()
     }
     kotlinGradle {
-      target("*.gradle.kts")
+      // The codelab is a standalone build, so the root project formats its build files too.
+      if (this@configureSpotless == rootProject) {
+        target("*.gradle.kts", "codelabs/**/*.gradle.kts")
+        targetExclude("codelabs/**/build/")
+      } else {
+        target("*.gradle.kts")
+      }
       ktlint(ktlintVersion).userData(ktlintOptions)
       ktfmt("0.44").googleStyle()
     }
