@@ -42,7 +42,10 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.ByteArrayContent
-import io.ktor.http.contentType
+import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -121,11 +124,12 @@ internal class KtorHttpService(
     resource: Resource,
     headers: Map<String, String>,
   ): Resource {
+    val body = uploadBody(ContentType.Application.Json) { fhirJson.encodeToString(resource) }
     val json: String =
       client
         .post(path) {
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          setUploadBody(fhirJson.encodeToString(resource), ContentType.Application.Json)
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
@@ -136,11 +140,12 @@ internal class KtorHttpService(
     resource: Resource,
     headers: Map<String, String>,
   ): Resource {
+    val body = uploadBody(ContentType.Application.Json) { fhirJson.encodeToString(resource) }
     val json: String =
       client
         .put(path) {
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          setUploadBody(fhirJson.encodeToString(resource), ContentType.Application.Json)
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
@@ -151,29 +156,37 @@ internal class KtorHttpService(
     patchDocument: JsonArray,
     headers: Map<String, String>,
   ): Resource {
+    val body =
+      uploadBody(ContentType.parse("application/json-patch+json")) { patchDocument.toString() }
     val json: String =
       client
         .patch(path) {
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          setUploadBody(patchDocument.toString(), ContentType.parse("application/json-patch+json"))
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
   }
 
   /**
-   * Sets [body] as the request body, gzipped when [compressUploads] is on. The gzipped bytes are
-   * sent whole, so the request carries a Content-Length, as android-fhir's GzipUploadInterceptor
-   * does. Servers that reject chunked uploads need it.
+   * Encodes the upload body, gzipped when [compressUploads] is on, off the caller's thread so a
+   * large bundle doesn't block it. android-fhir does both on OkHttp's threads. The gzipped bytes
+   * are sent whole, so the request carries a Content-Length, as android-fhir's
+   * GzipUploadInterceptor does. Servers that reject chunked uploads need it.
    */
-  private fun HttpRequestBuilder.setUploadBody(body: String, contentType: ContentType) {
-    if (compressUploads) {
-      header(HttpHeaders.ContentEncoding, "gzip")
-      setBody(ByteArrayContent(gzip(body.encodeToByteArray()), contentType))
-    } else {
-      contentType(contentType)
-      setBody(body)
+  private suspend fun uploadBody(contentType: ContentType, encode: () -> String): OutgoingContent =
+    withContext(Dispatchers.Default) {
+      val body = encode()
+      if (compressUploads) {
+        ByteArrayContent(gzip(body.encodeToByteArray()), contentType)
+      } else {
+        TextContent(body, contentType)
+      }
     }
+
+  private fun HttpRequestBuilder.setUploadBody(body: OutgoingContent) {
+    if (compressUploads) header(HttpHeaders.ContentEncoding, "gzip")
+    setBody(body)
   }
 
   override suspend fun delete(path: String, headers: Map<String, String>): Resource {
