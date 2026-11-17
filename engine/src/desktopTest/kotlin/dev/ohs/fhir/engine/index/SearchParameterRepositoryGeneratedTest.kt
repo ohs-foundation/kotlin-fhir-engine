@@ -24,8 +24,8 @@ import org.junit.runners.Parameterized
 /**
  * Checks the generated search parameters against the `@SearchParamDefinition` annotations of the
  * HAPI R4 model classes, which android-fhir's version of this test reads by reflection.
- * `expected-search-param-definitions.tsv` holds those annotations, so the expected values do not come
- * from the bundle the generator parses.
+ * `expected-search-param-definitions.tsv` holds those annotations, so the expected values do not
+ * come from the bundle the generator parses.
  */
 @RunWith(Parameterized::class)
 class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceType) {
