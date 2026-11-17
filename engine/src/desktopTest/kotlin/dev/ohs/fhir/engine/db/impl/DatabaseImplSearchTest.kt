@@ -482,9 +482,6 @@ class DatabaseImplSearchTest {
     )
   }
 
-  @Ignore(
-    "An empty system drops the system clause but still binds its argument, so SQLite throws column index out of range",
-  )
   @Test
   fun search_token_emptySystem_matchesCodeOnly() = runTest {
     database.insert(immunization("1", coding("http://hl7.org/fhir/sid/cvx", "140", "Influenza")))

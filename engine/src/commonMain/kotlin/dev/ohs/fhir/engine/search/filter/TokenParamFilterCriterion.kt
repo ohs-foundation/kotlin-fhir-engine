@@ -102,9 +102,11 @@ data class TokenParamFilterCriterion(var parameter: TokenClientParam) : FilterCr
 
   override fun getConditionalParams(): List<ConditionParam<out Any>> {
     return value!!.tokenFilters.map {
+      // A blank system matches any system, so it adds no clause and no argument.
+      val system = it.uri?.takeIf { uri -> uri.isNotBlank() }
       ConditionParam(
-        "index_value = ?${if (it.uri.isNullOrBlank()) "" else " AND IFNULL(index_system,'') = ?"}",
-        listOfNotNull(it.code, it.uri),
+        "index_value = ?${if (system == null) "" else " AND IFNULL(index_system,'') = ?"}",
+        listOfNotNull(it.code, system),
       )
     }
   }
