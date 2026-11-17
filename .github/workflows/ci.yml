@@ -56,7 +56,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ohs-foundation/android-fhir
-          ref: 9440c546555eccbb03479cce4f9c52c27c17dfcc
+          ref: 28a5034563b83586d67c16bf18627fd540c32c27
           path: android-fhir
           sparse-checkout: |
             engine/src/test
