@@ -469,9 +469,6 @@ class DatabaseImplSearchTest {
     assertEquals(listOf("1"), searchDeathDate(SearchComparator.Eq, "2013-03-14"))
   }
 
-  @Ignore(
-    "A dateTime is indexed as a one second range but eq searches a single instant, so nothing matches",
-  )
   @Test
   fun search_dateTime_equals_sameSecond() = runTest {
     database.insert(deceasedPatient("2013-03-14T10:00:00-05:30"))
