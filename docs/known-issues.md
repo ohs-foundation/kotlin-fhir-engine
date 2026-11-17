@@ -36,9 +36,12 @@ supported yet** are features the KMP engine doesn't have.
 | Search | Chained parameters, and `:iterate` on `include` and `revInclude`. |
 | Search | The result parameters `_text`, `_content`, `_list`, `_summary`, `_elements` and `_contained`. |
 | Search | In X-FHIR-Query strings: prefixes, modifiers, comma-separated values, repeated parameters, `include`, `revInclude` and `has`. `_sort` uses only its last field. Use the search DSL for those. |
-| Sync | Updates upload as `PATCH` only. `HttpUpdateMethod.PUT` throws `NotImplementedError`, as in android-fhir. |
+| Sync | Updates upload as `PATCH` only. `HttpUpdateMethod.PUT` throws `NotImplementedError`, as in android-fhir. See [#136](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/136). |
 | Sync | `If-Match` on individual requests. It's sent on bundle uploads only. |
 | Sync | Conflict resolution outcomes other than resolved. There's no abort or defer. |
+| Sync | Discarding the local changes of a resource and going back to the server version. `purge` with `forcePurge = true` deletes the resource instead. See [#137](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/137). |
+| Sync | Resource types that stay on the device and never upload. Every `create`, `update` and `delete` is uploaded at the next sync. See [#138](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/138). |
+| Server | Working directly with the server without a local database. The server is reached only through sync. See [#139](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/139). |
 
 ## Platforms
 
