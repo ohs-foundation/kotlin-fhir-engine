@@ -19,18 +19,58 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(REPO, "docs", "test-parity.csv")
 FIELDS = ["android_file", "android_test", "status", "kmp_file", "kmp_test", "note"]
 STATUSES = ["ported", "ignored", "partial", "not-applicable", "missing"]
-TEST = re.compile(r"((?:@\w+(?:\([^)]*\))?\s*)*)@Test\b[\s\S]{0,300}?fun\s+(`[^`]+`|\w+)")
+FUN = re.compile(r"\bfun\s+(`[^`]+`|\w+)\s*\(")
+ANNOTATION = re.compile(r"^\s*@(\w+)")
+
+
+def open_parens(line):
+    """Parentheses opened minus closed on [line], ignoring any inside string literals."""
+    depth, in_string, i = 0, False, 0
+    while i < len(line):
+        c = line[i]
+        if in_string:
+            if c == "\\":
+                i += 1
+            elif c == '"':
+                in_string = False
+        elif c == '"':
+            in_string = True
+        elif c == "(":
+            depth += 1
+        elif c == ")":
+            depth -= 1
+        i += 1
+    return depth
 
 
 def tests(root):
-    """Returns (path relative to root, test name, is ignored) for every @Test under root."""
+    """Returns (path relative to root, test name, is ignored) for every @Test under root.
+
+    Reads the annotations above each function, which may span several lines and hold parentheses in
+    their arguments, and treats the function as a test when one of them is @Test.
+    """
     found = []
     for path in sorted(glob.glob(os.path.join(root, "**", "*.kt"), recursive=True)):
-        text = open(path, encoding="utf-8").read()
-        for match in TEST.finditer(text):
-            # An @Ignore may sit before or after @Test.
-            ignored = "@Ignore" in match.group(0)
-            found.append((os.path.relpath(path, root), match.group(2).strip("`"), ignored))
+        annotations, depth = set(), 0
+        for line in open(path, encoding="utf-8"):
+            if depth > 0:
+                depth += open_parens(line)
+                continue
+            if ANNOTATION.match(line):
+                annotations.update(re.findall(r"@(\w+)", line.split("fun ")[0]))
+                depth = open_parens(line)
+                if depth > 0 or not FUN.search(line):
+                    continue
+            if match := FUN.search(line):
+                if "Test" in annotations:
+                    name = match.group(1).strip("`")
+                    found.append((os.path.relpath(path, root), name, "Ignore" in annotations))
+                annotations = set()
+                continue
+            stripped = line.strip()
+            # Comments may sit between annotations, but any other line ends them.
+            if stripped and not stripped.startswith(("//", "/*", "*")):
+                annotations = set()
     return found
 
 
