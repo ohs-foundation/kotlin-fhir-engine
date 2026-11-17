@@ -1314,10 +1314,45 @@ class ResourceIndexerTest {
     assertEquals(1, matching.size)
   }
 
-  // The search param paths use `Observation.component.value as Quantity`, and fhir-path's `as`
-  // throws on a collection with more than one item, so the whole param is skipped. Enable once
-  // `as` works on repeating elements.
-  @Ignore
+  @Test
+  fun index_observation_withTwoComponents_keepsComponentAndComboValues() {
+    val observation =
+      Observation(
+        id = "non-null-ID",
+        status = Enumeration(value = Observation.ObservationStatus.Final),
+        code = CodeableConcept(),
+        value =
+          Observation.Value.Quantity(Quantity(value = Decimal(value = FhirDecimal.fromInt(5)))),
+        component =
+          listOf(
+            Observation.Component(
+              code = CodeableConcept(),
+              value =
+                Observation.Component.Value.Quantity(
+                  Quantity(value = Decimal(value = FhirDecimal.fromInt(10))),
+                ),
+            ),
+            Observation.Component(
+              code = CodeableConcept(),
+              value =
+                Observation.Component.Value.CodeableConcept(
+                  CodeableConcept(
+                    coding = listOf(Coding(system = Uri(value = "s"), code = Code(value = "c1"))),
+                  ),
+                ),
+            ),
+          ),
+      )
+    val resourceIndices = resourceIndexer.index(observation)
+    val quantities = resourceIndices.quantityIndices.map { it.name to it.value.intValue() }
+    val tokens = resourceIndices.tokenIndices.map { it.name to it.value }
+    assertContains(quantities, "component-value-quantity" to 10)
+    assertContains(quantities, "combo-value-quantity" to 10)
+    assertContains(quantities, "combo-value-quantity" to 5)
+    assertContains(tokens, "component-value-concept" to "c1")
+    assertContains(tokens, "combo-value-concept" to "c1")
+  }
+
   @Test
   fun index_quantity_observation_valueQuantity() {
     val observation =
