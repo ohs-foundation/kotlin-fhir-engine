@@ -74,6 +74,13 @@ jobs:
           ./gradlew compileDebugKotlinAndroid :engine:compileAndroidMain compileKotlinDesktop
           compileKotlinJs compileKotlinWasmJs
 
+      # The codelab is its own build on the published engine. iOS compiles in the ios job.
+      - name: Check the codelab compiles
+        working-directory: codelabs
+        run: >
+          ./gradlew :androidApp:compileDebugKotlinAndroid :shared:compileKotlinDesktop
+          :shared:compileKotlinWasmJs
+
   # Each job runs the shared tests (commonTest) and its platform's own tests. Android runs them on
   # an emulator in android-test, because the engine needs a real SQLite.
   test:
@@ -135,6 +142,11 @@ jobs:
       # --continue so the second iOS suite still runs when the first fails.
       - name: Run tests
         run: ./gradlew ${{ matrix.tasks }} --continue "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Check the codelab compiles for iOS
+        if: matrix.name == 'iOS'
+        working-directory: codelabs
+        run: ./gradlew :shared:compileKotlinIosSimulatorArm64
 
       - name: Save Kotlin/Native
         if: runner.os == 'macOS' && github.ref == 'refs/heads/main' && steps.konan.outputs.cache-hit != 'true'
