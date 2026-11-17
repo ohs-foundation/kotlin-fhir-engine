@@ -95,6 +95,13 @@ def main():
     for f, n, ignored in kmp:
         kmp_by_name.setdefault(norm(n), []).append((f, n, ignored))
 
+    def find(name, kmp_file):
+        """The KMP tests a row's name refers to: the one in the row's own file, or else the only
+        test anywhere with that name. Several tests can share a name in different files."""
+        matches = kmp_by_name.get(norm(name), [])
+        in_file = [m for m in matches if m[0] == kmp_file]
+        return in_file or matches
+
     rows = {}
     if os.path.exists(CSV_PATH):
         for row in csv.DictReader(open(CSV_PATH, encoding="utf-8")):
@@ -104,25 +111,31 @@ def main():
     for f, n in android:
         row = rows.get((f, n))
         if row is None:
+            # Only a test of the same name in a file of the same name is taken as its port.
             matches = kmp_by_name.get(norm(n), [])
             same_file = [m for m in matches if os.path.basename(m[0]) == os.path.basename(f)]
-            if not matches:
+            if len(same_file) != 1:
                 problems.append(f"no row: {f} :: {n}")
                 continue
-            kf, kn, _ = (same_file or matches)[0]
+            kf, kn, _ = same_file[0]
             row = rows[(f, n)] = dict(
                 android_file=f, android_test=n, status="ported", kmp_file=kf, kmp_test=kn, note=""
             )
         if row["status"] not in STATUSES:
             problems.append(f"unknown status {row['status']!r}: {f} :: {n}")
         names = [x.strip() for x in row["kmp_test"].split(";") if x.strip()]
+        found = []
         for name in names:
-            if norm(name) not in kmp_by_name:
+            matches = find(name, row["kmp_file"])
+            if not matches:
                 problems.append(f"KMP test not found {name!r}: {f} :: {n}")
+            elif len(matches) > 1:
+                problems.append(f"KMP test {name!r} is in several files, set kmp_file: {f} :: {n}")
+            else:
+                found.append(matches[0])
         # Keep ported and ignored in step with the code, so un-ignoring a test updates the table.
-        if row["status"] in ("ported", "ignored") and names:
-            ignored = any(i for name in names for _, _, i in kmp_by_name.get(norm(name), []))
-            row["status"] = "ignored" if ignored else "ported"
+        if row["status"] in ("ported", "ignored") and found:
+            row["status"] = "ignored" if any(i for _, _, i in found) else "ported"
 
     android_keys = {(f, n) for f, n in android}
     for key in list(rows):
