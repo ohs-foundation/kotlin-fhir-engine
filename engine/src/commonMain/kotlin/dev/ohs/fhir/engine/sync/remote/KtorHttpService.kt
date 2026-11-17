@@ -25,7 +25,6 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.ContentEncodingConfig
 import io.ktor.client.plugins.logging.LogLevel
@@ -234,10 +233,6 @@ internal class KtorHttpService(
         }
       }
 
-      if (networkConfiguration.httpCache != null) {
-        install(HttpCache)
-      }
-
       install(DefaultRequest) {
         url(baseUrl)
         authenticator?.let {
@@ -280,7 +275,7 @@ internal class KtorHttpService(
     }
 
     fun build(): KtorHttpService {
-      val client = HttpClient { configureClient() }
+      val client = httpClient(networkConfiguration.httpCache) { configureClient() }
       return KtorHttpService(client, compressUploads = networkConfiguration.uploadWithGzip)
     }
   }
