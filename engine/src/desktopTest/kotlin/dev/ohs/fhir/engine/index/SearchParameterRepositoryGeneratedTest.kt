@@ -24,14 +24,14 @@ import org.junit.runners.Parameterized
 /**
  * Checks the generated search parameters against the `@SearchParamDefinition` annotations of the
  * HAPI R4 model classes, which android-fhir's version of this test reads by reflection.
- * `hapi-search-param-definitions.tsv` holds those annotations, so the expected values do not come
+ * `expected-search-param-definitions.tsv` holds those annotations, so the expected values do not come
  * from the bundle the generator parses.
  */
 @RunWith(Parameterized::class)
 class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceType) {
 
   @Test
-  fun getSearchParamList_matchesHapiAnnotations() {
+  fun getSearchParamList_matchesExpectedDefinitions() {
     assertEquals(
       expectedFor(resourceType.name).sortedWith(order),
       getSearchParamList(resourceType.name).sortedWith(order),
@@ -39,7 +39,7 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
   }
 
   private fun expectedFor(name: String): List<SearchParamDefinition> =
-    hapiDefinitions.filter { it.first == name }.map { it.second } + baseSearchParameters(name)
+    expectedDefinitions.filter { it.first == name }.map { it.second } + baseSearchParameters(name)
 
   // The HAPI model classes do not declare these, so they are added by hand as android-fhir does.
   private fun baseSearchParameters(name: String) =
@@ -55,12 +55,12 @@ class SearchParameterRepositoryGeneratedTest(private val resourceType: ResourceT
   private companion object {
     private val order = compareBy<SearchParamDefinition>({ it.name }, { it.path })
 
-    private val hapiDefinitions: List<Pair<String, SearchParamDefinition>> by lazy {
+    private val expectedDefinitions: List<Pair<String, SearchParamDefinition>> by lazy {
       val stream =
         SearchParameterRepositoryGeneratedTest::class
           .java
-          .getResourceAsStream("/hapi-search-param-definitions.tsv")
-          ?: error("hapi-search-param-definitions.tsv is not on the test classpath")
+          .getResourceAsStream("/expected-search-param-definitions.tsv")
+          ?: error("expected-search-param-definitions.tsv is not on the test classpath")
       stream.bufferedReader().useLines { lines ->
         lines
           .filterNot { it.startsWith("#") }
