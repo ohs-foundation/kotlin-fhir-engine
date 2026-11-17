@@ -30,10 +30,12 @@ replay_pid*
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
+!codelabs/gradle/wrapper/gradle-wrapper.jar
 local.properties
 
 # iOS — local signing config (copy Local.xcconfig.example → Local.xcconfig)
 iosApp/iosApp/Local.xcconfig
+codelabs/iosApp/iosApp/Local.xcconfig
 
 # IDE
 .idea/

@@ -47,6 +47,8 @@ with:
 
 For iOS, build the framework and run the demo from Xcode on a simulator.
 
+For a step-by-step introduction, see the [codelab](codelabs/README.md).
+
 ## User guide
 
 ### Adding the library dependency to your project
