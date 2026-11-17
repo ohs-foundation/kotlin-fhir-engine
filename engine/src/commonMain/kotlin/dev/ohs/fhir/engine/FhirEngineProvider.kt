@@ -137,7 +137,7 @@ object FhirEngineProvider {
    */
   @FhirEngineTestApi
   fun cleanup() {
-    if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
+    (fhirEngine as? FhirEngineImpl)?.closeDatabase()
     dataSource?.close()
     fhirEngine = null
     dataSource = null

@@ -75,6 +75,7 @@ supported yet** are features the KMP engine doesn't have.
 | Gzip uploads (`uploadWithGzip`) | ✅ | ✅ | Sent uncompressed, with a warning | Sent uncompressed, with a warning |
 | Gzip downloads | ✅ | Only when `uploadWithGzip` is on | ✅ | ✅ |
 | Built-in sync scheduling | ✅ WorkManager | The app schedules it | The app schedules it | The app schedules it |
+| Closing the database (`FhirEngineProvider.cleanup()`) | ✅ | ✅ | ✅ | Leaves it open, because a close can freeze the browser. The cause isn't known yet. |
 
 On web, the database worker logs every message it handles to the browser console, including the
 SQL and its values, so patient data can appear there.

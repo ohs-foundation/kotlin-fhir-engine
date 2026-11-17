@@ -16,7 +16,7 @@
 package dev.ohs.fhir.engine
 
 /**
- * Whether [FhirEngineProvider.cleanup] may close the database on this platform. False on web, where
- * closing breaks the SQLite Web Worker and every later database call hangs.
+ * Whether the KMP engine may close a database on this platform. False on web, where a close can
+ * hang the shared SQLite Web Worker, and with it every open database. The cause isn't known yet.
  */
 internal expect fun canCloseDatabaseOnReset(): Boolean
