@@ -96,7 +96,7 @@ jobs:
             tasks: >-
               compileKotlinIosArm64 compileKotlinIosSimulatorArm64
               :engine:iosSimulatorArm64Test :engine:iosSimulatorArm64SystemSqliteTest
-            os: macos-15
+            os: macos-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
 
