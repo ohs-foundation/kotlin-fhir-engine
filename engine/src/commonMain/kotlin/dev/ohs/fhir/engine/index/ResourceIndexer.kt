@@ -451,7 +451,7 @@ internal class ResourceIndexer(
       when (value) {
         is Money -> {
           val amount = value.value?.value?.asBigDecimal()
-          val currency = value.currency?.value?.name
+          val currency = value.currency?.value?.code
           if (amount != null && currency != null) {
             listOf(
               QuantityIndex(
