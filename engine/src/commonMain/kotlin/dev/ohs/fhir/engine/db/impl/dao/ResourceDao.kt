@@ -63,20 +63,22 @@ internal abstract class ResourceDao {
    * Updates the resource in the [ResourceEntity] and adds indexes as a result of changes made on
    * device.
    *
+   * @param [existing] the stored entity of [resource], as read before the update
    * @param [resource] the resource with local (on device) updates
    * @param [timeOfLocalChange] time when the local change was made
    */
-  suspend fun applyLocalUpdate(resource: Resource, timeOfLocalChange: Instant?) {
-    getResourceEntity(resource.id.orEmpty(), resource.resourceTypeEnum)?.let {
-      val entity =
-        it.copy(
-          serializedResource = fhirJsonParser.encodeToString(resource),
-          lastUpdatedLocal = timeOfLocalChange,
-          lastUpdatedRemote = resource.lastUpdated ?: it.lastUpdatedRemote,
-        )
-      updateChanges(entity, resource)
-    }
-      ?: throw ResourceNotFoundException(resource.resourceTypeEnum.name, resource.id.orEmpty())
+  suspend fun applyLocalUpdate(
+    existing: ResourceEntity,
+    resource: Resource,
+    timeOfLocalChange: Instant?,
+  ) {
+    val entity =
+      existing.copy(
+        serializedResource = fhirJsonParser.encodeToString(resource),
+        lastUpdatedLocal = timeOfLocalChange,
+        lastUpdatedRemote = resource.lastUpdated ?: existing.lastUpdatedRemote,
+      )
+    updateChanges(entity, resource)
   }
 
   suspend fun updateResourceWithUuid(resourceUuid: Uuid, updatedResource: Resource) {

@@ -165,7 +165,7 @@ internal class DatabaseImpl(
           resourceDao.getResourceEntity(resourceId = resourceId, resourceType = resourceTypeEnum)
             ?: throw ResourceNotFoundException(resourceTypeEnum.name, resourceId)
         val now = Clock.System.now()
-        resourceDao.applyLocalUpdate(res, now)
+        resourceDao.applyLocalUpdate(existing, res, now)
         localChangeDao.addUpdate(existing, res, now)
       }
     }
