@@ -214,24 +214,24 @@ internal class ResourceIndexer(
             )
           }
         }
-        is dev.ohs.fhir.model.r4.String -> {
-          // e.g. CarePlan may have schedule as a string value 2011-06-27T09:30:10+01:00
-          // OR 'daily'. Only the former is parseable as a date-time.
-          value.value?.let { str ->
-            runCatching { FhirDateTime.fromString(str) }
-              .getOrNull()
-              ?.let { dt ->
-                val (from, to) = fhirDateTimeToEpochMillisRange(dt)
-                DateTimeIndex(searchParam.name, searchParam.path, from, to)
-              }
-          }
-        }
+        // e.g. CarePlan may have schedule as a string value 2011-06-27T09:30:10+01:00 OR 'daily'.
+        // Only the former is parseable as a date-time. fhir-path unwraps a string to kotlin.String.
+        is kotlin.String -> stringDateTimeIndex(searchParam, value)
+        is dev.ohs.fhir.model.r4.String -> value.value?.let { stringDateTimeIndex(searchParam, it) }
         is FhirPathDateTime -> {
           val (from, to) = fhirPathDateTimeToEpochMillisRange(value)
           DateTimeIndex(searchParam.name, searchParam.path, from, to)
         }
         else -> null
       }
+
+    private fun stringDateTimeIndex(searchParam: SearchParamDefinition, value: kotlin.String) =
+      runCatching { FhirDateTime.fromString(value) }
+        .getOrNull()
+        ?.let { dt ->
+          val (from, to) = fhirDateTimeToEpochMillisRange(dt)
+          DateTimeIndex(searchParam.name, searchParam.path, from, to)
+        }
 
     /** Builds a [DateIndex] from the [FhirPathDate] that fhir-path returns for `date` params. */
     private fun fhirPathDateIndex(

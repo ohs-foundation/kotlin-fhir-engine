@@ -7,11 +7,10 @@ again.
 This page is generated from the test code. After adding or removing an `@Ignore`, run
 `python3 scripts/ignored_tests.py`. CI fails when the page is out of date.
 
-35 ignored tests.
+34 ignored tests.
 
 | Test | Runs on | Why |
 |---|---|---|
-| `ResourceIndexerTest.index_dateTime_string` | every platform | fhir-path returns scheduledString as a plain kotlin String, which the dateTime indexer does not handle. Enable once the indexer parses plain String date-times. |
 | `ResourceIndexerTest.index_gender` | every platform | fhir-path unwraps Enumeration/Code to a bare String, dropping the code system (e.g. http://hl7.org/fhir/administrative-gender). Enable once fhir-path preserves it. |
 | `ResourceIndexerTest.index_quantity_money` | every platform | Money currency is indexed as the enum name "Eur" instead of its code "EUR". Enable once the indexer uses the currency code. |
 | `ResourceIndexerTest.index_quantity_quantity_unit` | every platform | fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex can't be reconstructed. Enable once fhir-path preserves Quantity system/code. |
