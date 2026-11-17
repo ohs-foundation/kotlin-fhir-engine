@@ -19,7 +19,6 @@ import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.OffsetDateTime
 import dev.ohs.fhir.engine.SearchResult
-import dev.ohs.fhir.engine.canCloseDatabaseOnReset
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.LocalChangeResourceReference
 import dev.ohs.fhir.engine.resourceTypeEnum
@@ -43,12 +42,9 @@ import kotlinx.coroutines.flow.onEach
 /** Implementation of [FhirEngine] backed by a [Database]. */
 internal class FhirEngineImpl(private val database: Database) : FhirEngine {
 
-  /**
-   * Closes the database connection. The engine is unusable afterwards. Does nothing on web, where a
-   * close can hang every open database (see [canCloseDatabaseOnReset]).
-   */
+  /** Closes the database connection. The engine is unusable afterwards. */
   fun closeDatabase() {
-    if (canCloseDatabaseOnReset()) database.close()
+    database.close()
   }
 
   override suspend fun create(vararg resource: Resource): List<String> {

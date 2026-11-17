@@ -17,7 +17,6 @@ package dev.ohs.fhir.engine.impl
 
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.LocalChange
-import dev.ohs.fhir.engine.canCloseDatabaseOnReset
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
 import dev.ohs.fhir.engine.db.impl.DatabaseConfig
@@ -94,7 +93,7 @@ class FhirEngineImplTest {
     // On web, closing an in-memory database here can hang the browser, as
     // FhirEngineProvider.cleanup
     // also avoids.
-    if (canCloseDatabaseOnReset()) databases.forEach { it.close() }
+    databases.forEach { it.close() }
     databases.clear()
   }
 

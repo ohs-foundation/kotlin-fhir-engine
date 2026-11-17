@@ -16,7 +16,6 @@
 package dev.ohs.fhir.engine.sync.upload
 
 import dev.ohs.fhir.engine.LocalChange
-import dev.ohs.fhir.engine.canCloseDatabaseOnReset
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.impl.DatabaseConfig
 import dev.ohs.fhir.engine.db.impl.DatabaseImpl
@@ -54,7 +53,7 @@ class LocalChangeFetcherTest {
     // On web, closing an in-memory database here can hang the browser, as
     // FhirEngineProvider.cleanup
     // also avoids.
-    if (canCloseDatabaseOnReset()) database.close()
+    database.close()
   }
 
   @Test

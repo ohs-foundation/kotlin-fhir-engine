@@ -23,6 +23,7 @@ import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.async.step
 import dev.ohs.fhir.engine.LocalChange
 import dev.ohs.fhir.engine.LocalChangeToken
+import dev.ohs.fhir.engine.canCloseDatabaseOnReset
 import dev.ohs.fhir.engine.db.Database
 import dev.ohs.fhir.engine.db.LocalChangeResourceReference
 import dev.ohs.fhir.engine.db.ResourceNotFoundException
@@ -131,7 +132,8 @@ internal class DatabaseImpl(
     }
 
   override fun close() {
-    db.close()
+    // A close can hang the shared SQLite worker on web, so the database stays open there.
+    if (canCloseDatabaseOnReset()) db.close()
   }
 
   override suspend fun clearDatabase() {
