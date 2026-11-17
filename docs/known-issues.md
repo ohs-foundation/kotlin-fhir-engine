@@ -21,6 +21,7 @@ supported yet** are features the KMP engine doesn't have.
 | Sync | Every resource the server returns is changed before it's stored. A step meant to repair invalid server data runs on every response. It drops narratives (`text`), and cuts the time off any field whose name ends in `Date`, such as `Condition.recordedDate`. | None |
 | Sync | A base URL without a trailing `/` loses its path. With `https://hapi.fhir.org/baseR4`, requests go to `https://hapi.fhir.org/Patient`. | End the base URL with `/`. |
 | Sync | A sync error keeps only the exception message. The exception's type and stack trace are lost, and a failure without a message reaches the app as `Unknown Exception`. | None |
+| Sync | `httpCache` keeps an unlimited cache in memory. `cacheDir` and `maxSize` are ignored, where android-fhir keeps a disk cache of `maxSize`. | None |
 
 ## Not supported yet
 
@@ -38,7 +39,6 @@ supported yet** are features the KMP engine doesn't have.
 | Sync | Updates upload as `PATCH` only. `HttpUpdateMethod.PUT` throws `NotImplementedError`, as in android-fhir. |
 | Sync | `If-Match` on individual requests. It's sent on bundle uploads only. |
 | Sync | Conflict resolution outcomes other than resolved. There's no abort or defer. |
-| Sync | `httpCache` turns on Ktor's in-memory cache only. Its `cacheDir` and `maxSize` are ignored. |
 
 ## Platforms
 
