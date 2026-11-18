@@ -417,6 +417,7 @@ and the `webMain.dependencies` block in
    and
    [`worker.js`](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/engine-app/src/webMain/npm/sqlite-wasm-worker/worker.js)
    into your project, e.g. `app/src/webMain/npm/sqlite-wasm-worker/`.
+   Copy `worker.js` again when you upgrade the engine, because fixes to it do not reach your copy.
 2. Declare a matching npm dependency on the source set that compiles for your `js`/`wasmJs` targets
    (Kotlin's default hierarchy template groups both under `webMain` once both targets are declared):
 
