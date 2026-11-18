@@ -7,7 +7,7 @@ again.
 This page is generated from the test code. After adding or removing an `@Ignore`, run
 `python3 scripts/ignored_tests.py`. CI fails when the page is out of date.
 
-35 ignored tests.
+34 ignored tests.
 
 | Test | Runs on | Why |
 |---|---|---|
@@ -18,7 +18,6 @@ This page is generated from the test code. After adding or removing an `@Ignore`
 | `ResourceIndexerTest.index_quantity_quantity_code_canonicalized` | every platform | fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex can't be reconstructed. Enable once fhir-path preserves Quantity system/code. |
 | `ResourceIndexerTest.index_quantity_quantity_code_notCanonicalized` | every platform | fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex can't be reconstructed. Enable once fhir-path preserves Quantity system/code. |
 | `ResourceIndexerTest.index_duplicateQuantity_deduplicateQuantityIndices` | every platform | fhir-path unwraps Quantity to a lossy FhirPathQuantity that drops system/code, so QuantityIndex can't be reconstructed. Enable once fhir-path preserves Quantity system/code. |
-| `ResourceIndexerTest.index_quantity_observation_valueQuantity` | every platform | The search param paths use `Observation.component.value as Quantity`, and fhir-path's `as` throws on a collection with more than one item, so the whole param is skipped. Enable once `as` works on repeating elements. |
 | `ResourceIndexerTest.index_invoice` | every platform | Money currency is indexed as the enum name "Eur" instead of its code "EUR", and coded values lose their system as in index_gender. Enable once both are fixed. |
 | `ResourceIndexerTest.index_questionnaire` | every platform | fhir-path unwraps Enumeration/Code to a bare String, dropping the code system, so coded values are indexed with a null system. Enable once fhir-path preserves it. |
 | `ResourceIndexerTest.index_patient` | every platform | fhir-path unwraps Enumeration/Code to a bare String, dropping the code system, so coded values are indexed with a null system. Enable once fhir-path preserves it. |

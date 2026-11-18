@@ -109,7 +109,7 @@ internal class ResourceIndexer(
         // swallow the exception and skip that param.
         runCatching {
             referencesOfType(searchParam.path, resource)
-              ?: fhirPathEngine.evaluateExpression(searchParam.path, resource)
+              ?: fhirPathEngine.evaluateExpression(searchParam.path.withOfTypeForAs(), resource)
           }
           .getOrDefault(emptyList())
           .map { searchParam to it }
@@ -618,3 +618,18 @@ internal class ResourceIndexer(
     }
   }
 }
+
+private val asOperator = Regex("""([A-Za-z][\w.]*)\s+as\s+([A-Za-z]\w*)""")
+
+/**
+ * Rewrites `x as T` to `x.ofType(T)`. FHIRPath's `as` throws on more than one item, so an R4
+ * expression such as `Observation.component.value as Quantity` fails for an Observation with two
+ * components, where `ofType` keeps every item of that type. On a single item both give the same
+ * result. FHIR R5 rewrote its search parameters this way. The stored path stays as defined.
+ */
+internal fun String.withOfTypeForAs(): String =
+  if (" as " !in this) {
+    this
+  } else {
+    replace(asOperator) { "${it.groupValues[1]}.ofType(${it.groupValues[2]})" }
+  }
