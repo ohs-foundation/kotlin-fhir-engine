@@ -212,9 +212,12 @@ internal class KtorHttpService(
   }
 
   class Builder(
-    private val baseUrl: String,
+    baseUrl: String,
     private val networkConfiguration: NetworkConfiguration,
   ) {
+    // Ktor drops the last path segment of a base URL without a trailing slash, so
+    // https://hapi.fhir.org/baseR4 would send requests to https://hapi.fhir.org/Patient.
+    private val baseUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
     private var authenticator: HttpAuthenticator? = null
     private var httpLogger: HttpLogger? = null
 
