@@ -18,7 +18,11 @@ package dev.ohs.fhir.engine.wasm.worker
 import androidx.sqlite.driver.web.WebWorkerSQLiteDriver
 import org.w3c.dom.Worker
 
-actual fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = WebWorkerSQLiteDriver(jsWorker())
+// One driver, and so one Web Worker, for every database. The worker keeps each open database by
+// id, and nothing stops a worker, so a worker per database piles up until the browser stalls.
+private val sharedDriver by lazy { WebWorkerSQLiteDriver(jsWorker()) }
+
+actual fun createSqliteWasmDriver(): WebWorkerSQLiteDriver = sharedDriver
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun jsWorker(): Worker =

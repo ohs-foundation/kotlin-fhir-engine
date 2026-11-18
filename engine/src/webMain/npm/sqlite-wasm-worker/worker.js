@@ -79,33 +79,25 @@ function stepRequest(id, requestData) {
     }
 }
 
+// The driver sends close one-way and waits for no reply, so this never posts one. A reply it isn't
+// waiting for fails every request still pending on that driver, which all databases share.
 function closeRequest(id, requestData) {
-    if (requestData.statementId) {
-        const statement = statements.get(requestData.statementId);
-        if (!statement) {
-            postMessage({'id': id, error: "Invalid statement ID: " + requestData.statementId});
-            return;
-        }
+    if (requestData.statementId != null) {
         try {
-            statement.finalize();
-            statements.delete(requestData.statementId);
+            statements.get(requestData.statementId)?.finalize();
         } catch (error) {
-            postMessage({'id': id, error: error.message});
+            console.error("Closing statement " + requestData.statementId + " failed: " + error.message);
         }
+        statements.delete(requestData.statementId);
     }
 
-    if (requestData.databaseId) {
-        const database = databases.get(requestData.databaseId);
-        if (!database) {
-            postMessage({'id': id, error: "Invalid database ID: " + requestData.databaseId});
-            return;
-        }
+    if (requestData.databaseId != null) {
         try {
-            database.close();
-            databases.delete(requestData.databaseId);
+            databases.get(requestData.databaseId)?.close();
         } catch (error) {
-            postMessage({'id': id, error: error.message});
+            console.error("Closing database " + requestData.databaseId + " failed: " + error.message);
         }
+        databases.delete(requestData.databaseId);
     }
 }
 

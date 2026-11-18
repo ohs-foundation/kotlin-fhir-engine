@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import dev.ohs.fhir.engine.codegen.GenerateSearchParamsTask
 import java.io.ByteArrayOutputStream
 import java.net.URI
@@ -76,9 +77,19 @@ kotlin {
     namespace = "dev.ohs.fhir.engine"
     compileSdk = 36
     minSdk = 26
-    withHostTestBuilder {}
     withDeviceTestBuilder { sourceSetTreeName = "test" }
-      .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+      .configure {
+        instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // A Gradle-managed emulator, so CI and local runs use the same device:
+        // ./gradlew :engine:pixel2Api34AndroidDeviceTest
+        managedDevices {
+          allDevices.create("pixel2Api34", ManagedVirtualDevice::class.java) {
+            device = "Pixel 2"
+            apiLevel = 34
+            systemImageSource = "aosp"
+          }
+        }
+      }
     optimization {
       consumerKeepRules.apply {
         publish = true
@@ -214,26 +225,12 @@ kotlin {
     val desktopBenchmark by getting {
       dependencies { implementation(libs.kotlinx.benchmark.runtime) }
     }
-    val desktopTest by getting {
-      // `SearchParameterRepositoryGeneratedTest` reads the same FHIR R4 search-parameters bundle
-      // the codegen consumes at build time, so the test classpath needs access to it.
-      resources.srcDir(rootProject.file("buildSrc/src/main/resources"))
-    }
     getByName("androidDeviceTest") {
       dependencies {
         implementation(libs.androidx.test.core)
         implementation(libs.androidx.test.runner)
-        implementation(libs.kotlin.test.junit)
-      }
-    }
-    getByName("androidHostTest") {
-      dependencies {
-        implementation(libs.junit)
-        implementation(libs.robolectric)
-        implementation(libs.androidx.test.core)
         implementation(libs.androidx.work.testing)
         implementation(libs.kotlin.test.junit)
-        implementation(libs.kotlinx.coroutines.test)
       }
     }
   }
@@ -365,22 +362,6 @@ dependencies {
 // Exports the Room schema for every target into one directory (the schema is identical across
 // targets). Committed so migrations can be tested against previous versions.
 room3 { schemaDirectory("$projectDir/schemas") }
-
-tasks
-  .withType<Test>()
-  .matching { it.name == "testAndroidHostTest" }
-  .configureEach {
-    filter {
-      // These tests need an Android Context, which host tests cannot provide. They run on every
-      // other target and on Android in connectedAndroidDeviceTest.
-      excludeTestsMatching("dev.ohs.fhir.engine.FhirEngineProviderTest")
-      excludeTestsMatching("dev.ohs.fhir.engine.impl.FhirEngineImplTest")
-      excludeTestsMatching("dev.ohs.fhir.engine.search.query.XFhirQueryTranslatorTest")
-      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.ResourceDatabaseMigrationTest")
-      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.JournalModeTest")
-      excludeTestsMatching("dev.ohs.fhir.engine.db.impl.DatabaseFileNameTest")
-    }
-  }
 
 // OPFS may not support WAL, so JournalModeTest does not run on web.
 tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest>().configureEach {

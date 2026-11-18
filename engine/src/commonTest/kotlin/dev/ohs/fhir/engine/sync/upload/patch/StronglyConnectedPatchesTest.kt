@@ -17,7 +17,7 @@ package dev.ohs.fhir.engine.sync.upload.patch
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.collections.shouldContainOnly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlin.collections.mutableListOf
 import kotlin.test.Test
 
@@ -71,7 +71,7 @@ class StronglyConnectedPatchesTest {
     graph.addNode("0")
     graph.addNode("1")
     val result = StronglyConnectedPatches.scc(graph)
-    result.shouldContainOnly(listOf("0"), listOf("1"))
+    result.shouldContainExactlyInAnyOrder(listOf("0"), listOf("1"))
   }
 
   @Test

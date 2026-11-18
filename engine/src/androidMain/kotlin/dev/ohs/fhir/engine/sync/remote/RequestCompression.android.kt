@@ -15,4 +15,12 @@
  */
 package dev.ohs.fhir.engine.sync.remote
 
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPOutputStream
+
 internal actual fun supportsRequestCompression(): Boolean = true
+
+internal actual fun gzip(bytes: ByteArray): ByteArray =
+  ByteArrayOutputStream()
+    .also { out -> GZIPOutputStream(out).use { it.write(bytes) } }
+    .toByteArray()

@@ -67,7 +67,7 @@ class SortMatchingTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
   }
 
   @Test

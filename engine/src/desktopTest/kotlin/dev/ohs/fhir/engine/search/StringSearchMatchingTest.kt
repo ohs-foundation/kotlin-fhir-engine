@@ -48,12 +48,14 @@ class StringSearchMatchingTest {
         patient("string-search-title", family = "Okonkwo"),
         patient("string-search-upper", family = "OKONKWO"),
         patient("string-search-other", family = "Achebe"),
+        // Holds "ache" mid-string, so a prefix search that matched anywhere would return it.
+        patient("string-search-mid", family = "Sachem"),
       )
   }
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
   }
 
   @Test

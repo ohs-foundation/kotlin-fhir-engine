@@ -12,13 +12,14 @@ A Kotlin Multiplatform library for building offline-capable healthcare applicati
 FHIR R4 standard. It provides on-device FHIR resource persistence, a type-safe search API, and
 synchronization with remote FHIR servers.
 
-## Conformance
+## Status
 
-The library targets FHIR R4 (v4.0.1). See [Conformance](docs/conformance.md) for feature by
-feature support of the [Search](https://hl7.org/fhir/R4/search.html) and
-[RESTful API](https://hl7.org/fhir/R4/http.html) specifications and per platform support. It
-documents what is supported and what is not. Parity with the original android-fhir engine is
-documented in [android-fhir parity](docs/android-fhir-parity.md).
+The library targets FHIR R4 (v4.0.1).
+
+- [Migrating from android-fhir](docs/migrating-from-android-fhir.md): what stays the same and what
+  changes.
+- [Known issues](docs/known-issues.md): bugs, and what isn't supported yet, including per platform.
+- [Ignored tests](docs/ignored-tests.md): every test skipped because of a known bug, and why.
 
 ## Supported platforms
 
@@ -365,15 +366,14 @@ For periodic sync, `PeriodicSyncJobStatus` combines `currentSyncJobStatus` with 
 
 #### Compressing uploads (gzip)
 
-`NetworkConfiguration(uploadWithGzip = true)` compresses upload request bodies with gzip.
-
-This only works on Android and Desktop. Ktor can only compress request bodies on the JVM. On iOS
-and js/wasmJs it would label the body as gzip but send it uncompressed, and the server would
-reject it. The engine therefore ignores the flag on those platforms, sends uploads uncompressed,
-and logs a warning. Tracked upstream as
+`NetworkConfiguration(uploadWithGzip = true)` gzips upload request bodies. It works on Android
+and Desktop, where the KMP engine gzips the body itself and sends a `Content-Length` header, as
+android-fhir does. iOS and js/wasmJs have no gzip encoder, so the KMP engine sends uploads
+uncompressed there and logs a warning. Ktor's own encoder only works on the JVM, see
 [KTOR-8198](https://youtrack.jetbrains.com/issue/KTOR-8198).
 
-Downloads are not affected. Response decompression works on every platform.
+Downloads are decompressed on Android, iOS and web. On Desktop, Ktor's Java client only asks for
+and decompresses gzipped responses when `uploadWithGzip` is on.
 
 ### Web (Wasm)
 

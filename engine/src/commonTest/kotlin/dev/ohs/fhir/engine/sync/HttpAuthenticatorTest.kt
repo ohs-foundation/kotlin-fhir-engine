@@ -13,6 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ohs.fhir.engine.db.impl
+package dev.ohs.fhir.engine.sync
 
-internal actual val encryptionTestSupport: EncryptionTestSupport? = null
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class HttpAuthenticatorTest {
+  @Test
+  fun basic_getAuthorizationHeader_encodesCredentials() {
+    assertEquals(
+      "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
+      HttpAuthenticationMethod.Basic("username", "password").getAuthorizationHeader(),
+    )
+  }
+
+  @Test
+  fun bearer_getAuthorizationHeader_prefixesToken() {
+    assertEquals("Bearer token", HttpAuthenticationMethod.Bearer("token").getAuthorizationHeader())
+  }
+}

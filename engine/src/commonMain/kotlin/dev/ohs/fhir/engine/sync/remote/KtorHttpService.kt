@@ -28,11 +28,12 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.compression.ContentEncodingConfig
-import io.ktor.client.plugins.compression.compress
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.headers
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -40,7 +41,11 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
+import io.ktor.http.content.ByteArrayContent
+import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -119,13 +124,12 @@ internal class KtorHttpService(
     resource: Resource,
     headers: Map<String, String>,
   ): Resource {
+    val body = uploadBody(ContentType.Application.Json) { fhirJson.encodeToString(resource) }
     val json: String =
       client
         .post(path) {
-          contentType(ContentType.Application.Json)
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          if (compressUploads) compress("gzip")
-          setBody(fhirJson.encodeToString(resource))
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
@@ -136,13 +140,12 @@ internal class KtorHttpService(
     resource: Resource,
     headers: Map<String, String>,
   ): Resource {
+    val body = uploadBody(ContentType.Application.Json) { fhirJson.encodeToString(resource) }
     val json: String =
       client
         .put(path) {
-          contentType(ContentType.Application.Json)
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          if (compressUploads) compress("gzip")
-          setBody(fhirJson.encodeToString(resource))
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
@@ -153,16 +156,37 @@ internal class KtorHttpService(
     patchDocument: JsonArray,
     headers: Map<String, String>,
   ): Resource {
+    val body =
+      uploadBody(ContentType.parse("application/json-patch+json")) { patchDocument.toString() }
     val json: String =
       client
         .patch(path) {
-          contentType(ContentType.parse("application/json-patch+json"))
           headers { headers.forEach { (k, v) -> append(k, v) } }
-          if (compressUploads) compress("gzip")
-          setBody(patchDocument.toString())
+          setUploadBody(body)
         }
         .body()
     return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+  }
+
+  /**
+   * Encodes the upload body, gzipped when [compressUploads] is on, off the caller's thread so a
+   * large bundle doesn't block it. android-fhir does both on OkHttp's threads. The gzipped bytes
+   * are sent whole, so the request carries a Content-Length, as android-fhir's
+   * GzipUploadInterceptor does. Servers that reject chunked uploads need it.
+   */
+  private suspend fun uploadBody(contentType: ContentType, encode: () -> String): OutgoingContent =
+    withContext(Dispatchers.Default) {
+      val body = encode()
+      if (compressUploads) {
+        ByteArrayContent(gzip(body.encodeToByteArray()), contentType)
+      } else {
+        TextContent(body, contentType)
+      }
+    }
+
+  private fun HttpRequestBuilder.setUploadBody(body: OutgoingContent) {
+    if (compressUploads) header(HttpHeaders.ContentEncoding, "gzip")
+    setBody(body)
   }
 
   override suspend fun delete(path: String, headers: Map<String, String>): Resource {
@@ -202,10 +226,11 @@ internal class KtorHttpService(
         socketTimeoutMillis = networkConfiguration.writeTimeOut * 1000
       }
 
+      // Uploads are gzipped in setUploadBody. The plugin only decompresses gzipped responses.
       if (networkConfiguration.uploadWithGzip && supportsRequestCompression()) {
         install(ContentEncoding) {
           gzip()
-          mode = ContentEncodingConfig.Mode.All
+          mode = ContentEncodingConfig.Mode.DecompressResponse
         }
       }
 

@@ -136,8 +136,8 @@ object FhirEngineProvider {
    *   new `storageDirectory` to start without them.
    */
   @FhirEngineTestApi
-  fun resetForTesting() {
-    if (canCloseDatabaseOnReset()) (fhirEngine as? FhirEngineImpl)?.closeDatabase()
+  fun cleanup() {
+    (fhirEngine as? FhirEngineImpl)?.closeDatabase()
     dataSource?.close()
     fhirEngine = null
     dataSource = null

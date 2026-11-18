@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # Runs on any branch from the Actions tab, for branches that have no pull request to main yet.
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,11 +20,12 @@ env:
 
 jobs:
   lint-and-compile:
-    name: Lint and compile all platforms
-    runs-on: macos-latest
+    name: Lint and compile
+    runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
+      # Full history, because Spotless only checks files changed since origin/main.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -41,56 +44,68 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Cache Kotlin/Native
-        uses: actions/cache@v4
-        with:
-          path: ~/.konan
-          key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
-          restore-keys: ${{ runner.os }}-konan-
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Check code formatting (Spotless)
         run: ./gradlew spotlessCheck
 
-      - name: Check all platforms compile
+      # The android-fhir commit docs/test-parity.csv was checked against. Its engine tests have not
+      # changed since.
+      - name: Check out the android-fhir engine tests
+        uses: actions/checkout@v4
+        with:
+          repository: ohs-foundation/android-fhir
+          ref: master
+          path: android-fhir
+          sparse-checkout: |
+            engine/src/test
+            engine/src/androidTest
+
+      - name: Check every android-fhir engine test is mapped
+        run: python3 scripts/test_parity.py android-fhir && git diff --exit-code docs/test-parity.csv
+
+      - name: Check the list of ignored tests is up to date
+        run: python3 scripts/ignored_tests.py && git diff --exit-code docs/ignored-tests.md
+
+      # Every module, not just the engine the test jobs build. iOS compiles in the ios job.
+      - name: Compile Android, desktop and web
         run: >
           ./gradlew compileDebugKotlinAndroid :engine:compileAndroidMain compileKotlinDesktop
-          compileKotlinJs compileKotlinWasmJs compileKotlinIosArm64 compileKotlinIosSimulatorArm64
+          compileKotlinJs compileKotlinWasmJs
 
+      # The codelab is its own build on the published engine. iOS compiles in the ios job.
       - name: Check the codelab compiles
         working-directory: codelabs
         run: >
           ./gradlew :androidApp:compileDebugKotlinAndroid :shared:compileKotlinDesktop
-          :shared:compileKotlinWasmJs :shared:compileKotlinIosSimulatorArm64
+          :shared:compileKotlinWasmJs
 
+  # Each job runs the shared tests (commonTest) and its platform's own tests. Android runs them on
+  # an emulator in android-test, because the engine needs a real SQLite.
   test:
     name: Test ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Desktop
-            target: ":engine:desktopTest"
+          - name: desktop
+            tasks: ":engine:desktopTest"
             os: ubuntu-latest
-          - name: Android host
-            target: ":engine:testAndroidHostTest"
+          - name: JS
+            tasks: ":engine:jsBrowserTest"
             os: ubuntu-latest
-          - name: JS browser
-            target: ":engine:jsBrowserTest"
+          - name: Wasm
+            tasks: ":engine:wasmJsBrowserTest"
             os: ubuntu-latest
-          - name: Wasm browser
-            target: ":engine:wasmJsBrowserTest"
-            os: ubuntu-latest
-          - name: iOS simulator
-            target: ":engine:iosSimulatorArm64Test"
-            os: macos-latest
-          - name: iOS simulator, system SQLite
-            target: ":engine:iosSimulatorArm64SystemSqliteTest"
+          # One macOS job builds Kotlin/Native once for both SQLite variants and every module.
+          - name: iOS
+            tasks: >-
+              compileKotlinIosArm64 compileKotlinIosSimulatorArm64
+              :engine:iosSimulatorArm64Test :engine:iosSimulatorArm64SystemSqliteTest
             os: macos-latest
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -111,15 +126,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        if: matrix.name == 'Android host'
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
-
-      - name: Cache Kotlin/Native
+      # The toolchain is about 2 GB, so only main saves it and other branches read it.
+      - name: Restore Kotlin/Native
         if: runner.os == 'macOS'
-        uses: actions/cache@v4
+        id: konan
+        uses: actions/cache/restore@v4
         with:
           path: ~/.konan
           key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
@@ -128,8 +139,21 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # --continue so the second iOS suite still runs when the first fails.
       - name: Run tests
-        run: ./gradlew ${{ matrix.target }} "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        run: ./gradlew ${{ matrix.tasks }} --continue "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Check the codelab compiles for iOS
+        if: matrix.name == 'iOS'
+        working-directory: codelabs
+        run: ./gradlew :shared:compileKotlinIosSimulatorArm64
+
+      - name: Save Kotlin/Native
+        if: runner.os == 'macOS' && github.ref == 'refs/heads/main' && steps.konan.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
@@ -140,8 +164,8 @@ jobs:
             engine/build/reports/tests/
             engine/build/test-results/
 
-  android-device-test:
-    name: Test Android device
+  android-test:
+    name: Test Android
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -177,27 +201,63 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run Android device tests
-        uses: reactivecircus/android-emulator-runner@v2
+      # The system image and the emulator snapshot are about 2 GB, so only main saves them.
+      - name: Restore the emulator
+        id: emulator
+        uses: actions/cache/restore@v4
         with:
-          api-level: 34
-          arch: x86_64
-          disable-animations: true
-          script: ./gradlew :engine:connectedAndroidDeviceTest "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+          path: |
+            ${{ env.ANDROID_HOME }}/system-images
+            ~/.android/avd/gradle-managed
+          key: emulator-${{ hashFiles('engine/build.gradle.kts') }}
+          restore-keys: emulator-
 
-      - name: Upload Android device test reports
+      # The emulator is declared in engine/build.gradle.kts, so this is the same run as locally.
+      - name: Run tests
+        run: >
+          ./gradlew :engine:pixel2Api34AndroidDeviceTest
+          -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+          "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Save the emulator
+        if: github.ref == 'refs/heads/main' && steps.emulator.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/system-images
+            ~/.android/avd/gradle-managed
+          key: emulator-${{ hashFiles('engine/build.gradle.kts') }}
+
+      - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-reports-Android device
+          name: test-reports-android
           path: |
             engine/build/reports/
             engine/build/outputs/androidTest-results/
 
+  summary:
+    name: Test results
+    needs: [test, android-test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: test-reports-*
+          path: test-reports
+
+      - name: Write the results table
+        run: python3 .github/scripts/test_summary.py test-reports >> "$GITHUB_STEP_SUMMARY"
+
   # Each shard runs base and head for its share of the classes on one runner. The comment workflow
   # merges the shards.
   benchmark:
-    name: Micro benchmarks
+    name: Benchmarks, part ${{ matrix.shard }} of 2
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:

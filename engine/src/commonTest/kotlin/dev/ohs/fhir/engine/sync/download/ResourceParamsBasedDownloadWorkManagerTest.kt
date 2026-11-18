@@ -25,7 +25,7 @@ import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.Uri
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldContainOnly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -55,7 +55,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
       }
     } while (url != null)
 
-    urlsToDownload shouldContainOnly
+    urlsToDownload shouldContainExactlyInAnyOrder
       listOf(
         "Patient?address-city=NAIROBI&_sort=_lastUpdated&_lastUpdated=gt2022-03-20",
         "Observation?_sort=_lastUpdated&_lastUpdated=gt2022-03-20",
@@ -97,7 +97,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
       }
     } while (url != null)
 
-    urlsToDownload shouldContainOnly
+    urlsToDownload shouldContainExactlyInAnyOrder
       listOf(
         "Patient?_sort=_lastUpdated&_lastUpdated=gt2022-03-20",
         "http://url-to-next-page?token=pageToken",
@@ -186,9 +186,9 @@ class ResourceParamsBasedDownloadWorkManagerTest {
 
     val urls = downloadManager.getSummaryRequestUrls()
 
-    urls.map { it.key } shouldContainOnly
+    urls.map { it.key } shouldContainExactlyInAnyOrder
       listOf(ResourceType.Patient, ResourceType.Immunization, ResourceType.Observation)
-    urls.map { it.value } shouldContainOnly
+    urls.map { it.value } shouldContainExactlyInAnyOrder
       listOf(
         "Patient?address-city=NAIROBI&_sort=_lastUpdated&_lastUpdated=gt2022-03-20&_summary=count",
         "Immunization?_sort=_lastUpdated&_lastUpdated=gt2022-03-20&_summary=count",
@@ -271,7 +271,7 @@ class ResourceParamsBasedDownloadWorkManagerTest {
           ),
       )
 
-    downloadManager.processResponse(response).map { it.id } shouldContainOnly
+    downloadManager.processResponse(response).map { it.id } shouldContainExactlyInAnyOrder
       listOf("Patient-Id-001", "Patient-Id-002")
   }
 

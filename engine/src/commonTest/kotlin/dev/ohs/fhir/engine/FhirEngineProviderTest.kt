@@ -31,7 +31,7 @@ class FhirEngineProviderTest {
 
   @AfterTest
   fun tearDown() {
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
   }
 
   @Test
@@ -52,7 +52,7 @@ class FhirEngineProviderTest {
       testPlatformContext(),
     )
     val engineOne = FhirEngineProvider.getInstance(testPlatformContext())
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
     FhirEngineProvider.init(
       FhirEngineConfiguration(testMode = true, storageDirectory = testStorageDirectory()),
       testPlatformContext(),
@@ -62,7 +62,7 @@ class FhirEngineProviderTest {
   }
 
   @Test
-  fun testMode_usesAnInMemoryDatabaseThatSupportsReadsAndWrites() = runTest {
+  fun testMode_engineSupportsReadsAndWrites() = runTest {
     FhirEngineProvider.init(FhirEngineConfiguration(testMode = true), testPlatformContext())
     val engine = FhirEngineProvider.getInstance(testPlatformContext())
 
@@ -139,7 +139,7 @@ class FhirEngineProviderTest {
     )
     FhirEngineProvider.getFhirDataStore()
 
-    FhirEngineProvider.resetForTesting()
+    FhirEngineProvider.cleanup()
 
     assertFailsWith<IllegalStateException> { FhirEngineProvider.getFhirDataStore() }
   }
