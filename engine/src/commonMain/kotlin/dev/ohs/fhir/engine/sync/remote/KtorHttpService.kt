@@ -50,6 +50,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
@@ -77,10 +78,48 @@ internal class KtorHttpService(
   }
 
   /**
-   * Sanitizes JSON to work around bugs in the kotlin-fhir library (fhir-model beta):
-   * 1. Truncates DateTime values in date-only fields, e.g. birthDate, deceasedDate
-   *    (FhirDate.fromString() crash)
-   * 2. Strips "text" (Narrative) fields that cause NPE when status/div is missing
+   * Parses a response, and only when that fails retries with [repair]. Sanitizing cuts every
+   * `...Date` field to a date, dateTime fields included, so valid data must skip it.
+   */
+  private fun decode(json: String): Resource =
+    try {
+      fhirJson.decodeFromString<Resource>(json)
+    } catch (_: Exception) {
+      fhirJson.decodeFromString<Resource>(repair(json))
+    }
+
+  /**
+   * Sanitizes only the bundle entries that fail to parse, so one invalid resource leaves the rest
+   * of the bundle as the server sent it. Any other response is sanitized whole.
+   */
+  private fun repair(json: String): String {
+    val bundle =
+      (runCatching { lenientJson.parseToJsonElement(json) }.getOrNull() as? JsonObject)?.takeIf {
+        (it["resourceType"] as? JsonPrimitive)?.content == "Bundle"
+      }
+    val entries = bundle?.get("entry") as? JsonArray ?: return sanitizeJson(json)
+    val repaired =
+      entries.map { entry ->
+        val resource = (entry as? JsonObject)?.get("resource") ?: return@map entry
+        val resourceJson = lenientJson.encodeToString(JsonElement.serializer(), resource)
+        if (runCatching { fhirJson.decodeFromString<Resource>(resourceJson) }.isSuccess) {
+          entry
+        } else {
+          JsonObject(
+            entry + ("resource" to lenientJson.parseToJsonElement(sanitizeJson(resourceJson))),
+          )
+        }
+      }
+    return lenientJson.encodeToString(
+      JsonElement.serializer(),
+      JsonObject(bundle + ("entry" to JsonArray(repaired))),
+    )
+  }
+
+  /**
+   * Repairs invalid server JSON that kotlin-fhir rejects:
+   * 1. Truncates a dateTime in a field ending in `Date`, such as a birthDate with a time.
+   * 2. Strips narratives, which fail to parse when their status or div is missing.
    */
   private fun sanitizeJson(json: String): String {
     val sanitized =
@@ -116,7 +155,7 @@ internal class KtorHttpService(
   override suspend fun get(path: String, headers: Map<String, String>): Resource {
     val json: String =
       client.get(path) { headers { headers.forEach { (k, v) -> append(k, v) } } }.body()
-    return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+    return decode(json)
   }
 
   override suspend fun post(
@@ -132,7 +171,7 @@ internal class KtorHttpService(
           setUploadBody(body)
         }
         .body()
-    return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+    return decode(json)
   }
 
   override suspend fun put(
@@ -148,7 +187,7 @@ internal class KtorHttpService(
           setUploadBody(body)
         }
         .body()
-    return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+    return decode(json)
   }
 
   override suspend fun patch(
@@ -165,7 +204,7 @@ internal class KtorHttpService(
           setUploadBody(body)
         }
         .body()
-    return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+    return decode(json)
   }
 
   /**
@@ -192,7 +231,7 @@ internal class KtorHttpService(
   override suspend fun delete(path: String, headers: Map<String, String>): Resource {
     val json: String =
       client.delete(path) { headers { headers.forEach { (k, v) -> append(k, v) } } }.body()
-    return fhirJson.decodeFromString<Resource>(sanitizeJson(json))
+    return decode(json)
   }
 
   companion object {

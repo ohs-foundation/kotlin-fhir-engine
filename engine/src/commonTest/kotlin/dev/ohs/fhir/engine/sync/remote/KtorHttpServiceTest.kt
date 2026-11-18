@@ -17,6 +17,7 @@ package dev.ohs.fhir.engine.sync.remote
 
 import dev.ohs.fhir.engine.NetworkConfiguration
 import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Condition
 import dev.ohs.fhir.model.r4.Enumeration
 import dev.ohs.fhir.model.r4.HumanName
 import dev.ohs.fhir.model.r4.Patient
@@ -137,6 +138,49 @@ class KtorHttpServiceTest {
     httpService.post("", request, emptyMap())
 
     requestData!!.url.encodedPath.shouldBeEqual("/fhir/")
+  }
+
+  @Test
+  fun get_validResponse_keepsDateTimesAndNarratives() = runTest {
+    val json =
+      """{"resourceType":"Condition","id":"c1","subject":{"reference":"Patient/p1"},"recordedDate":"2020-01-01T10:20:30Z","text":{"status":"generated","div":"<div xmlns=\"http://www.w3.org/1999/xhtml\">Flu</div>"}}"""
+
+    val condition = respondingWith(json).get("Condition/c1", emptyMap()) as Condition
+
+    condition.recordedDate?.value.toString() shouldBe "2020-01-01T10:20:30Z"
+    condition.text?.div?.value shouldContain "Flu"
+  }
+
+  @Test
+  fun get_invalidResponse_isRepaired() = runTest {
+    val json =
+      """{"resourceType":"Patient","id":"p1","birthDate":"2000-01-02T10:00:00Z","text":{"div":"<div xmlns=\"http://www.w3.org/1999/xhtml\">Hi</div>"}}"""
+
+    val patient = respondingWith(json).get("Patient/p1", emptyMap()) as Patient
+
+    patient.birthDate?.value.toString() shouldBe "2000-01-02"
+    patient.text shouldBe null
+  }
+
+  @Test
+  fun get_bundleWithOneInvalidEntry_repairsOnlyThatEntry() = runTest {
+    fun condition(id: String, text: String) =
+      """{"resource":{"resourceType":"Condition","id":"$id","subject":{"reference":"Patient/p1"},"recordedDate":"2020-01-01T10:20:30Z","text":$text}}"""
+    val valid =
+      """{"status":"generated","div":"<div xmlns=\"http://www.w3.org/1999/xhtml\">Flu</div>"}"""
+    val noStatus = """{"div":"<div xmlns=\"http://www.w3.org/1999/xhtml\">Flu</div>"}"""
+    val json =
+      """{"resourceType":"Bundle","type":"searchset","entry":[""" +
+        listOf(condition("c1", valid), condition("c2", noStatus), condition("c3", valid))
+          .joinToString(",") +
+        "]}"
+
+    val bundle = respondingWith(json).get("Condition", emptyMap()) as Bundle
+    val conditions = bundle.entry.map { it.resource as Condition }
+
+    conditions.map { it.recordedDate?.value.toString() } shouldBe
+      listOf("2020-01-01T10:20:30Z", "2020-01-01", "2020-01-01T10:20:30Z")
+    conditions.map { it.text != null } shouldBe listOf(true, false, true)
   }
 
   // Ktor's DefaultRequest drops the base URL path when it has no trailing slash, so the request
@@ -336,4 +380,8 @@ class KtorHttpServiceTest {
             respondOk(parser.encodeToString(Patient(id = "patient-1")))
           },
       )
+
+  private fun respondingWith(json: String) =
+    KtorHttpService.Builder("/", NetworkConfiguration())
+      .build(engine = MockEngine { respondOk(json) })
 }
