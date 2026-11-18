@@ -113,7 +113,7 @@ data class NetworkConfiguration(
  * Configuration for HTTP caching of network requests.
  *
  * @property cacheDir The directory path used for caching (platform-agnostic string path).
- * @property maxSize The maximum size of the cache in bits, e.g., `50L * 1024L * 1024L` for 50 MiB.
+ * @property maxSize The maximum size of the cache in bytes, e.g., `50L * 1024L * 1024L` for 50 MiB.
  */
 data class CacheConfiguration(
   val cacheDir: String,

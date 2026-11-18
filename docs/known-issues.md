@@ -21,7 +21,6 @@ supported yet** are features the KMP engine doesn't have.
 | Sync | Every resource the server returns is changed before it's stored. A step meant to repair invalid server data runs on every response. It drops narratives (`text`), and cuts the time off any field whose name ends in `Date`, such as `Condition.recordedDate`. | None | [#128](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/128) |
 | Sync | A base URL without a trailing `/` loses its path. With `https://hapi.fhir.org/baseR4`, requests go to `https://hapi.fhir.org/Patient`. | End the base URL with `/`. | [#90](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/90) |
 | Sync | A sync error keeps only the exception message. The exception's type and stack trace are lost, and a failure without a message reaches the app as `Unknown Exception`. | None | [#91](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/91) |
-| Sync | `httpCache` keeps an unlimited cache in memory. `cacheDir` and `maxSize` are ignored, where android-fhir keeps a disk cache of `maxSize`. | None | [#131](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/131) |
 
 ## Not supported yet
 
@@ -50,5 +49,6 @@ supported yet** are features the KMP engine doesn't have.
 | Database encryption | ✅ | Throws at init | ✅ The app links SQLCipher, or init throws | Throws at init |
 | Gzip uploads (`uploadWithGzip`) | ✅ | ✅ | Sent uncompressed, with a warning | Sent uncompressed, with a warning |
 | Gzip downloads | ✅ | Only when `uploadWithGzip` is on | ✅ | ✅ |
+| HTTP cache (`httpCache`) | ✅ On disk, up to `maxSize` | On disk in `cacheDir`, with no size limit | ✅ On disk, up to `maxSize` | The browser's own cache. `cacheDir` and `maxSize` don't apply |
 | Built-in sync scheduling | ✅ WorkManager | The app schedules it | The app schedules it | The app schedules it |
 | Closing the database (`FhirEngineProvider.cleanup()`) | ✅ | ✅ | ✅ | Leaves it open, because a close can freeze the browser. The cause isn't known yet. See [#132](https://github.com/ohs-foundation/kotlin-fhir-engine/issues/132). |
