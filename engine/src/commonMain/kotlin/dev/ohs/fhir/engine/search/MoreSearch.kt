@@ -810,8 +810,12 @@ internal fun fhirDateTimeToEpochMillis(dateTime: FhirDateTime): Long =
  */
 internal fun fhirDateTimeToEndEpochMillis(dateTime: FhirDateTime): Long =
   when (dateTime) {
-    is FhirDateTime.DateTime ->
-      dateTime.dateTime.toInstant(dateTime.utcOffset).toEpochMilliseconds()
+    is FhirDateTime.DateTime -> {
+      // A whole-second value covers that second and a fractional one is that millisecond, as the
+      // indexer stores them.
+      val start = dateTime.dateTime.toInstant(dateTime.utcOffset).toEpochMilliseconds()
+      if (dateTime.dateTime.nanosecond == 0) start + 999 else start
+    }
     is FhirDateTime.Date -> {
       val nextDay = dateTime.date.plus(1, DateTimeUnit.DAY)
       nextDay.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds() - 1
