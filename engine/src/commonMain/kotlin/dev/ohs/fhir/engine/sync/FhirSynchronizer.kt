@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 @Serializable
 enum class SyncOperation {
@@ -44,12 +45,30 @@ private sealed class SyncResult {
   data class Error(val exceptions: List<ResourceSyncException>) : SyncResult()
 }
 
+/**
+ * A sync failure for [resourceType].
+ *
+ * @property exception The exception that caused the failure, if any. It is not saved with the sync
+ *   status, so it is null on a status read back from storage.
+ */
 @Serializable
 data class ResourceSyncException(
   val resourceType: ResourceType,
   val exceptionMessage: String? = null,
   val exceptionStacktrace: String? = null,
-)
+  @Transient val exception: Exception? = null,
+) {
+  /** Keeps the type, message and stack trace of [exception], as in android-fhir. */
+  constructor(
+    resourceType: ResourceType,
+    exception: Exception,
+  ) : this(
+    resourceType,
+    exception.message ?: exception.toString(),
+    exception.stackTraceToString(),
+    exception,
+  )
+}
 
 internal data class UploadConfiguration(
   val uploader: Uploader,

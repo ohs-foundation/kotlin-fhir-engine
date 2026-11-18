@@ -116,6 +116,7 @@ class FhirSynchronizerTest {
       assertEquals(SyncJobStatus.InProgress(SyncOperation.UPLOAD, 1, 0), emitted[2])
       val failed = assertIs<SyncJobStatus.Failed>(emitted[3])
       assertEquals("Upload error", failed.exceptions.single().exceptionMessage)
+      assertIs<IllegalStateException>(failed.exceptions.single().exception)
       assertEquals(failed.exceptions, assertIs<SyncJobStatus.Failed>(result).exceptions)
     }
 
