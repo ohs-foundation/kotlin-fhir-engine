@@ -1,0 +1,87 @@
+// Builds what binary_size.py measures, for every published multiplatform module.
+//
+// Usage: ./gradlew --init-script .github/scripts/binary-size.init.gradle binarySizeArtifacts
+//
+// Writes <module>/build/binary-size/manifest.json with the artifact paths and the resolved runtime
+// dependencies. JS and Wasm get library binaries here, so the engine build has no size-only setup.
+
+import groovy.json.JsonOutput
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+
+allprojects {
+  pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+    pluginManager.withPlugin("com.vanniktech.maven.publish") {
+      kotlin.targets.matching { it.name in ["js", "wasmJs"] }.configureEach { it.binaries.library() }
+      afterEvaluate { configureBinarySize(project) }
+    }
+  }
+}
+
+def configureBinarySize(Project project) {
+  def android = project.kotlin.targets.findByName("android")
+  // The Android library target also reports the jvm platform type.
+  def jvmTargets = project.kotlin.targets.findAll { it.platformType.name() == "jvm" && it != android }*.name
+
+  def jars = jvmTargets.collectEntries { [(it): project.tasks.named("${it}Jar")] }
+  def aar = android ? project.tasks.named("bundleAndroidMainAar") : null
+  def web = ["js", "wasmJs"].findAll { project.kotlin.targets.findByName(it) }.collectEntries {
+    [(it): project.tasks.named("${it}DevelopmentLibraryCompileSync")]
+  }
+  // The npm packages the browser loads at runtime are installed into the root build.
+  def npmInstalls = ["kotlinNpmInstall", "kotlinWasmNpmInstall"].findResults {
+    project.rootProject.tasks.findByName(it)
+  }
+  def classpaths = jvmTargets.collectEntries { [(it): "${it}RuntimeClasspath"] }
+  if (android) classpaths.android = "androidRuntimeClasspath"
+
+  project.tasks.register("binarySizeArtifacts") {
+    group = "reporting"
+    description = "Builds the artifacts and writes the manifest that binary_size.py reads."
+    dependsOn(jars.values() + web.values() + npmInstalls + (aar ? [aar] : []))
+    def manifest = project.layout.buildDirectory.file("binary-size/manifest.json")
+    outputs.file(manifest)
+    outputs.upToDateWhen { false }
+
+    doLast {
+      def report = [
+        project: project.path,
+        name: project.name,
+        namespace: android?.namespace,
+        rootBuildDir: project.rootProject.layout.buildDirectory.get().asFile.absolutePath,
+        jvm: jars.collectEntries { name, task -> [(name): task.get().archiveFile.get().asFile.absolutePath] },
+        android: aar ? aar.get().outputs.files.singleFile.absolutePath : null,
+        web: web.collectEntries { name, task -> [(name): fileOf(task.get().destinationDirectory)] },
+        dependencies: classpaths.collectEntries { target, configuration ->
+          [(target): resolveRuntime(project, configuration)]
+        },
+      ]
+      def file = manifest.get().asFile
+      file.parentFile.mkdirs()
+      file.text = JsonOutput.prettyPrint(JsonOutput.toJson(report))
+    }
+  }
+}
+
+// Some tasks expose a Provider, others a plain File.
+def fileOf(value) {
+  def resolved = value instanceof org.gradle.api.provider.Provider ? value.get() : value
+  (resolved instanceof File ? resolved : resolved.asFile).absolutePath
+}
+
+def resolveRuntime(Project project, String configuration) {
+  def artifacts = project.configurations.getByName(configuration)
+    .incoming.artifactView { lenient = true }.artifacts.artifacts
+  artifacts.findResults { artifact ->
+    def id = artifact.id.componentIdentifier
+    if (id instanceof ProjectComponentIdentifier) return null
+    def entry = [file: artifact.file.absolutePath, bytes: artifact.file.length()]
+    if (id instanceof ModuleComponentIdentifier) {
+      entry.module = "${id.group}:${id.module}"
+      entry.version = id.version
+    } else {
+      entry.module = artifact.file.name
+    }
+    entry
+  }.unique { it.file }.sort { it.module }
+}

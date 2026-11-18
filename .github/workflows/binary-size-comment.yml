@@ -1,0 +1,125 @@
+# Posts the binary size table onto the pull request that produced it.
+#
+# A separate workflow because fork pull requests get a read-only token in CI; `workflow_run` runs
+# with a writable one. This job never runs pull request code.
+#
+# The artifact is written by the pull request, so it is untrusted: the pull request number is
+# validated, the script shows only text that matches a safe pattern, and the table body goes
+# through the environment, not `${{ }}` interpolation.
+name: Binary size comment
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Post binary size
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+
+    steps:
+      # The base branch's copy, never the pull request's.
+      - uses: actions/checkout@v4
+
+      - name: Download the report
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-size
+          path: reports
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        # A cancelled run may upload nothing.
+        continue-on-error: true
+
+      - name: Resolve the pull request
+        id: pr
+        run: |
+          # Untrusted input. Accept digits only, so it cannot inject step outputs or quotes.
+          number="$(head -n 1 reports/pr-number.txt 2>/dev/null | tr -d '[:space:]')" || true
+          if printf '%s' "$number" | grep -Eq '^[0-9]+$'; then
+            echo "number=$number" >> "$GITHUB_OUTPUT"
+          else
+            echo "No usable pr-number.txt in the artifact; nothing to comment on."
+            echo "number=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Render the table
+        id: table
+        if: steps.pr.outputs.number != ''
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        # The script links only a 40-character hex base SHA.
+        run: |
+          {
+            echo 'body<<BINARY_SIZE_EOF'
+            if [ -f reports/head.json ]; then
+              ARGS=(--head-sha "$HEAD_SHA" --repository "$GITHUB_REPOSITORY")
+              if [ -f reports/base.json ]; then ARGS+=(--base reports/base.json); fi
+              if [ -f reports/base-sha.txt ]; then ARGS+=(--base-sha "$(head -n 1 reports/base-sha.txt)"); fi
+              python3 .github/scripts/binary_size.py render reports/head.json "${ARGS[@]}"
+            else
+              echo '<!-- binary-size -->'
+              echo '## Binary size'
+              echo ''
+              if [ -f reports/skipped.txt ]; then
+                echo 'Not measured: the pull request changes nothing that is built into the engine.'
+              else
+                echo 'Not measured: the build failed.'
+              fi
+            fi
+            echo ''
+            echo "[Full report](${{ github.event.workflow_run.html_url }})"
+            echo 'BINARY_SIZE_EOF'
+          } >> "$GITHUB_OUTPUT"
+          if [ -f reports/skipped.txt ]; then echo "skipped=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Post or update the comment
+        if: steps.pr.outputs.number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- binary-size -->';
+            const body = process.env.BODY;
+            const issue_number = Number(process.env.ISSUE_NUMBER);
+            const { owner, repo } = context.repo;
+
+            // The artifact can name any pull request. Comment only if its head was measured.
+            const { data: pull } = await github.rest.pulls.get({
+              owner, repo, pull_number: issue_number,
+            });
+            if (pull.head.sha !== process.env.HEAD_SHA) {
+              core.setFailed(
+                `Pull request #${issue_number} is at ${pull.head.sha}, not the measured ` +
+                  `${process.env.HEAD_SHA}. Refusing to comment.`,
+              );
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body.includes(marker));
+
+            // A skip only replaces an earlier table; it never starts a thread.
+            if (!existing && process.env.SKIPPED === 'true') {
+              return;
+            }
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+        env:
+          BODY: ${{ steps.table.outputs.body }}
+          ISSUE_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          SKIPPED: ${{ steps.table.outputs.skipped }}

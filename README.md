@@ -20,6 +20,7 @@ The library targets FHIR R4 (v4.0.1).
   changes.
 - [Known issues](docs/known-issues.md): bugs, and what isn't supported yet, including per platform.
 - [Ignored tests](docs/ignored-tests.md): every test skipped because of a known bug, and why.
+- [Binary size](docs/binary-size.md): how CI measures the library size on each platform.
 
 ## Supported platforms
 
