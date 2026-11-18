@@ -16,6 +16,7 @@
 package dev.ohs.fhir.engine
 
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
@@ -45,14 +46,7 @@ data class OffsetDateTime(val dateTime: LocalDateTime, val offset: UtcOffset) {
 
   companion object {
     /** Returns the current local datetime paired with the system's current UTC offset. */
-    fun now(): OffsetDateTime {
-      val instant = Clock.System.now()
-      val zone = TimeZone.currentSystemDefault()
-      return OffsetDateTime(
-        dateTime = instant.toLocalDateTime(zone),
-        offset = zone.offsetAt(instant),
-      )
-    }
+    fun now(): OffsetDateTime = Clock.System.now().toOffsetDateTime()
 
     /** Parses ISO 8601 like `"2026-01-15T10:30:00+05:30"` or `"...Z"`. */
     fun parse(text: String): OffsetDateTime {
@@ -60,6 +54,12 @@ data class OffsetDateTime(val dateTime: LocalDateTime, val offset: UtcOffset) {
       return OffsetDateTime(dateTime = parsed.toLocalDateTime(), offset = parsed.toUtcOffset())
     }
   }
+}
+
+/** This instant in the system time zone, with the offset that applied at this instant. */
+internal fun Instant.toOffsetDateTime(): OffsetDateTime {
+  val zone = TimeZone.currentSystemDefault()
+  return OffsetDateTime(dateTime = toLocalDateTime(zone), offset = zone.offsetAt(this))
 }
 
 internal object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {

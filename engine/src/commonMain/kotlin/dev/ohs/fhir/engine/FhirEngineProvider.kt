@@ -177,7 +177,7 @@ object FhirEngineProvider {
         )
     }
 
-    return FhirEngineImpl(database)
+    return FhirEngineImpl(database, fhirDataStore)
   }
 
   private fun buildCustomParamsMap(

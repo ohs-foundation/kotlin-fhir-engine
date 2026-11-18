@@ -26,12 +26,14 @@ import dev.ohs.fhir.engine.search.Search
 import dev.ohs.fhir.engine.search.count
 import dev.ohs.fhir.engine.search.execute
 import dev.ohs.fhir.engine.sync.ConflictResolver
+import dev.ohs.fhir.engine.sync.FhirDataStore
 import dev.ohs.fhir.engine.sync.Resolved
 import dev.ohs.fhir.engine.sync.upload.LocalChangeFetcherFactory
 import dev.ohs.fhir.engine.sync.upload.ResourceConsolidatorFactory
 import dev.ohs.fhir.engine.sync.upload.SyncUploadProgress
 import dev.ohs.fhir.engine.sync.upload.UploadRequestResult
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
+import dev.ohs.fhir.engine.toOffsetDateTime
 import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +42,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 
 /** Implementation of [FhirEngine] backed by a [Database]. */
-internal class FhirEngineImpl(private val database: Database) : FhirEngine {
+internal class FhirEngineImpl(
+  private val database: Database,
+  private val fhirDataStore: FhirDataStore? = null,
+) : FhirEngine {
 
   /** Closes the database connection. The engine is unusable afterwards. */
   fun closeDatabase() {
@@ -167,10 +172,8 @@ internal class FhirEngineImpl(private val database: Database) : FhirEngine {
     return search.count(database)
   }
 
-  override suspend fun getLastSyncTimeStamp(): OffsetDateTime? {
-    // TODO: implement with FhirDataStore
-    return null
-  }
+  override suspend fun getLastSyncTimeStamp(): OffsetDateTime? =
+    fhirDataStore?.readLastSyncTimestamp()?.toOffsetDateTime()
 
   override suspend fun clearDatabase() {
     database.clearDatabase()
