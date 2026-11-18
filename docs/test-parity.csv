@@ -110,7 +110,7 @@ test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_reference_n
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_reference_empty,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_reference_empty,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_gender,ignored,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_gender,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_gender_null,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_gender_null,
-test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_quantity_money,ignored,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_quantity_money,
+test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_quantity_money,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_quantity_money,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_quantity_quantity_noUnitOrCode,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_quantity_quantity_noUnitOrCode,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_quantity_quantity_unit,ignored,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_quantity_quantity_unit,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_quantity_null,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_quantity_null,

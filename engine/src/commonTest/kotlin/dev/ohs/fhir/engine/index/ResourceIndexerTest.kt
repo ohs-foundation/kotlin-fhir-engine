@@ -801,9 +801,6 @@ class ResourceIndexerTest {
     assertFalse(resourceIndices.tokenIndices.any { it.name == "gender" })
   }
 
-  // Money currency is indexed as the enum name "Eur" instead of its code "EUR". Enable once the
-  // indexer uses the currency code.
-  @Ignore
   @Test
   fun index_quantity_money() {
     val testInvoice =
@@ -1476,8 +1473,7 @@ class ResourceIndexerTest {
     assertEquals(6, resourceIndices.stringIndices.size)
   }
 
-  // Money currency is indexed as the enum name "Eur" instead of its code "EUR", and coded values
-  // lose their system as in index_gender. Enable once both are fixed.
+  // Coded values lose their system as in index_gender. Enable once fhir-path preserves it.
   @Ignore
   @Test
   fun index_invoice() {
