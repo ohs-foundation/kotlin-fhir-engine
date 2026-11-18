@@ -105,6 +105,9 @@ internal class TransactionBundleGenerator(
     private val updateMapping =
       mapOf(
         Bundle.HTTPVerb.Patch to this::patchForUpdateBasedBundleComponentMapper,
+        // The Uploader puts the stored resource in the patch payload, so this is the same as
+        // create.
+        Bundle.HTTPVerb.Put to this::putForCreateBasedBundleComponentMapper,
       )
 
     fun getDefault(useETagForUpload: Boolean = true, bundleSize: Int = 500) =

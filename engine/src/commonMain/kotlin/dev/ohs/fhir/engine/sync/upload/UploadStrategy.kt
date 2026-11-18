@@ -52,6 +52,14 @@ private constructor(
   internal val patchGeneratorMode: PatchGeneratorMode,
   internal val requestGeneratorMode: UploadRequestGeneratorMode,
 ) {
+  /** Whether updates upload the whole stored resource with `PUT` instead of a JSON Patch. */
+  internal val updatesWithPut: Boolean
+    get() =
+      when (requestGeneratorMode) {
+        is UploadRequestGeneratorMode.UrlRequest -> requestGeneratorMode.httpVerbToUseForUpdate
+        is UploadRequestGeneratorMode.BundleRequest -> requestGeneratorMode.httpVerbToUseForUpdate
+      } == HTTPVerb.Put
+
   companion object {
     /**
      * Creates an [UploadStrategy] for bundling changes into a single request.
@@ -66,6 +74,8 @@ private constructor(
      *
      * @param methodForCreate The HTTP method to use for creating new resources (PUT or POST).
      * @param methodForUpdate The HTTP method to use for updating existing resources (PUT or PATCH).
+     *   PUT sends the whole resource as stored on the device, with `If-Match` set to the version it
+     *   is based on.
      * @param squash Whether to combine multiple changes to the same resource into a single update.
      *   Only `true` is supported currently.
      * @param bundleSize The maximum number of resources to include in a single bundle.
@@ -77,9 +87,6 @@ private constructor(
       squash: Boolean,
       bundleSize: Int,
     ): UploadStrategy {
-      if (methodForUpdate == HttpUpdateMethod.PUT) {
-        throw NotImplementedError("PUT for UPDATE not supported yet.")
-      }
       if (!squash) {
         throw NotImplementedError("No squashing with bundle uploading not supported yet.")
       }
@@ -107,6 +114,8 @@ private constructor(
      *
      * @param methodForCreate The HTTP method to use for creating new resources (PUT or POST).
      * @param methodForUpdate The HTTP method to use for updating existing resources (PUT or PATCH).
+     *   PUT sends the whole resource as stored on the device, with `If-Match` set to the version it
+     *   is based on, and needs `squash = true`.
      * @param squash Whether to squash multiple changes to the same resource into a single update.
      *   If `true`, all changes for a resource are fetched and patches are generated per resource.
      *   If `false`, only the earliest change is fetched and patches are generated per change.
@@ -117,9 +126,6 @@ private constructor(
       methodForUpdate: HttpUpdateMethod,
       squash: Boolean,
     ): UploadStrategy {
-      if (methodForUpdate == HttpUpdateMethod.PUT) {
-        throw NotImplementedError("PUT for UPDATE not supported yet.")
-      }
       require(methodForUpdate != HttpUpdateMethod.PUT || squash) {
         "Http method PUT not supported for UPDATE with squash set as false."
       }

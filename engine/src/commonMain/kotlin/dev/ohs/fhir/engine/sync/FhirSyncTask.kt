@@ -17,11 +17,13 @@ package dev.ohs.fhir.engine.sync
 
 import dev.ohs.fhir.engine.FhirEngine
 import dev.ohs.fhir.engine.FhirEngineProvider
+import dev.ohs.fhir.engine.db.impl.serializeResource
 import dev.ohs.fhir.engine.sync.download.DownloaderImpl
 import dev.ohs.fhir.engine.sync.upload.UploadStrategy
 import dev.ohs.fhir.engine.sync.upload.Uploader
 import dev.ohs.fhir.engine.sync.upload.patch.PatchGeneratorFactory
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorFactory
+import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -88,6 +90,14 @@ internal suspend fun FhirSyncTask.runSync(
             patchGenerator = PatchGeneratorFactory.byMode(uploadStrategy.patchGeneratorMode),
             requestGenerator =
               UploadRequestGeneratorFactory.byMode(uploadStrategy.requestGeneratorMode),
+            getStoredResource =
+              if (uploadStrategy.updatesWithPut) {
+                { type, id ->
+                  serializeResource(getFhirEngine().get(ResourceType.valueOf(type), id))
+                }
+              } else {
+                null
+              },
           ),
         uploadStrategy = uploadStrategy,
       ),

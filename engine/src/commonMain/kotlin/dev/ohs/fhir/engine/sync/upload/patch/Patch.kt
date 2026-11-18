@@ -42,7 +42,10 @@ internal data class Patch(
     /** Create a new resource; payload is the full resource JSON. */
     INSERT(1),
 
-    /** Update an existing resource; payload is a JSON Patch document. */
+    /**
+     * Update an existing resource; payload is a JSON Patch document, or the whole resource when
+     * updates upload with `PUT`.
+     */
     UPDATE(2),
 
     /** Delete a resource; payload is empty. */

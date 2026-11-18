@@ -21,7 +21,9 @@ import dev.ohs.fhir.engine.db.LocalChangeResourceReference
 import dev.ohs.fhir.engine.resourceType
 import dev.ohs.fhir.engine.sync.DataSource
 import dev.ohs.fhir.engine.sync.ResourceSyncException
+import dev.ohs.fhir.engine.sync.upload.patch.Patch
 import dev.ohs.fhir.engine.sync.upload.patch.PatchGenerator
+import dev.ohs.fhir.engine.sync.upload.patch.StronglyConnectedPatchMappings
 import dev.ohs.fhir.engine.sync.upload.request.BundleUploadRequestMapping
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGenerator
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestMapping
@@ -46,6 +48,11 @@ internal class Uploader(
   private val dataSource: DataSource,
   private val patchGenerator: PatchGenerator,
   private val requestGenerator: UploadRequestGenerator,
+  /**
+   * Returns the JSON of a resource as stored on the device, given its type and id. Set when updates
+   * upload with `PUT`, which sends the whole resource instead of a JSON Patch.
+   */
+  private val getStoredResource: (suspend (resourceType: String, id: String) -> String)? = null,
 ) {
   suspend fun upload(
     localChanges: List<LocalChange>,
@@ -53,6 +60,7 @@ internal class Uploader(
   ) =
     localChanges
       .let { patchGenerator.generate(it, localChangesReferences) }
+      .let { withStoredResourceForUpdates(it) }
       .let { requestGenerator.generateUploadRequests(it) }
       .asFlow()
       .transformWhile {
@@ -61,6 +69,27 @@ internal class Uploader(
           this !is UploadRequestResult.Failure
         }
       }
+
+  private suspend fun withStoredResourceForUpdates(
+    mappings: List<StronglyConnectedPatchMappings>,
+  ): List<StronglyConnectedPatchMappings> {
+    val getStoredResource = getStoredResource ?: return mappings
+    return mappings.map { group ->
+      StronglyConnectedPatchMappings(
+        group.patchMappings.map { mapping ->
+          val patch = mapping.generatedPatch
+          if (patch.type != Patch.Type.UPDATE) {
+            mapping
+          } else {
+            mapping.copy(
+              generatedPatch =
+                patch.copy(payload = getStoredResource(patch.resourceType, patch.resourceId)),
+            )
+          }
+        },
+      )
+    }
+  }
 
   private fun handleSuccessfulUploadResponse(
     mappedUploadRequest: UploadRequestMapping,
