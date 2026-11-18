@@ -398,9 +398,6 @@ class ResourceIndexerTest {
     assertTrue(resourceIndices.dateTimeIndices.isEmpty())
   }
 
-  // fhir-path returns scheduledString as a plain kotlin String, which the dateTime indexer does not
-  // handle. Enable once the indexer parses plain String date-times.
-  @Ignore
   @Test
   fun index_dateTime_string() {
     val iso = "2011-06-27T09:30:10+01:00"

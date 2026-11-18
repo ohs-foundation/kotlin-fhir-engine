@@ -92,7 +92,7 @@ test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_pe
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_period_noEnd,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_period_noEnd,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_timing,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_timing,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_repeated_timing_is_ignored,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_repeated_timing_is_ignored,
-test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_string,ignored,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_string,
+test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_string,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_string,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_dateTime_null,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_dateTime_null,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_string,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_string,
 test/java/com/google/android/fhir/index/ResourceIndexerTest.kt,index_string_null,ported,commonTest/kotlin/dev/ohs/fhir/engine/index/ResourceIndexerTest.kt,index_string_null,
