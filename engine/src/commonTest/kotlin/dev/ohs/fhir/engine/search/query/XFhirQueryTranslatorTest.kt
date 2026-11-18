@@ -20,6 +20,7 @@ import dev.ohs.fhir.engine.FhirEngineConfiguration
 import dev.ohs.fhir.engine.FhirEngineProvider
 import dev.ohs.fhir.engine.index.SearchParamDefinition
 import dev.ohs.fhir.engine.index.SearchParamType
+import dev.ohs.fhir.engine.index.searchParameter
 import dev.ohs.fhir.engine.search.Order
 import dev.ohs.fhir.engine.search.Search
 import dev.ohs.fhir.engine.search.query.XFhirQueryTranslator.applyFilterParam
@@ -30,6 +31,7 @@ import dev.ohs.fhir.engine.testStorageDirectory
 import dev.ohs.fhir.model.r4.FhirDate
 import dev.ohs.fhir.model.r4.FhirDateTime
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
+import dev.ohs.fhir.model.r4.terminologies.SearchParamType as FhirSearchParamType
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -47,10 +49,11 @@ class XFhirQueryTranslatorTest {
         storageDirectory = testStorageDirectory(),
         customSearchParameters =
           listOf(
-            SearchParamDefinition(
+            searchParameter(
               name = "maritalStatus",
-              type = SearchParamType.TOKEN,
-              path = "Patient.maritalStatus.coding.code",
+              expression = "Patient.maritalStatus.coding.code",
+              base = listOf(ResourceType.Patient),
+              type = FhirSearchParamType.Token,
             ),
           ),
       ),
