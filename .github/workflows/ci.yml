@@ -394,3 +394,117 @@ jobs:
         with:
           name: benchmark-shard-${{ matrix.shard }}
           path: reports/
+
+  # On a pull request, base and head build in this one job, so the comment compares the pull request
+  # with the commit it is based on. See docs/binary-size.md.
+  binary-size:
+    name: Binary size
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Empty when the pull request changes nothing that is built into the engine.
+      - name: Check what changed
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+        run: |
+          mkdir -p reports
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "measure=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only > changed-files.txt \
+              && ! grep -qE '^(engine/|buildSrc/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|\.github/scripts/binary)' changed-files.txt; then
+            echo "measure=false" >> "$GITHUB_OUTPUT"
+            touch reports/skipped.txt
+          else
+            echo "measure=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add swap space
+        if: steps.scope.outputs.measure == 'true'
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile
+          sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=8192
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+
+      - name: Set up JDK 21
+        if: steps.scope.outputs.measure == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # D8 and R8 come from the SDK build tools.
+      - name: Setup Android SDK
+        if: steps.scope.outputs.measure == 'true'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Setup Gradle
+        if: steps.scope.outputs.measure == 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Check out the base branch
+        if: github.event_name == 'pull_request' && steps.scope.outputs.measure == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      # The head's init script, so a base without it is still measured.
+      - name: Build the base
+        id: base
+        if: github.event_name == 'pull_request' && steps.scope.outputs.measure == 'true'
+        continue-on-error: true
+        working-directory: base
+        run: ./gradlew --init-script "$GITHUB_WORKSPACE/.github/scripts/binary-size.init.gradle" binarySizeArtifacts "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Build the head
+        if: steps.scope.outputs.measure == 'true'
+        run: ./gradlew --init-script .github/scripts/binary-size.init.gradle binarySizeArtifacts "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+      - name: Measure
+        if: steps.scope.outputs.measure == 'true'
+        run: |
+          python3 .github/scripts/binary_size.py measure --root . --output reports/head.json
+          if [ "${{ steps.base.outcome }}" = "success" ]; then
+            python3 .github/scripts/binary_size.py measure --root base --output reports/base.json || true
+          fi
+
+      # Fork pull requests leave workflow_run.pull_requests empty; the artifact carries the number.
+      # A skipped run uploads these alone, and the comment says so.
+      - name: Record the pull request
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          echo "${{ github.event.number }}" > reports/pr-number.txt
+          echo "${{ github.event.pull_request.base.sha }}" > reports/base-sha.txt
+
+      - name: Write the job summary
+        if: always() && steps.scope.outputs.measure == 'true'
+        run: |
+          [ -f reports/head.json ] || exit 0
+          ARGS=(--repository "$GITHUB_REPOSITORY")
+          if [ -f reports/base.json ]; then ARGS+=(--base reports/base.json); fi
+          if [ -f reports/base-sha.txt ]; then
+            ARGS+=(--base-sha "$(head -n 1 reports/base-sha.txt)" --head-sha "${{ github.event.pull_request.head.sha }}")
+          fi
+          python3 .github/scripts/binary_size.py render reports/head.json "${ARGS[@]}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: binary-size
+          path: reports/
