@@ -23,6 +23,7 @@ import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.toPatch
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.updateLocalChange
 import dev.ohs.fhir.model.r4.Binary
 import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Patient
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -31,6 +32,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.util.decodeBase64String
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 
 class IndividualGeneratorTest {
 
@@ -112,6 +114,28 @@ class IndividualGeneratorTest {
       }
       localChanges.shouldBeEqual(patchOutput.localChanges)
     }
+  }
+
+  @Test
+  fun should_create_a_put_request_with_if_match_for_update() = runTest {
+    val storedPatient = Patient(id = "Patient-001")
+    val patch = updateLocalChange.toPatch().copy(payload = Json.encodeToString(storedPatient))
+    val generator = UrlRequestGenerator.getGenerator(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Put)
+
+    val request =
+      generator
+        .generateUploadRequests(
+          listOf(
+            StronglyConnectedPatchMappings(listOf(PatchMapping(listOf(updateLocalChange), patch))),
+          ),
+        )
+        .single()
+        .generatedRequest
+
+    request.httpVerb.shouldBe(Bundle.HTTPVerb.Put)
+    request.url.shouldBe("Patient/Patient-001")
+    request.resource.shouldBe(storedPatient)
+    request.headers.shouldBe(mapOf("If-Match" to "W/\"v-p002-01\""))
   }
 
   @Test

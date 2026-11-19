@@ -68,6 +68,7 @@ internal class UrlRequestGenerator(
     private val updateMapping =
       mapOf(
         Bundle.HTTPVerb.Patch to this::patchForUpdateResource,
+        Bundle.HTTPVerb.Put to this::putForUpdateResource,
       )
 
     fun getDefault() = getGenerator(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Patch)
@@ -121,6 +122,23 @@ internal class UrlRequestGenerator(
         httpVerb = Bundle.HTTPVerb.Put,
         url = "${patch.resourceType}/${patch.resourceId}",
         resource = fhirR4Json.decodeFromString(patch.payload),
+      )
+
+    /**
+     * The Uploader puts the stored resource in the patch payload. `If-Match` makes the server
+     * reject the update with 412 if the resource changed since [Patch.versionId].
+     */
+    private fun putForUpdateResource(patch: Patch) =
+      UrlUploadRequest(
+        httpVerb = Bundle.HTTPVerb.Put,
+        url = "${patch.resourceType}/${patch.resourceId}",
+        resource = fhirR4Json.decodeFromString(patch.payload),
+        headers =
+          if (patch.versionId.isNullOrEmpty()) {
+            emptyMap()
+          } else {
+            mapOf("If-Match" to "W/\"${patch.versionId}\"")
+          },
       )
 
     private fun patchForUpdateResource(patch: Patch) =

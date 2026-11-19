@@ -24,6 +24,7 @@ import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.inserti
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.toPatch
 import dev.ohs.fhir.engine.sync.upload.request.RequestGeneratorTestUtils.updateLocalChange
 import dev.ohs.fhir.model.r4.Bundle
+import dev.ohs.fhir.model.r4.Patient
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -37,6 +38,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 
 class TransactionBundleGeneratorTest {
 
@@ -317,17 +319,29 @@ class TransactionBundleGeneratorTest {
   }
 
   @Test
-  fun get_generator_should_through_exception_for_update_by_put() {
-    val exception =
-      assertFailsWith(IllegalArgumentException::class) {
-        TransactionBundleGenerator.getGenerator(
-          Bundle.HTTPVerb.Put,
-          Bundle.HTTPVerb.Put,
-          generatedBundleSize = 500,
-          useETagForUpload = true,
+  fun generate_with_update_by_put_should_return_bundle_entry_with_the_whole_resource() = runTest {
+    val storedPatient = Patient(id = "Patient-001")
+    val patch = updateLocalChange.toPatch().copy(payload = Json.encodeToString(storedPatient))
+    val generator =
+      TransactionBundleGenerator.getGenerator(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Put)
+
+    val entry =
+      generator
+        .generateUploadRequests(
+          listOf(
+            StronglyConnectedPatchMappings(listOf(PatchMapping(listOf(updateLocalChange), patch))),
+          ),
         )
-      }
-    exception.message.shouldBe("Update using PUT is not supported.")
+        .single()
+        .generatedRequest
+        .resource
+        .entry
+        .single()
+
+    entry.request?.method?.value.shouldBe(Bundle.HTTPVerb.Put)
+    entry.request?.url?.value.shouldBe("Patient/Patient-001")
+    entry.request?.ifMatch?.value.shouldBe("W/\"v-p002-01\"")
+    entry.resource.shouldBe(storedPatient)
   }
 
   @Test

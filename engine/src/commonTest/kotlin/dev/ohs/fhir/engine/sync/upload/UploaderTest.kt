@@ -32,6 +32,7 @@ import dev.ohs.fhir.engine.sync.upload.patch.PatchGeneratorFactory
 import dev.ohs.fhir.engine.sync.upload.patch.PatchGeneratorMode
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorFactory
 import dev.ohs.fhir.engine.sync.upload.request.UploadRequestGeneratorMode
+import dev.ohs.fhir.engine.sync.upload.request.UrlUploadRequest
 import dev.ohs.fhir.engine.toLocalChange
 import dev.ohs.fhir.model.r4.Bundle
 import dev.ohs.fhir.model.r4.Enumeration
@@ -544,6 +545,51 @@ class UploaderTest {
         }
       }
     }
+
+  @Test
+  fun url_upload_with_put_for_update_should_send_the_stored_resource() = runTest {
+    val storedPatient =
+      patient1.copy(
+        name = listOf(HumanName(family = dev.ohs.fhir.model.r4.String(value = "Nucleus"))),
+      )
+    val update =
+      LocalChange(
+        resourceType = ResourceType.Patient.name,
+        resourceId = patient1Id,
+        type = LocalChange.Type.UPDATE,
+        payload = "[{\"op\":\"replace\",\"path\":\"/name/0/family\",\"value\":\"Nucleus\"}]",
+        timestamp = Clock.System.now(),
+        versionId = "2",
+        token = LocalChangeToken(listOf(1)),
+      )
+    val sentRequests = mutableListOf<UrlUploadRequest>()
+
+    val result =
+      Uploader(
+          UrlRequestDataSource {
+            sentRequests.add(it)
+            storedPatient
+          },
+          perResourcePatchGenerator,
+          UploadRequestGeneratorFactory.byMode(
+            UploadRequestGeneratorMode.UrlRequest(Bundle.HTTPVerb.Put, Bundle.HTTPVerb.Put),
+          ),
+          getStoredResource = { type, id ->
+            check(type == ResourceType.Patient.name && id == patient1Id)
+            fhirR4Json.encodeToString(storedPatient)
+          },
+        )
+        .upload(listOf(update), emptyList())
+        .toList()
+
+    result.single().shouldBeInstanceOf<UploadRequestResult.Success>()
+    with(sentRequests.single()) {
+      httpVerb.shouldBe(Bundle.HTTPVerb.Put)
+      url.shouldBe("Patient/$patient1Id")
+      resource.shouldBe(storedPatient)
+      headers.shouldBe(mapOf("If-Match" to "W/\"2\""))
+    }
+  }
 
   companion object {
     private val fhirR4Json = Json
