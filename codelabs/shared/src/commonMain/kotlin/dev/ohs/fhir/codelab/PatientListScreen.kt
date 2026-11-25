@@ -91,7 +91,7 @@ fun PatientListScreen(viewModel: PatientListViewModel, onRegister: () -> Unit) {
         modifier = Modifier.fillMaxWidth().padding(16.dp),
       )
       LazyColumn {
-        items(patients, key = { it.id ?: it.hashCode().toString() }) { patient ->
+        items(patients) { patient ->
           PatientItem(patient, tasks["Patient/${patient.id}"].orEmpty())
           HorizontalDivider()
         }

@@ -70,9 +70,10 @@ The starter project for this codelab is located in `codelabs/`.
 HAPI FHIR server in our codelab for the app to connect to.
 
 The `codelabs` folder includes a Docker Compose file that starts a HAPI FHIR server and loads three
-test patients into it, together with the PlanDefinition you'll use in step 10. Run the following command in the `codelabs` folder:
+test patients into it, together with the PlanDefinition you'll use in step 10. Go to the `codelabs` folder and start the server:
 
 ```shell
+cd codelabs
 docker compose up -d
 ```
 
@@ -115,7 +116,7 @@ into seven files in `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/`:
 
 The registration form is in `shared/src/commonMain/composeResources/files/questionnaire.json`.
 
-Each place you'll change is marked with a numbered comment, such as
+Most places you'll change are marked with a numbered comment, such as
 `// 4 Replace with code from the codelab to initialize the FHIR Engine.` The number tells you which
 step of the codelab adds the code.
 
@@ -611,7 +612,7 @@ questionnaireJson?.let { questionnaireJson ->
 
 The `Questionnaire` composable shows the form with a **Submit** button. When you tap **Submit**,
 `getQuestionnaireResponse()` checks the answers and returns them as a FHIR QuestionnaireResponse.
-The name and date of birth are required. If one is missing or isn't valid, the library lists it
+The first name, family name and date of birth are required. If one is missing or isn't valid, the library lists it
 in a dialog and the form stays open. `showSubmitAnywayWhenValidationFails = false` removes the
 dialog's option to submit anyway. Otherwise the app
 passes the response to `registerPatient()` in the view model and goes back to the patient list.

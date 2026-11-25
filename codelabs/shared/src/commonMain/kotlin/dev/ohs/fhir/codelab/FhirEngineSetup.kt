@@ -17,7 +17,7 @@ package dev.ohs.fhir.codelab
 
 /**
  * Initializes the FHIR Engine. [platformContext] is the application `Context` on Android and `Unit`
- * elsewhere. [storageDirectory] is used on desktop and web only.
+ * elsewhere. Only the desktop app passes [storageDirectory].
  */
 fun initFhirEngine(
   platformContext: Any,
