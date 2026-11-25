@@ -1,0 +1,83 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "PlanDefinition/patient-registration",
+      "resource": {
+        "resourceType": "PlanDefinition",
+        "id": "patient-registration",
+        "url": "http://example.org/fhir/PlanDefinition/patient-registration",
+        "name": "PatientRegistration",
+        "title": "New patient registration",
+        "status": "active",
+        "description": "Proposes the first tasks for a newly registered patient.",
+        "action": [
+          {
+            "id": "first-visit",
+            "title": "First visit",
+            "description": "Every new patient gets a first visit.",
+            "definitionCanonical": "http://example.org/fhir/ActivityDefinition/first-visit"
+          },
+          {
+            "id": "child-health-check",
+            "title": "Child health check",
+            "description": "Patients under 5 years old also get a child health check.",
+            "condition": [
+              {
+                "kind": "applicability",
+                "expression": {
+                  "language": "text/fhirpath",
+                  "expression": "(Patient.birthDate + 5 years) > %today"
+                }
+              }
+            ],
+            "definitionCanonical": "http://example.org/fhir/ActivityDefinition/child-health-check"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "PlanDefinition/patient-registration"
+      }
+    },
+    {
+      "fullUrl": "ActivityDefinition/first-visit",
+      "resource": {
+        "resourceType": "ActivityDefinition",
+        "id": "first-visit",
+        "url": "http://example.org/fhir/ActivityDefinition/first-visit",
+        "name": "FirstVisit",
+        "status": "active",
+        "kind": "Task",
+        "code": {
+          "text": "First visit"
+        },
+        "description": "Book a first visit with the new patient."
+      },
+      "request": {
+        "method": "PUT",
+        "url": "ActivityDefinition/first-visit"
+      }
+    },
+    {
+      "fullUrl": "ActivityDefinition/child-health-check",
+      "resource": {
+        "resourceType": "ActivityDefinition",
+        "id": "child-health-check",
+        "url": "http://example.org/fhir/ActivityDefinition/child-health-check",
+        "name": "ChildHealthCheck",
+        "status": "active",
+        "kind": "Task",
+        "code": {
+          "text": "Child health check"
+        },
+        "description": "Book a health check for a child under 5."
+      },
+      "request": {
+        "method": "PUT",
+        "url": "ActivityDefinition/child-health-check"
+      }
+    }
+  ]
+}

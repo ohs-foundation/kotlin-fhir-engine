@@ -6,7 +6,9 @@
 
 In this codelab, you're going to build a Kotlin Multiplatform app with the Kotlin FHIR Engine. Your
 app will use the engine to download FHIR resources from a FHIR server, and upload any local changes
-to the server. The same code runs on Android, iOS, Desktop (JVM) and Web (Wasm).
+to the server. You'll then add a registration form with Kotlin FHIR Data Capture, and use the Kotlin
+FHIR Workflow library to propose the first tasks for each new patient. The same code runs on
+Android, iOS, Desktop (JVM) and Web (Wasm).
 
 ### What you'll learn
 
@@ -15,6 +17,8 @@ to the server. The same code runs on Android, iOS, Desktop (JVM) and Web (Wasm).
 *   How to use the Sync API to download and upload FHIR resources
 *   How to use the Search API
 *   How to use the Data Access APIs to create, read, update, and delete FHIR resources locally
+*   How to show a registration form and extract a Patient from it with Kotlin FHIR Data Capture
+*   How to apply a PlanDefinition to a patient with the Kotlin FHIR Workflow library
 
 ### What you'll need
 
@@ -28,7 +32,9 @@ to the server. The same code runs on Android, iOS, Desktop (JVM) and Web (Wasm).
 *   Basic knowledge of Kotlin and [Jetpack Compose](https://developer.android.com/compose)
 
 This codelab is focused on the
-[Kotlin FHIR Engine](https://github.com/ohs-foundation/kotlin-fhir-engine). Non-relevant concepts
+[Kotlin FHIR Engine](https://github.com/ohs-foundation/kotlin-fhir-engine), with a short look at
+[Kotlin FHIR Data Capture](https://github.com/ohs-foundation/kotlin-fhir-data-capture) and
+[Kotlin FHIR Workflow](https://github.com/ohs-foundation/kotlin-fhir-workflow) at the end. Non-relevant concepts
 and code blocks are glossed over and are provided for you to simply copy and paste. If you haven't
 built a Kotlin Multiplatform app before, you can start by
 [creating your first Compose Multiplatform app](https://www.jetbrains.com/help/kotlin-multiplatform-dev/compose-multiplatform-create-first-app.html).
@@ -64,7 +70,7 @@ The starter project for this codelab is located in `codelabs/`.
 HAPI FHIR server in our codelab for the app to connect to.
 
 The `codelabs` folder includes a Docker Compose file that starts a HAPI FHIR server and loads three
-test patients into it. Run the following command in the `codelabs` folder:
+test patients into it, together with the PlanDefinition you'll use in step 10. Run the following command in the `codelabs` folder:
 
 ```shell
 docker compose up -d
@@ -79,7 +85,7 @@ result with a `total` count of 3.
 
 ![Test data on server](images/image5.png "Test data on server")
 
-The test patients are in `data/patients.json`. To reset the server to them, for example to run the
+The test data is in the `data` folder. The patients are in `data/patients.json`. To reset the server to them, for example to run the
 update step again, run `docker compose down` and then `docker compose up -d`. The app keeps its own
 copy of the patients, so tap **Sync** in the app after a reset, before you tap **Update** again.
 When you're done with the codelab, stop the server with `docker compose down`.
@@ -95,13 +101,17 @@ When you're done with the codelab, stop the server with `docker compose down`.
 | `iosApp`     | Xcode project for iOS. It shows `App()` through `MainViewController()` in `shared/iosMain`.                                                                 |
 
 The platform entry points are already written for you. Everything you'll write in this codelab goes
-into five files in `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/`:
+into seven files in `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/`:
 
 *   `FhirEngineSetup.kt`
 *   `DownloadWorkManagerImpl.kt`
 *   `AppFhirSyncTask.kt`
 *   `PatientListViewModel.kt`
 *   `PatientListScreen.kt`
+*   `RegistrationScreen.kt`
+*   `EngineWorkflowRepository.kt`
+
+The registration form is in `shared/src/commonMain/composeResources/files/questionnaire.json`.
 
 Each place you'll change is marked with a numbered comment, such as
 `// 4 Replace with code from the codelab to initialize the FHIR Engine.` The number tells you which
@@ -114,9 +124,10 @@ Let's start by importing the starter app into Android Studio.
 Open Android Studio, select **Open** and choose the `codelabs` folder from the source code that you
 have downloaded earlier.
 
-### The Kotlin FHIR Engine dependency
+### The library dependencies
 
-For your convenience, the Kotlin FHIR Engine dependencies have already been added to the
+For your convenience, the Kotlin FHIR Engine, Data Capture and Workflow dependencies have already
+been added to the
 `commonMain` source set of `shared/build.gradle.kts`:
 
 ```kotlin
@@ -125,6 +136,8 @@ kotlin {
     commonMain.dependencies {
       api("dev.ohs.fhir:fhir-engine:2.0.0-alpha05")
       api("dev.ohs.fhir:fhir-model-r4:1.0.0-rc03")
+      implementation("dev.ohs.fhir:fhir-data-capture:2.0.0-alpha05")
+      implementation("dev.ohs.fhir:fhir-workflow:2.0.0-alpha01")
       // ...
     }
   }
@@ -463,93 +476,48 @@ scope.launch {
 After modifying the data locally, the app triggers a one-time sync to upload the changes to the
 FHIR server.
 
-Your `PatientListViewModel` class should now look like this:
+The code you added to `PatientListViewModel` should now look like this:
 
 ```kotlin
-class PatientListViewModel(
-  private val fhirEngine: FhirEngine,
-  private val syncLauncher: SyncLauncher,
-  private val scope: CoroutineScope,
-) {
-  private val _pollState = MutableSharedFlow<CurrentSyncJobStatus>()
-  val pollState: SharedFlow<CurrentSyncJobStatus> = _pollState
+fun triggerOneTimeSync() {
+  // 5.3 Start the sync
+  scope.launch { syncLauncher.oneTimeSync().collect { _pollState.emit(it) } }
+}
 
-  private val _patients = MutableStateFlow<List<Patient>>(emptyList())
-  val patients: StateFlow<List<Patient>> = _patients
-
-  /** The name typed in the search field. */
-  private var nameQuery = ""
-
-  private var loadJob: Job? = null
-
-  init {
-    refreshPatients()
-  }
-
-  /**
-   * Loads the patients from the local database, sorted by family name. Cancels the previous load,
-   * so an older search can't replace the result of a newer one.
-   */
-  fun refreshPatients() {
-    loadJob?.cancel()
-    loadJob =
-      scope.launch {
-        _patients.value =
-          fhirEngine
-            .search<Patient> {
-              sort(StringClientParam("family"), Order.ASCENDING)
-              // 7 Replace with code from the codelab to filter the patients by name.
-            }
-            .map { it.resource }
-      }
-  }
-
-  fun triggerOneTimeSync() {
-    // 5.3 Start the sync
-    scope.launch { syncLauncher.oneTimeSync().collect { _pollState.emit(it) } }
-  }
-
-  // 6.1 Search for patients by city
-  private suspend fun searchByCity(city: String): List<Patient> =
-    fhirEngine
-      .search<Patient> {
-        filter(
-          StringClientParam("address-city"),
-          {
-            modifier = StringFilterModifier.MATCHES_EXACTLY
-            value = city
-          },
-        )
-      }
-      .map { it.resource }
-
-  // 6.2 Change the city of a patient
-  private fun Patient.withCity(city: String): Patient =
-    copy(
-      address =
-        address.mapIndexed { index, address ->
-          if (index == 0) address.copy(city = FhirString(value = city)) else address
+// 6.1 Search for patients by city
+private suspend fun searchByCity(city: String): List<Patient> =
+  fhirEngine
+    .search<Patient> {
+      filter(
+        StringClientParam("address-city"),
+        {
+          modifier = StringFilterModifier.MATCHES_EXACTLY
+          value = city
         },
-    )
-
-  /** Swaps the city of patients in Wakefield and Taunton, then syncs the changes. */
-  fun triggerUpdate() {
-    // 6.3 Update the patients and sync
-    scope.launch {
-      val patientsFromWakefield = searchByCity("Wakefield")
-      val patientsFromTaunton = searchByCity("Taunton")
-
-      patientsFromWakefield.forEach { fhirEngine.update(it.withCity("Taunton")) }
-      patientsFromTaunton.forEach { fhirEngine.update(it.withCity("Wakefield")) }
-
-      triggerOneTimeSync()
+      )
     }
-  }
+    .map { it.resource }
 
-  /** Shows only the patients whose name contains [query], or all patients if it is empty. */
-  fun searchPatientsByName(query: String) {
-    nameQuery = query
-    refreshPatients()
+// 6.2 Change the city of a patient
+private fun Patient.withCity(city: String): Patient =
+  copy(
+    address =
+      address.mapIndexed { index, address ->
+        if (index == 0) address.copy(city = FhirString(value = city)) else address
+      },
+  )
+
+/** Swaps the city of patients in Wakefield and Taunton, then syncs the changes. */
+fun triggerUpdate() {
+  // 6.3 Update the patients and sync
+  scope.launch {
+    val patientsFromWakefield = searchByCity("Wakefield")
+    val patientsFromTaunton = searchByCity("Taunton")
+
+    patientsFromWakefield.forEach { fhirEngine.update(it.withCity("Taunton")) }
+    patientsFromTaunton.forEach { fhirEngine.update(it.withCity("Wakefield")) }
+
+    triggerOneTimeSync()
   }
 }
 ```
@@ -594,24 +562,276 @@ to filter the list of patients.
 
 <img src="images/image9.png" alt="Patient list filtered by name" width="400">
 
-## 8. Congratulations!
+## 8. Show a registration form
 
-You have used the Kotlin FHIR Engine to manage FHIR resources in your app:
+In this step, you'll add a patient registration form with
+[Kotlin FHIR Data Capture](https://github.com/ohs-foundation/kotlin-fhir-data-capture). The form is
+a FHIR Questionnaire, and the library renders it for you.
+
+The starter already has what you need around the form:
+
+*   A **Register** button on the patient list, which opens the screen in `RegistrationScreen.kt`
+*   The questionnaire in `shared/src/commonMain/composeResources/files/questionnaire.json`, which
+    asks for a name, a date of birth and a patient ID. `RegistrationScreen` reads it into
+    `questionnaireJson`.
+*   The Kotlin FHIR Data Capture dependency in `shared/build.gradle.kts`
+
+Along the way, Android Studio will prompt you to add the necessary imports:
+
+*   `dev.ohs.fhir.datacapture.Questionnaire`
+*   `dev.ohs.fhir.datacapture.QuestionnaireConfig`
+*   `kotlinx.coroutines.launch`
+
+Open `RegistrationScreen.kt`. Find the
+`// 8 Replace with code from the codelab to display the registration form.` comment, delete the
+`Text(...)` line below it, and add the following code in its place:
+
+```kotlin
+// 8 Display the registration form
+questionnaireJson?.let { questionnaireJson ->
+  Questionnaire(
+    questionnaireJson = questionnaireJson,
+    config = QuestionnaireConfig(showCancelButton = false),
+    onSubmit = { getQuestionnaireResponse ->
+      scope.launch {
+        viewModel.registerPatient(questionnaireJson, getQuestionnaireResponse())
+        onClose()
+      }
+    },
+    onCancel = {},
+  )
+}
+```
+
+The `Questionnaire` composable shows the form with a **Submit** button. When you tap **Submit**,
+`getQuestionnaireResponse()` checks the answers and returns them as a FHIR QuestionnaireResponse.
+If an answer isn't valid, the library shows a dialog and the form stays open. Otherwise the app
+passes the response to `registerPatient()` in the view model and goes back to the patient list.
+
+Run the app and tap **Register**. Fill in the form and tap **Submit**. The app goes back to the
+list, but the patient isn't saved yet, because `registerPatient()` is still empty.
+
+<img src="images/image10.png" alt="Registration form" width="400">
+
+To learn more about rendering forms, follow the
+[Data Capture codelab](https://github.com/ohs-foundation/kotlin-fhir-data-capture/tree/main/codelabs).
+
+## 9. Save the registered patient
+
+In this step, you'll turn the answers into a FHIR Patient and save it in the local database.
+Turning answers into FHIR resources is called
+[data extraction](https://hl7.org/fhir/uv/sdc/STU4/extraction.html). The questionnaire contains a
+Patient template, and the `TemplateExtractionEngine` class of Kotlin FHIR Data Capture fills it in
+with the answers.
+
+Along the way, Android Studio will prompt you to add the necessary imports:
+
+*   `dev.ohs.fhir.datacapture.extraction.template.TemplateExtractionEngine`
+*   `dev.ohs.fhir.model.r4.Questionnaire`
+*   `kotlinx.serialization.json.Json`
+
+Open `PatientListViewModel.kt`. In `registerPatient()`, find the
+`// 9 Replace with code from the codelab to extract and save the patient.` comment and replace it
+with the following code:
+
+```kotlin
+// 9 Extract and save the patient
+val questionnaire = Json.decodeFromString<Questionnaire>(questionnaireJson)
+val bundle = TemplateExtractionEngine.extract(questionnaire, questionnaireResponse)
+val extracted = bundle.entry.firstNotNullOf { it.resource as? Patient }
+val patientId = fhirEngine.create(extracted).first()
+val patient = extracted.copy(id = patientId)
+```
+
+*   `Json.decodeFromString()` turns the questionnaire JSON into a Kotlin FHIR `Questionnaire`.
+*   `TemplateExtractionEngine.extract()` returns a transaction Bundle with the extracted resources.
+    For this questionnaire, the Bundle holds one Patient.
+*   `fhirEngine.create()` saves the patient in the local database. The extracted patient has no
+    ID, so the engine creates one and returns it. You'll use the patient with its ID in step 11.
+
+The starter already runs `registerPatient()` in a coroutine. If the code fails, it shows the error
+as a message. When the code finishes, it reloads the patient list.
+
+Run the app and register a patient. The new patient appears in the list. Tap **Sync** to upload
+it, then open `http://localhost:8080/fhir/Patient` in a browser to see it on the FHIR server.
+
+## 10. Connect the workflow library to the engine
+
+In the next step, you'll use the
+[Kotlin FHIR Workflow](https://github.com/ohs-foundation/kotlin-fhir-workflow) library to apply a
+PlanDefinition to each new patient. A PlanDefinition lists actions to take for a patient, and rules
+that decide which actions apply. In this step, you'll download the PlanDefinition to the device,
+and give the workflow library access to the local database.
+
+The FHIR server already has the PlanDefinition, from `data/registration-plan.json`. It has two
+actions, and each points to an ActivityDefinition that describes a Task:
+
+*   **First visit** applies to every new patient.
+*   **Child health check** applies only to patients under 5. Its condition is the FHIRPath
+    expression `(Patient.birthDate + 5 years) > %today`.
+
+### Step 1: Download the PlanDefinition
+
+Open `DownloadWorkManagerImpl.kt` and change the `urls` line as follows:
+
+```kotlin
+// 10.1 Download the PlanDefinition and ActivityDefinitions too
+private val urls = ArrayDeque(listOf("Patient", "PlanDefinition", "ActivityDefinition"))
+```
+
+The next sync downloads the PlanDefinition and its ActivityDefinitions into the local database,
+next to the patients.
+
+### Step 2: Give the workflow library access to the engine
+
+The workflow library reads and writes resources through the `WorkflowRepository` interface. In
+this codelab, the resources are in the FHIR Engine, so you'll implement the interface with the
+engine.
+
+Along the way, Android Studio will prompt you to add the necessary imports:
+
+*   `dev.ohs.fhir.engine.FhirEngine`
+*   `dev.ohs.fhir.engine.db.ResourceNotFoundException`
+*   `dev.ohs.fhir.engine.search.ReferenceClientParam`
+*   `dev.ohs.fhir.engine.search.Search`
+*   `dev.ohs.fhir.engine.search.UriClientParam`
+*   `dev.ohs.fhir.model.r4.Resource`
+*   `dev.ohs.fhir.model.r4.terminologies.ResourceType`
+*   `dev.ohs.fhir.workflow.WorkflowRepository`
+
+Open `EngineWorkflowRepository.kt`. Replace the `// 10.2 Replace with code from the codelab ...`
+comment with the following code:
+
+```kotlin
+// 10.2 Let the workflow library read and write through the FHIR Engine
+class EngineWorkflowRepository(private val fhirEngine: FhirEngine) : WorkflowRepository {
+  override suspend fun read(type: String, id: String): Resource? =
+    try {
+      fhirEngine.get(ResourceType.fromCode(type), id)
+    } catch (e: ResourceNotFoundException) {
+      null
+    }
+
+  override suspend fun create(resource: Resource): String = fhirEngine.create(resource).first()
+
+  override suspend fun update(resource: Resource) = fhirEngine.update(resource)
+
+  override suspend fun delete(type: String, id: String) =
+    fhirEngine.delete(ResourceType.fromCode(type), id)
+
+  override suspend fun searchByReferenceParam(
+    type: String,
+    param: String,
+    referenceValue: String,
+  ): List<Resource> =
+    fhirEngine
+      .search<Resource>(
+        Search(ResourceType.fromCode(type)).apply {
+          filter(ReferenceClientParam(param), { value = referenceValue })
+        }
+      )
+      .map { it.resource }
+
+  override suspend fun searchByUri(type: String, param: String, uri: String): List<Resource> =
+    fhirEngine
+      .search<Resource>(
+        Search(ResourceType.fromCode(type)).apply { filter(UriClientParam(param), { value = uri }) }
+      )
+      .map { it.resource }
+}
+```
+
+Each function uses a Data Access or Search API of the engine that you used in the earlier steps.
+The workflow library gives the resource type as a string, so these functions build a `Search` for
+that type, instead of using `search<Patient> { ... }`. The library finds the PlanDefinition by its
+canonical URL with `searchByUri`.
+
+## 11. Propose tasks with the PlanDefinition
+
+In this step, you'll apply the PlanDefinition to each new patient, and save the Tasks it proposes.
+
+Along the way, Android Studio will prompt you to add the necessary imports:
+
+*   `dev.ohs.fhir.model.r4.Date`
+*   `dev.ohs.fhir.model.r4.FhirDate`
+*   `dev.ohs.fhir.workflow.FhirOperator`
+*   `kotlin.time.Clock`
+*   `kotlinx.datetime.TimeZone`
+*   `kotlinx.datetime.todayIn`
+
+In `registerPatient()` in `PatientListViewModel.kt`, find the
+`// 11 Replace with code from the codelab to propose tasks for the patient.` comment and replace it
+with the following code:
+
+```kotlin
+// 11 Propose tasks for the patient
+val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+val carePlan =
+  FhirOperator(EngineWorkflowRepository(fhirEngine))
+    .generateCarePlan(
+      planDefinitionCanonical = REGISTRATION_PLAN,
+      subject = patient,
+      variables = mapOf("today" to Date(value = FhirDate.fromString(today.toString()))),
+      today = today,
+    )
+val tasks =
+  carePlan.contained.filterIsInstance<Task>().map { it.copy(id = null, basedOn = emptyList()) }
+fhirEngine.create(*tasks.toTypedArray())
+```
+
+*   `FhirOperator` is the entry point of the workflow library. It finds the PlanDefinition by its
+    canonical URL, `REGISTRATION_PLAN`, which is already in the starter.
+*   `generateCarePlan()` runs
+    [`PlanDefinition/$apply`](https://hl7.org/fhir/R4/plandefinition-operation-apply.html) for the
+    patient. It checks the condition of each action, and creates a Task with the intent `proposal`
+    for each action that applies. It returns the Tasks inside a CarePlan, in `contained`.
+*   `variables` makes `%today` available to the conditions. `generateCarePlan()` also takes
+    `today`, but this version of the library doesn't pass it to the conditions, so the code passes
+    today's date both ways.
+*   The Tasks come with IDs from the PlanDefinition actions, which would be the same for every
+    patient. Setting `id` to `null` lets the engine create a new ID for each Task. `basedOn` points
+    into the CarePlan, which the app doesn't save, so the code removes it.
+*   `fhirEngine.create()` saves the Tasks in the local database.
+
+Run the app and tap **Sync**, so that the PlanDefinition is on the device. Then register a child
+born less than 5 years ago, and an adult. Each new patient shows its Tasks in the list. The child
+gets First visit and Child health check, and the adult gets only First visit.
+
+<img src="images/image11.png" alt="Patient list with proposed tasks" width="400">
+
+Tap **Sync** again to upload the new patients and their Tasks. Open
+`http://localhost:8080/fhir/Task` in a browser to see the Tasks on the FHIR server.
+
+If you register a patient before the PlanDefinition is downloaded, the app shows a message that
+starts with `Registration failed`. The patient is saved without Tasks. Tap **Sync** before you
+register the next patient.
+
+## 12. Congratulations!
+
+You have used the Kotlin FHIR Engine to manage FHIR resources in your app, together with Kotlin
+FHIR Data Capture and Kotlin FHIR Workflow:
 
 *   Use the Sync API to sync FHIR resources with a FHIR server
 *   Use the Data Access API to create, read, update, and delete local FHIR resources
 *   Use the Search API to search local FHIR resources
+*   Show a FHIR Questionnaire and extract a Patient from the answers
+*   Apply a PlanDefinition to a patient to propose Tasks
 
 ### What we've covered
 
 *   How to run a local HAPI FHIR server with test data
 *   How to add the Kotlin FHIR Engine to your Kotlin Multiplatform app
 *   How to use the Sync API, Data Access API, and Search API of the Kotlin FHIR Engine
+*   How to register patients with Kotlin FHIR Data Capture and save them with the engine
+*   How to connect Kotlin FHIR Workflow to the engine and run `PlanDefinition/$apply`
 
 ### Next steps
 
 *   Run the codelab on the other platforms: Desktop, Web and iOS
-*   Download other resource types by adding them to the `urls` queue in `DownloadWorkManagerImpl`
+*   Download the Tasks too, by adding `Task` to the `urls` queue in `DownloadWorkManagerImpl`, so
+    that Tasks created on another device show up
+*   Move a proposed Task through its lifecycle with `ActivityFlow` in the
+    [Kotlin FHIR Workflow](https://github.com/ohs-foundation/kotlin-fhir-workflow) library
 *   Add periodic sync. See [`engine-app`](https://github.com/ohs-foundation/kotlin-fhir-engine/tree/main/engine-app)
     for an example on every platform.
 *   Explore the Search API. The [conformance](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/docs/conformance.md)

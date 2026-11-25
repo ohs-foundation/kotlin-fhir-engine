@@ -21,6 +21,8 @@ import dev.ohs.fhir.engine.search.StringClientParam
 import dev.ohs.fhir.engine.search.search
 import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.QuestionnaireResponse
+import dev.ohs.fhir.model.r4.Task
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,6 +30,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+
+/** The canonical URL of the plan definition that proposes tasks for a new patient. */
+const val REGISTRATION_PLAN = "http://example.org/fhir/PlanDefinition/patient-registration"
 
 class PatientListViewModel(
   private val fhirEngine: FhirEngine,
@@ -40,8 +45,17 @@ class PatientListViewModel(
   private val _patients = MutableStateFlow<List<Patient>>(emptyList())
   val patients: StateFlow<List<Patient>> = _patients
 
+  private val _tasks = MutableStateFlow<Map<String, List<Task>>>(emptyMap())
+  /** The tasks of each patient, keyed by a patient reference such as `Patient/123`. */
+  val tasks: StateFlow<Map<String, List<Task>>> = _tasks
+
+  private val _message = MutableStateFlow<String?>(null)
+  /** A message for the user, or null when there is none to show. */
+  val message: StateFlow<String?> = _message
+
   /** The name typed in the search field. */
-  private var nameQuery = ""
+  var nameQuery = ""
+    private set
 
   private var loadJob: Job? = null
 
@@ -64,6 +78,8 @@ class PatientListViewModel(
               // 7 Replace with code from the codelab to filter the patients by name.
             }
             .map { it.resource }
+        _tasks.value =
+          fhirEngine.search<Task> {}.map { it.resource }.groupBy { it.`for`?.reference?.value.orEmpty() }
       }
   }
 
@@ -78,6 +94,24 @@ class PatientListViewModel(
   /** Swaps the city of patients in Wakefield and Taunton, then syncs the changes. */
   fun triggerUpdate() {
     // 6.3 Replace with code from the codelab to update the patients and sync.
+  }
+
+  /** Saves the patient from the registration form, then proposes their first tasks. */
+  fun registerPatient(questionnaireJson: String, questionnaireResponse: QuestionnaireResponse) {
+    scope.launch {
+      try {
+        // 9 Replace with code from the codelab to extract and save the patient.
+
+        // 11 Replace with code from the codelab to propose tasks for the patient.
+      } catch (e: Exception) {
+        _message.value = "Registration failed. ${e.message}"
+      }
+      refreshPatients()
+    }
+  }
+
+  fun messageShown() {
+    _message.value = null
   }
 
   /** Shows only the patients whose name contains [query], or all patients if it is empty. */

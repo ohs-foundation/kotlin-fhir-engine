@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -42,16 +43,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.ohs.fhir.engine.sync.CurrentSyncJobStatus
 import dev.ohs.fhir.model.r4.Patient
+import dev.ohs.fhir.model.r4.Task
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PatientListScreen(viewModel: PatientListViewModel) {
+fun PatientListScreen(viewModel: PatientListViewModel, onRegister: () -> Unit) {
   val patients by viewModel.patients.collectAsState()
+  val tasks by viewModel.tasks.collectAsState()
   val snackbarHostState = remember { SnackbarHostState() }
-  var query by remember { mutableStateOf("") }
+  var query by remember { mutableStateOf(viewModel.nameQuery) }
 
   LaunchedEffect(viewModel) {
     viewModel.pollState.collect { handleSyncJobStatus(it, viewModel, snackbarHostState) }
+  }
+  val message by viewModel.message.collectAsState()
+  LaunchedEffect(message) {
+    message?.let {
+      snackbarHostState.showSnackbar(it)
+      viewModel.messageShown()
+    }
   }
 
   Scaffold(
@@ -65,6 +75,9 @@ fun PatientListScreen(viewModel: PatientListViewModel) {
       )
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
+    floatingActionButton = {
+      ExtendedFloatingActionButton(onClick = onRegister) { Text("Register") }
+    },
   ) { padding ->
     Column(Modifier.padding(padding).fillMaxSize()) {
       OutlinedTextField(
@@ -79,7 +92,7 @@ fun PatientListScreen(viewModel: PatientListViewModel) {
       )
       LazyColumn {
         items(patients, key = { it.id ?: it.hashCode().toString() }) { patient ->
-          PatientItem(patient)
+          PatientItem(patient, tasks["Patient/${patient.id}"].orEmpty())
           HorizontalDivider()
         }
       }
@@ -96,7 +109,7 @@ private suspend fun handleSyncJobStatus(
 }
 
 @Composable
-private fun PatientItem(patient: Patient) {
+private fun PatientItem(patient: Patient, tasks: List<Task>) {
   val name =
     patient.name.firstOrNull()?.let { humanName ->
       (humanName.given.mapNotNull { it.value } + listOfNotNull(humanName.family?.value))
@@ -105,9 +118,20 @@ private fun PatientItem(patient: Patient) {
   Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
     Text(name.orEmpty(), style = MaterialTheme.typography.titleMedium)
     Text(
-      listOfNotNull(patient.gender?.value?.display, patient.address.singleOrNull()?.city?.value)
+      listOfNotNull(
+          patient.gender?.value?.display,
+          patient.birthDate?.value?.let { "Born $it" },
+          patient.address.singleOrNull()?.city?.value,
+        )
         .joinToString(" · "),
       style = MaterialTheme.typography.bodyMedium,
     )
+    if (tasks.isNotEmpty()) {
+      Text(
+        "Tasks: " + tasks.mapNotNull { it.code?.text?.value }.joinToString(", "),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.primary,
+      )
+    }
   }
 }

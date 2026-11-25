@@ -21,8 +21,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dev.ohs.fhir.engine.FhirEngineProvider
@@ -41,6 +44,11 @@ fun App(platformContext: Any, syncLauncher: SyncLauncher) {
     val viewModel = remember {
       PatientListViewModel(FhirEngineProvider.getInstance(platformContext), syncLauncher, scope)
     }
-    PatientListScreen(viewModel)
+    var registering by remember { mutableStateOf(false) }
+    if (registering) {
+      RegistrationScreen(viewModel, onClose = { registering = false })
+    } else {
+      PatientListScreen(viewModel, onRegister = { registering = true })
+    }
   }
 }

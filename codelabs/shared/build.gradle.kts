@@ -35,12 +35,17 @@ kotlin {
     commonMain.dependencies {
       api("dev.ohs.fhir:fhir-engine:2.0.0-alpha05")
       api("dev.ohs.fhir:fhir-model-r4:1.0.0-rc03")
+      implementation("dev.ohs.fhir:fhir-data-capture:2.0.0-alpha05")
+      implementation("dev.ohs.fhir:fhir-workflow:2.0.0-alpha01")
+      implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
 
       implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.kotlinx.serialization.json)
       implementation(compose.runtime)
       implementation(compose.foundation)
       implementation(compose.material3)
       implementation(compose.ui)
+      implementation(compose.components.resources)
     }
     androidMain.dependencies { implementation(libs.androidx.work.runtime) }
     val desktopMain by getting {
@@ -61,5 +66,7 @@ kotlin {
     }
   }
 }
+
+compose.resources { packageOfResClass = "dev.ohs.fhir.codelab.resources" }
 
 compose.desktop { application { mainClass = "dev.ohs.fhir.codelab.MainKt" } }
