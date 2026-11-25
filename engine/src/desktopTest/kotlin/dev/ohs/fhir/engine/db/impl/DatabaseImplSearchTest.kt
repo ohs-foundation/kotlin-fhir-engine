@@ -459,9 +459,6 @@ class DatabaseImplSearchTest {
     )
   }
 
-  @Ignore(
-    "The indexer throws ArithmeticException on a dateTime with fractional seconds, so the insert fails",
-  )
   @Test
   fun search_date_equals_fractionalSeconds() = runTest {
     database.insert(deceasedPatient("2013-03-14T10:00:00.123-05:30"))

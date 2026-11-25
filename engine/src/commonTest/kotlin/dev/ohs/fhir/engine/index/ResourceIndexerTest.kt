@@ -278,6 +278,24 @@ class ResourceIndexerTest {
   }
 
   @Test
+  fun index_dateTime_dateTimeWithMilliseconds() {
+    val iso = "2001-12-29T12:20:30.123+07:00"
+    val observation =
+      Observation(
+        id = "non-null-ID",
+        status = Enumeration(value = Observation.ObservationStatus.Final),
+        code = CodeableConcept(),
+        effective = Observation.Effective.DateTime(fhirDateTime(iso)),
+      )
+    val resourceIndices = resourceIndexer.index(observation)
+    val millis = epochMillis(iso)
+    assertContains(
+      resourceIndices.dateTimeIndices,
+      DateTimeIndex("date", "Observation.effective", millis, millis),
+    )
+  }
+
+  @Test
   fun index_dateTime_instant() {
     val iso = "2001-03-04T23:30:00.910+05:30"
     val observation =

@@ -306,18 +306,14 @@ internal class ResourceIndexer(
           start to start + 60_000 - 1
         }
         FhirPathDateTime.Precision.SECOND -> {
+          val seconds = dt.second!!.intValue(exactRequired = false)
+          val millis = ((dt.second!! - seconds) * 1_000).intValue(exactRequired = false)
           val start =
-            LocalDateTime(
-                dt.year,
-                dt.month!!,
-                dt.day!!,
-                dt.hour!!,
-                dt.minute!!,
-                dt.second!!.intValue(exactRequired = true),
-              )
+            LocalDateTime(dt.year, dt.month!!, dt.day!!, dt.hour!!, dt.minute!!, seconds)
               .toInstant(offset)
-              .toEpochMilliseconds()
-          start to start + 1_000 - 1
+              .toEpochMilliseconds() + millis
+          // Fractional seconds are millisecond precision, as in android-fhir.
+          if (millis == 0) start to start + 1_000 - 1 else start to start
         }
       }
     }
