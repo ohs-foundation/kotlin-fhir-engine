@@ -23,7 +23,7 @@ to the server. The same code runs on Android, iOS, Desktop (JVM) and Web (Wasm).
 *   [Android Emulator](https://developer.android.com/studio/run/emulator) or a physical Android
     device running Android 8.0 (API 26) or later
 *   JDK 21
-*   Optional: a Mac with [Xcode](https://developer.apple.com/xcode/) to run the iOS app
+*   Optional: a Mac with [Xcode](https://developer.apple.com/xcode/) 26 or later to run the iOS app
 *   The sample code
 *   Basic knowledge of Kotlin and [Jetpack Compose](https://developer.android.com/compose)
 
@@ -80,8 +80,9 @@ result with a `total` count of 3.
 ![Test data on server](images/image5.png "Test data on server")
 
 The test patients are in `data/patients.json`. To reset the server to them, for example to run the
-update step again, run `docker compose down` and then `docker compose up -d`. When you're done
-with the codelab, stop the server with `docker compose down`.
+update step again, run `docker compose down` and then `docker compose up -d`. The app keeps its own
+copy of the patients, so tap **Sync** in the app after a reset, before you tap **Update** again.
+When you're done with the codelab, stop the server with `docker compose down`.
 
 ## 3. Set up the project
 
@@ -157,6 +158,9 @@ install the app from the command line, in the `codelabs` folder:
 ./gradlew :androidApp:installDebug
 ```
 
+If you run it without opening the project in Android Studio first, set the `ANDROID_HOME`
+environment variable to your Android SDK folder.
+
 Because the FHIR Engine is not initialized yet, the app shows a `Hello World!` screen. As you can
 see there isn't much here yet, so let's get right into creating the FHIR Engine!
 
@@ -172,6 +176,10 @@ step of the codelab. Run the Gradle commands in the `codelabs` folder:
 | Desktop (JVM) | `./gradlew :shared:run`                                                            |
 | Web (Wasm)    | `./gradlew :shared:wasmJsBrowserDevelopmentRun`, then open `http://localhost:8081` |
 | iOS           | Open `iosApp/iosApp.xcodeproj` in Xcode, select a simulator, and click **Run**.    |
+
+The Web dev server doesn't rebuild when you change the code. To see a change, stop it with Ctrl+C
+and run the command again. If port 8081 is already in use on your computer, change the port in
+`shared/webpack.config.d/dev-server-port.js`.
 
 On iOS, Xcode builds the `shared` framework with Gradle. To run on a real device, see
 [`iosApp/README.md`](iosApp/README.md).
@@ -214,7 +222,7 @@ Along the way, Android Studio will prompt you to add the necessary imports:
     * `baseUrl`: the FHIR server's base URL.
     * `httpLogger`: logs the requests to the server. The logs show up in Logcat on Android, the
       Xcode console on iOS, the terminal on Desktop and the browser console on Web.
-    * `storageDirectory`: where the database is stored. Used on desktop and web only.
+    * `storageDirectory`: where the database is stored. Only the Desktop entry point sets it.
     * `RECREATE_AT_OPEN`: if the database fails to open, the engine deletes it and makes a new one.
     * `enableEncryption = true` encrypts the database with SQLCipher. It is supported on Android
       only.
@@ -361,7 +369,7 @@ when (syncJobStatus) {
 }
 ```
 
-Here, when the sync finishes, the app reloads all patients from the local database with
+Here, when the sync finishes, the app reloads the patients from the local database with
 `refreshPatients()`, which is already in the starter, and shows a message to the user. If the sync
 fails, for example because the FHIR server isn't running, the app shows `Sync Failed`. Check that
 `http://localhost:8080/fhir/Patient` opens in your browser, then tap **Sync** again.
@@ -469,26 +477,31 @@ class PatientListViewModel(
   private val _patients = MutableStateFlow<List<Patient>>(emptyList())
   val patients: StateFlow<List<Patient>> = _patients
 
+  /** The name typed in the search field. */
+  private var nameQuery = ""
+
   private var loadJob: Job? = null
 
   init {
     refreshPatients()
   }
 
-  /** Loads all patients from the local database, sorted by given name. */
-  fun refreshPatients() = showPatients {
-    fhirEngine
-      .search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }
-      .map { it.resource }
-  }
-
   /**
-   * Shows the patients that [load] returns. Cancels the previous load, so an older search can't
-   * replace the result of a newer one.
+   * Loads the patients from the local database, sorted by family name. Cancels the previous load,
+   * so an older search can't replace the result of a newer one.
    */
-  private fun showPatients(load: suspend () -> List<Patient>) {
+  fun refreshPatients() {
     loadJob?.cancel()
-    loadJob = scope.launch { _patients.value = load() }
+    loadJob =
+      scope.launch {
+        _patients.value =
+          fhirEngine
+            .search<Patient> {
+              sort(StringClientParam("family"), Order.ASCENDING)
+              // 7 Replace with code from the codelab to filter the patients by name.
+            }
+            .map { it.resource }
+      }
   }
 
   fun triggerOneTimeSync() {
@@ -533,49 +546,48 @@ class PatientListViewModel(
     }
   }
 
-  fun searchPatientsByName(nameQuery: String) {
-    // 7 Replace with code from the codelab to search for patients by name.
+  /** Shows only the patients whose name contains [query], or all patients if it is empty. */
+  fun searchPatientsByName(query: String) {
+    nameQuery = query
+    refreshPatients()
   }
 }
 ```
 
 ### Step 4: Test the functionality
 
-1. Run your app and tap **Update**. You should see the address cities for patients `Aaron697` and
-    `Abby752` swapped.
+1. Run your app. If the list is empty, tap **Sync** first. Then tap **Update**. You should see the
+    address cities for `Aaron697 Brekke496` and `Abby752 Kuvalis369` swapped. Each tap of
+    **Update** swaps them again.
 2. Open `http://localhost:8080/fhir/Patient/` in a browser. Verify that the address cities for
-    patients `Aaron697` and `Abby752` are updated on the local FHIR server.
+    `Aaron697 Brekke496` and `Abby752 Kuvalis369` are updated on the local FHIR server.
 
 ## 7. Search for patients by name
 
 In this step, you'll filter the patient list by the name typed in the search field.
 
-Find the `// 7 Replace with code from the codelab to search for patients by name.` comment in
-`searchPatientsByName` and replace it with the following code:
+Find the `// 7 Replace with code from the codelab to filter the patients by name.` comment in
+`refreshPatients()` and replace it with the following code:
 
 ```kotlin
-// 7 Search for patients by name
-showPatients {
-  fhirEngine
-    .search<Patient> {
-      if (nameQuery.isNotEmpty()) {
-        filter(
-          StringClientParam("name"),
-          {
-            modifier = StringFilterModifier.CONTAINS
-            value = nameQuery
-          },
-        )
-      }
-    }
-    .map { it.resource }
+// 7 Filter the patients by name
+if (nameQuery.isNotEmpty()) {
+  filter(
+    StringClientParam("name"),
+    {
+      modifier = StringFilterModifier.CONTAINS
+      value = nameQuery
+    },
+  )
 }
 ```
 
-Here, if `nameQuery` is not empty, the search returns only the patients whose names contain it.
-`showPatients`, which is already in the starter, shows the result. Each letter you type starts a
-new search, so `showPatients` cancels the previous search first. Otherwise an older search, such as
-the one for the first letter, could finish last and replace the result.
+Here, if `nameQuery` is not empty, the search returns only the patients whose names contain it. The
+starter already stores the text of the search field in `nameQuery` and calls `refreshPatients()`
+each time it changes. Each letter you type starts a new search, so `refreshPatients()` cancels the
+previous search first. Otherwise an older search, such as the one for the first letter, could
+finish last and replace the result. Because the filter is part of `refreshPatients()`, the list
+stays filtered after a sync too.
 
 Run your app again. You should now be able to enter a name, or part of a name, in the search field
 to filter the list of patients.

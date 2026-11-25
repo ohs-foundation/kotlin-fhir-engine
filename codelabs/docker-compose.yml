@@ -4,6 +4,9 @@ services:
     image: hapiproject/hapi:v8.12.0-2
     ports:
       - "8080:8080"
+    environment:
+      # Don't reuse cached search results, so a search right after the test patients load finds them.
+      hapi.fhir.reuse_cached_search_results_millis: 0
 
   # Loads the test patients once the server is up. Re-running it updates the same patients.
   seed:

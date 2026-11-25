@@ -40,26 +40,31 @@ class PatientListViewModel(
   private val _patients = MutableStateFlow<List<Patient>>(emptyList())
   val patients: StateFlow<List<Patient>> = _patients
 
+  /** The name typed in the search field. */
+  private var nameQuery = ""
+
   private var loadJob: Job? = null
 
   init {
     refreshPatients()
   }
 
-  /** Loads all patients from the local database, sorted by given name. */
-  fun refreshPatients() = showPatients {
-    fhirEngine
-      .search<Patient> { sort(StringClientParam("given"), Order.ASCENDING) }
-      .map { it.resource }
-  }
-
   /**
-   * Shows the patients that [load] returns. Cancels the previous load, so an older search can't
-   * replace the result of a newer one.
+   * Loads the patients from the local database, sorted by family name. Cancels the previous load,
+   * so an older search can't replace the result of a newer one.
    */
-  private fun showPatients(load: suspend () -> List<Patient>) {
+  fun refreshPatients() {
     loadJob?.cancel()
-    loadJob = scope.launch { _patients.value = load() }
+    loadJob =
+      scope.launch {
+        _patients.value =
+          fhirEngine
+            .search<Patient> {
+              sort(StringClientParam("family"), Order.ASCENDING)
+              // 7 Replace with code from the codelab to filter the patients by name.
+            }
+            .map { it.resource }
+      }
   }
 
   fun triggerOneTimeSync() {
@@ -75,7 +80,9 @@ class PatientListViewModel(
     // 6.3 Replace with code from the codelab to update the patients and sync.
   }
 
-  fun searchPatientsByName(nameQuery: String) {
-    // 7 Replace with code from the codelab to search for patients by name.
+  /** Shows only the patients whose name contains [query], or all patients if it is empty. */
+  fun searchPatientsByName(query: String) {
+    nameQuery = query
+    refreshPatients()
   }
 }
