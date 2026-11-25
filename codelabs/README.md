@@ -230,6 +230,10 @@ Along the way, Android Studio will prompt you to add the necessary imports:
     [more](https://developer.android.com/studio/run/emulator-networking). The Desktop, Web, and
     iOS entry points call it with `Unit` and `http://localhost:8080/fhir/`.
 
+    On a physical Android device, `10.0.2.2` doesn't reach your computer. Connect the device over
+    USB, run `adb reverse tcp:8080 tcp:8080`, and change the `baseUrl` in `FhirApplication` to
+    `http://localhost:8080/fhir/`. Run `adb reverse` again whenever you reconnect the device.
+
 3. Get the engine anywhere with `FhirEngineProvider.getInstance(platformContext)`.
 
 Now that the engine is initialized, run the app again. Instead of the `Hello World!` screen, you
@@ -352,12 +356,15 @@ when (syncJobStatus) {
     viewModel.refreshPatients()
     snackbarHostState.showSnackbar("Sync Finished")
   }
+  is CurrentSyncJobStatus.Failed -> snackbarHostState.showSnackbar("Sync Failed")
   else -> {}
 }
 ```
 
 Here, when the sync finishes, the app reloads all patients from the local database with
-`refreshPatients()`, which is already in the starter, and shows a message to the user.
+`refreshPatients()`, which is already in the starter, and shows a message to the user. If the sync
+fails, for example because the FHIR server isn't running, the app shows `Sync Failed`. Check that
+`http://localhost:8080/fhir/Patient` opens in your browser, then tap **Sync** again.
 
 Now that everything is set up, run your app and tap **Sync**. If everything works correctly, you
 should see the patients from your local FHIR server being downloaded and displayed in the app.

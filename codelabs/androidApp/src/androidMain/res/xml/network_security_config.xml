@@ -2,5 +2,7 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- For a physical device connected with `adb reverse tcp:8080 tcp:8080`. -->
+        <domain includeSubdomains="true">localhost</domain>
     </domain-config>
 </network-security-config>
