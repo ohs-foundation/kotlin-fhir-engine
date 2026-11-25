@@ -88,9 +88,9 @@ result with a `total` count of 3.
 The test data is in the `data` folder. The patients are in `data/patients.json`. To reset the server to them, for example to run the
 update step again, run `docker compose down` and then `docker compose up -d`. The app keeps its own
 copy of the patients, so tap **Sync** in the app after a reset, before you tap **Update** again.
-The server keeps its data in memory, so it starts empty if it restarts, for example after
-`docker compose restart` or a restart of Docker. Run `docker compose up -d` again to load the test
-data. When you're done with the codelab, stop the server with `docker compose down`.
+The server keeps its data in memory, so a restart of Docker or of the server alone leaves it
+empty. Run `docker compose up -d` again to load the test data. `docker compose restart` reloads the
+test data too, but anything you uploaded is lost. When you're done with the codelab, stop the server with `docker compose down`.
 
 ## 3. Set up the project
 
@@ -802,8 +802,8 @@ fhirEngine.create(*tasks.toTypedArray())
 *   `fhirEngine.create()` saves the Tasks in the local database.
 
 Run the app and tap **Sync**, so that the PlanDefinition is on the device. Then register a child
-born less than 5 years ago, and an adult. The date field follows the date format of your device or
-browser, such as dd/mm/yyyy or mm/dd/yyyy. Each new patient shows its Tasks in the list. The child
+born less than 5 years ago, and an adult. Type the date in the format shown in the field, for example
+dd/mm/yyyy. Each new patient shows its Tasks in the list. The child
 gets First visit and Child health check, and the adult gets only First visit.
 
 <img src="images/image11.png" alt="Patient list with proposed tasks" width="400">
