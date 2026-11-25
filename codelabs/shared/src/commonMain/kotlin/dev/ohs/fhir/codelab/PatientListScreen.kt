@@ -128,7 +128,7 @@ private fun PatientItem(patient: Patient, tasks: List<Task>) {
     )
     if (tasks.isNotEmpty()) {
       Text(
-        "Tasks: " + tasks.mapNotNull { it.code?.text?.value }.joinToString(", "),
+        "Tasks: " + tasks.mapNotNull { it.code?.text?.value }.sorted().joinToString(", "),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.primary,
       )

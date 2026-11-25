@@ -88,7 +88,9 @@ result with a `total` count of 3.
 The test data is in the `data` folder. The patients are in `data/patients.json`. To reset the server to them, for example to run the
 update step again, run `docker compose down` and then `docker compose up -d`. The app keeps its own
 copy of the patients, so tap **Sync** in the app after a reset, before you tap **Update** again.
-When you're done with the codelab, stop the server with `docker compose down`.
+The server keeps its data in memory, so it starts empty if it restarts, for example after
+`docker compose restart` or a restart of Docker. Run `docker compose up -d` again to load the test
+data. When you're done with the codelab, stop the server with `docker compose down`.
 
 ## 3. Set up the project
 
@@ -187,12 +189,12 @@ step of the codelab. Run the Gradle commands in the `codelabs` folder:
 | Platform      | Command or action                                                                  |
 |:--------------|:-----------------------------------------------------------------------------------|
 | Desktop (JVM) | `./gradlew :shared:run`                                                            |
-| Web (Wasm)    | `./gradlew :shared:wasmJsBrowserDevelopmentRun`, then open `http://localhost:8081` |
+| Web (Wasm)    | `./gradlew :shared:wasmJsBrowserDevelopmentRun`, which opens `http://localhost:8081` |
 | iOS           | Open `iosApp/iosApp.xcodeproj` in Xcode, select a simulator, and click **Run**.    |
 
 The Web dev server doesn't rebuild when you change the code. To see a change, stop it with Ctrl+C
-and run the command again. If port 8081 is already in use on your computer, change the port in
-`shared/webpack.config.d/dev-server-port.js`.
+and run the command again. If another app already uses port 8081 on your computer, the browser may
+show that app instead. Change the port in `shared/webpack.config.d/dev-server-port.js`.
 
 On iOS, Xcode builds the `shared` framework with Gradle. To run on a real device, see
 [`iosApp/README.md`](iosApp/README.md).
@@ -469,12 +471,14 @@ scope.launch {
   patientsFromWakefield.forEach { fhirEngine.update(it.withCity("Taunton")) }
   patientsFromTaunton.forEach { fhirEngine.update(it.withCity("Wakefield")) }
 
+  refreshPatients()
   triggerOneTimeSync()
 }
 ```
 
-After modifying the data locally, the app triggers a one-time sync to upload the changes to the
-FHIR server.
+After modifying the data locally, the app shows the change right away with `refreshPatients()`,
+even without a connection. Then it triggers a one-time sync to upload the changes to the FHIR
+server.
 
 The code you added to `PatientListViewModel` should now look like this:
 
@@ -517,6 +521,7 @@ fun triggerUpdate() {
     patientsFromWakefield.forEach { fhirEngine.update(it.withCity("Taunton")) }
     patientsFromTaunton.forEach { fhirEngine.update(it.withCity("Wakefield")) }
 
+    refreshPatients()
     triggerOneTimeSync()
   }
 }
@@ -591,7 +596,8 @@ Open `RegistrationScreen.kt`. Find the
 questionnaireJson?.let { questionnaireJson ->
   Questionnaire(
     questionnaireJson = questionnaireJson,
-    config = QuestionnaireConfig(showCancelButton = false),
+    config =
+      QuestionnaireConfig(showCancelButton = false, showSubmitAnywayWhenValidationFails = false),
     onSubmit = { getQuestionnaireResponse ->
       scope.launch {
         viewModel.registerPatient(questionnaireJson, getQuestionnaireResponse())
@@ -605,7 +611,9 @@ questionnaireJson?.let { questionnaireJson ->
 
 The `Questionnaire` composable shows the form with a **Submit** button. When you tap **Submit**,
 `getQuestionnaireResponse()` checks the answers and returns them as a FHIR QuestionnaireResponse.
-If an answer isn't valid, the library shows a dialog and the form stays open. Otherwise the app
+The name and date of birth are required. If one is missing or isn't valid, the library lists it
+in a dialog and the form stays open. `showSubmitAnywayWhenValidationFails = false` removes the
+dialog's option to submit anyway. Otherwise the app
 passes the response to `registerPatient()` in the view model and goes back to the patient list.
 
 Run the app and tap **Register**. Fill in the form and tap **Submit**. The app goes back to the
@@ -794,7 +802,8 @@ fhirEngine.create(*tasks.toTypedArray())
 *   `fhirEngine.create()` saves the Tasks in the local database.
 
 Run the app and tap **Sync**, so that the PlanDefinition is on the device. Then register a child
-born less than 5 years ago, and an adult. Each new patient shows its Tasks in the list. The child
+born less than 5 years ago, and an adult. The date field follows the date format of your device or
+browser, such as dd/mm/yyyy or mm/dd/yyyy. Each new patient shows its Tasks in the list. The child
 gets First visit and Child health check, and the adult gets only First visit.
 
 <img src="images/image11.png" alt="Patient list with proposed tasks" width="400">
@@ -834,5 +843,6 @@ FHIR Data Capture and Kotlin FHIR Workflow:
     [Kotlin FHIR Workflow](https://github.com/ohs-foundation/kotlin-fhir-workflow) library
 *   Add periodic sync. See [`engine-app`](https://github.com/ohs-foundation/kotlin-fhir-engine/tree/main/engine-app)
     for an example on every platform.
-*   Explore the Search API. The [conformance](https://github.com/ohs-foundation/kotlin-fhir-engine/blob/main/docs/conformance.md)
-    document lists the supported search parameter types, modifiers and prefixes.
+*   Explore the Search API.
+    [Search the local store](https://ohs-foundation.github.io/ohs-docs/fhir-foundations/kotlin-fhir-engine/persist-and-search/)
+    describes the search parameter types, modifiers and prefixes.

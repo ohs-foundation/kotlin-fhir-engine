@@ -94,13 +94,15 @@
               "linkId": "PR-name-given",
               "definition": "http://hl7.org/fhir/StructureDefinition/Patient#Patient.name.given",
               "type": "string",
-              "text": "First Name"
+              "text": "First Name",
+              "required": true
             },
             {
               "linkId": "PR-name-family",
               "definition": "http://hl7.org/fhir/StructureDefinition/Patient#Patient.name.family",
               "type": "string",
-              "text": "Family Name"
+              "text": "Family Name",
+              "required": true
             }
           ]
         },
@@ -108,7 +110,8 @@
           "linkId": "PR-birthdate",
           "definition": "http://hl7.org/fhir/StructureDefinition/Patient#Patient.birthDate",
           "type": "date",
-          "text": "Date of Birth"
+          "text": "Date of Birth",
+          "required": true
         },
         {
           "linkId": "PR-id",
