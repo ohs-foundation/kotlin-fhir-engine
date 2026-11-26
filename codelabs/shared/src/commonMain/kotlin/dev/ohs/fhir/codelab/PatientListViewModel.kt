@@ -46,10 +46,12 @@ class PatientListViewModel(
   val patients: StateFlow<List<Patient>> = _patients
 
   private val _tasks = MutableStateFlow<Map<String, List<Task>>>(emptyMap())
+
   /** The tasks of each patient, keyed by a patient reference such as `Patient/123`. */
   val tasks: StateFlow<Map<String, List<Task>>> = _tasks
 
   private val _message = MutableStateFlow<String?>(null)
+
   /** A message for the user, or null when there is none to show. */
   val message: StateFlow<String?> = _message
 
@@ -79,7 +81,10 @@ class PatientListViewModel(
             }
             .map { it.resource }
         _tasks.value =
-          fhirEngine.search<Task> {}.map { it.resource }.groupBy { it.`for`?.reference?.value.orEmpty() }
+          fhirEngine
+            .search<Task> {}
+            .map { it.resource }
+            .groupBy { it.`for`?.reference?.value.orEmpty() }
       }
   }
 

@@ -65,7 +65,7 @@ fun RegistrationScreen(viewModel: PatientListViewModel, onClose: () -> Unit) {
           title = { Text("Register a patient") },
           actions = { TextButton(onClick = onClose) { Text("Back") } },
         )
-      }
+      },
     ) { padding ->
       Box(Modifier.padding(padding).fillMaxSize()) {
         // 8 Replace with code from the codelab to display the registration form.
