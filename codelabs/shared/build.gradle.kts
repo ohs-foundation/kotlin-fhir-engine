@@ -14,6 +14,7 @@ kotlin {
     namespace = "dev.ohs.fhir.codelab.shared"
     compileSdk = 36
     minSdk = 26
+    androidResources { enable = true }
   }
 
   jvm("desktop")
