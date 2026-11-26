@@ -116,7 +116,7 @@ into seven files in `shared/src/commonMain/kotlin/dev/ohs/fhir/codelab/`:
 
 The registration form is in `shared/src/commonMain/composeResources/files/questionnaire.json`.
 
-Most places you'll change are marked with a numbered comment, such as
+Each place you'll change is marked with a numbered comment, such as
 `// 4 Replace with code from the codelab to initialize the FHIR Engine.` The number tells you which
 step of the codelab adds the code.
 
@@ -287,6 +287,7 @@ the class looks like this:
 
 ```kotlin
 class DownloadWorkManagerImpl : DownloadWorkManager {
+  // 10.1 Replace the line below with code from the codelab to download the PlanDefinition too.
   private val urls = ArrayDeque(listOf("Patient"))
 
   override suspend fun getNextRequest(): DownloadRequest? {
@@ -661,7 +662,7 @@ val patient = extracted.copy(id = patientId)
 The starter already runs `registerPatient()` in a coroutine. If the code fails, it shows the error
 as a message. When the code finishes, it reloads the patient list.
 
-Run the app and register a patient. The new patient appears in the list. Tap **Sync** to upload
+Run the app and register a patient. The new patient appears in the list, unless the search field filters it out. Tap **Sync** to upload
 it, then open `http://localhost:8080/fhir/Patient` in a browser to see it on the FHIR server.
 
 ## 10. Connect the workflow library to the engine
@@ -681,7 +682,8 @@ actions, and each points to an ActivityDefinition that describes a Task:
 
 ### Step 1: Download the PlanDefinition
 
-Open `DownloadWorkManagerImpl.kt` and change the `urls` line as follows:
+Open `DownloadWorkManagerImpl.kt` and replace the `// 10.1` comment and the `urls` line below it
+with the following code:
 
 ```kotlin
 // 10.1 Download the PlanDefinition and ActivityDefinitions too
