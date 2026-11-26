@@ -32,7 +32,6 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !codelabs/gradle/wrapper/gradle-wrapper.jar
 local.properties
-codelabs/kotlin-js-store/
 
 # iOS — local signing config (copy Local.xcconfig.example → Local.xcconfig)
 iosApp/iosApp/Local.xcconfig
