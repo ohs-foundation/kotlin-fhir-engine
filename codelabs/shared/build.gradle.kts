@@ -39,6 +39,7 @@ kotlin {
       implementation("dev.ohs.fhir:fhir-data-capture:2.0.0-alpha05")
       implementation("dev.ohs.fhir:fhir-workflow:2.0.0-alpha01")
       implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
+      implementation("org.jetbrains.androidx.navigationevent:navigationevent-compose:1.0.1")
 
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kotlinx.serialization.json)

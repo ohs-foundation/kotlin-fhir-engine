@@ -28,6 +28,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationEventHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import dev.ohs.fhir.engine.FhirEngineProvider
 
 @Composable
@@ -45,6 +48,12 @@ fun App(platformContext: Any, syncLauncher: SyncLauncher) {
       PatientListViewModel(FhirEngineProvider.getInstance(platformContext), syncLauncher, scope)
     }
     var registering by remember { mutableStateOf(false) }
+    // The system Back button on the form returns to the patient list.
+    NavigationEventHandler(
+      state = rememberNavigationEventState(NavigationEventInfo.None),
+      isBackEnabled = registering,
+      onBackCompleted = { registering = false },
+    )
     if (registering) {
       RegistrationScreen(viewModel, onClose = { registering = false })
     } else {
