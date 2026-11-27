@@ -21,6 +21,7 @@ import dev.ohs.fhir.model.r4.Resource
 import dev.ohs.fhir.model.r4.terminologies.ResourceType
 
 class DownloadWorkManagerImpl : DownloadWorkManager {
+  // 10.1 Replace the line below with code from the codelab to download the PlanDefinition too.
   private val urls = ArrayDeque(listOf("Patient"))
 
   override suspend fun getNextRequest(): DownloadRequest? {
